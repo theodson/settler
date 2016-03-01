@@ -69,6 +69,59 @@ install_nginx() {
     # and the number of worker processes that get spawned when Nginx is running, among other things.
 }
 
+
+install_hhvm() {
+
+    # TODO Can We Install from RPM????
+
+    # OR Build from source
+    # https://github.com/facebook/hhvm/wiki/Building-and-installing-hhvm-on-CentOS-7.x
+    # http://lifeandshell.com/php-hhvm-aka-the-hiphop-virtual-machine-on-centos-7/
+
+    # Build The HHVM Key & Repository
+
+    yum -y install cpp gcc-c++ cmake git psmisc {binutils,boost,jemalloc,numactl}-devel \
+    {ImageMagick,sqlite,tbb,bzip2,openldap,readline,elfutils-libelf,gmp,lz4,pcre}-devel \
+    lib{xslt,event,yaml,vpx,png,zip,icu,mcrypt,memcached,cap,dwarf}-devel \
+    {unixODBC,expat,mysql}-devel lib{edit,curl,xml2,xslt}-devel \
+    glog-devel oniguruma-devel ocaml gperf enca libjpeg-turbo-devel openssl-devel \
+    mysql mysql-server make
+
+    # Optional dependencies (these extensions are not built by default)
+
+    yum -y install {fribidi,libc-client}-devel
+
+    # Get our hhvm
+    cd /tmp
+    git clone https://github.com/facebook/hhvm -b master  hhvm  --recursive
+    cd hhvm
+
+    # Okay let's go
+    cmake .
+    # Multithreads compiling
+    make -j$(($(nproc)+1))
+    # Compiled?
+    ./hphp/hhvm/hhvm --version
+    # Install it
+    make install
+    # Final
+    hhvm --version
+
+    exit;
+
+    # TODO Configure HHVM To Run As Homestead
+
+    service hhvm stop
+    sed -i 's/#RUN_AS_USER="www-data"/RUN_AS_USER="vagrant"/' /etc/default/hhvm
+    service hhvm start
+
+    # Start HHVM On System Start
+
+    update-rc.d hhvm defaults
+
+}
+
+
 install_supervisor() {
 
     # install supervisor
@@ -213,30 +266,42 @@ install_php_remi() {
 
 
     # Setup Some PHP-FPM Options
+    phpfpm='/etc/opt/remi/php70/php.ini'
 
-    sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.0/fpm/php.ini
-    sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.0/fpm/php.ini
-    sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/7.0/fpm/php.ini
-    sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.0/fpm/php.ini
-    sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/7.0/fpm/php.ini
-    sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/7.0/fpm/php.ini
-    sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.0/fpm/php.ini
+    # possible to load different php.ini per worker BUT we can Pass environment variables and PHP settings
+    # to a pool (worker), which is like loading different php.ini file.
+    # see http://stackoverflow.com/questions/20930969/php5-fpm-per-worker-php-ini-file
+
+    sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" $phpfpm
+    sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" $phpfpm
+    sed -i "s/post_max_size = .*/post_max_size = 100M/" $phpfpm
 
 
     # Set The Nginx & PHP-FPM User
+    sed -i "s/user nginx;/user vagrant;/" /etc/nginx/nginx.conf
+    sed -i "s/http {/http {\n    server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
 
-    sed -i "s/user www-data;/user vagrant;/" /etc/nginx/nginx.conf
-    sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
+    fpm_pool_www=/etc/opt/remi/php70/php-fpm.d/www.conf
 
-    sed -i "s/user = www-data/user = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-    sed -i "s/group = www-data/group = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
+    sed -i "s/user = apache/user = vagrant/" $fpm_pool_www
+    sed -i "s/group = apache/group = vagrant/" $fpm_pool_www
 
-    sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-    sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-    sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/7.0/fpm/pool.d/www.conf
+    echo "listen.owner = vagrant" >> $fpm_pool_www
+    echo "listen.group = vagrant" >> $fpm_pool_www
+    echo "listen.mode = 0666" >> $fpm_pool_www
 
-    service nginx restart
-    service php7.0-fpm restart
+
+    cat $fpm_pool_www | egrep -v '^;|^[[:space:]]*$'
+    systemctl restart nginx
+    systemctl restart php70-php-fpm
+
+    # Add Vagrant User To WWW-Data (ubuntu)
+    # Add Vagrant User To nginx or apache? (centos)
+
+    usermod -a -G nginx vagrant
+    usermod -a -G apache vagrant
+    id vagrant
+    groups vagrant
 
 }
 
@@ -328,6 +393,10 @@ install_mysql() {
     mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
     mysql --user="root" --password="secret" -e "CREATE DATABASE homestead;"
     systemctl restart mysqld.service
+
+    # Add Timezone Support To MySQL
+    mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret mysql
+
 }
 
 yum_prepare
@@ -342,4 +411,5 @@ install_mysql
 install_other
 install_php_remi
 install_composer
+#install_hhvm
 
