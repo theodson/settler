@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # install required vagrant plugin to handle reloads during provisioning
 vagrant plugin install vagrant-reload
 
@@ -9,11 +10,14 @@ rm -rf .vagrant
 
 time vagrant up --provider virtualbox 2>&1 | tee virtualbox-build-output.log
 vagrant halt
-vagrant package --base `ls ~/VirtualBox\ VMs | grep settler` --output virtualbox.box
+vagrant package --base `ls ~/VirtualBox\ VMs | grep $(basename $(pwd))` --output virtualbox.box
 
 ls -lh virtualbox.box
 vagrant destroy -f
 rm -rf .vagrant
+
+# copy current iso images
+ln /Applications/VMware\ Fusion.app/Contents/Library/isoimages/linux.iso .
 
 time vagrant up --provider vmware_fusion 2>&1 | tee vmware-build-output.log
 vagrant halt
@@ -28,5 +32,6 @@ tar cvzf ../../../../../vmware_fusion.box *
 cd ../../../../../
 
 ls -lh vmware_fusion.box
+rm -f linux.iso
 vagrant destroy -f
 rm -rf .vagrant
