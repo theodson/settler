@@ -2,7 +2,7 @@
 
 # Vmware Tools
 
-apt-get install -y linux-headers-$(uname -r) build-essential
+yum -y install perl
 
 echo "answer AUTO_KMODS_ENABLED yes" | tee -a /etc/vmware-tools/locations || true
 
