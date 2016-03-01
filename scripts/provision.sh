@@ -1,235 +1,345 @@
 #!/usr/bin/env bash
 
-export DEBIAN_FRONTEND=noninteractive
 
-# Update Package List
+yum_prepare() {
 
-apt-get update
+    # To add the CentOS 7 EPEL repository, open terminal and use the following command:
+    yum -y install epel-release
+    yum -y install yum-priorities yum-utils yum-plugin-versionlock yum-plugin-show-leaves yum-plugin-upgrade-helper
 
-# Update System Packages
-apt-get -y upgrade
+    # ensure build tools are installed.
+    yum -y group install 'Development Tools'
 
-# Force Locale
+    # nodes repo
+    curl --silent --location https://rpm.nodesource.com/setup_5.x | bash -
 
-echo "LC_ALL=en_US.UTF-8" >> /etc/default/locale
-locale-gen en_US.UTF-8
+    yum -y update
+}
 
-# Install Some PPAs
+yum_install() {
+    yum -y install autoconf make automake sendmail sendmail-cf m4
 
-apt-get install -y software-properties-common curl
+    yum -y install vim mlocate curl htop wget dos2unix tree
+    yum -y install ntp nmap nc whois libnotify inotify-tools telnet ngrep
+}
 
-apt-add-repository ppa:nginx/development -y
-apt-add-repository ppa:chris-lea/redis-server -y
-apt-add-repository ppa:ondrej/php -y
+install_node5() {
+    # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
 
-# gpg: key 5072E1F5: public key "MySQL Release Engineering <mysql-build@oss.oracle.com>" imported
-apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 5072E1F5
-sh -c 'echo "deb http://repo.mysql.com/apt/ubuntu/ trusty mysql-5.7" >> /etc/apt/sources.list.d/mysql.list'
+    yum install -y nodejs
+    /usr/bin/npm install -g gulp
+    /usr/bin/npm install -g bower
+}
 
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" >> /etc/apt/sources.list.d/postgresql.list'
+install_git2() {
+    # http://tecadmin.net/install-git-2-0-on-centos-rhel-fedora/
+    v=2.5.4
+    yum install -y perl-Tk-devel curl-devel expat-devel gettext-devel openssl-devel zlib-devel
+    yum remove -y git
+    pushd /usr/src
+    wget "https://www.kernel.org/pub/software/scm/git/git-$v.tar.gz"
+    tar -xvf "git-$v.tar.gz"
+    pushd "git-$v"
+    make prefix=/usr/local/git all
+    make prefix=/usr/local/git install
+    echo "export PATH=\$PATH:/usr/local/git/bin" >> /etc/bashrc
 
-curl -s https://packagecloud.io/gpg.key | apt-key add -
-echo "deb http://packages.blackfire.io/debian any main" | tee /etc/apt/sources.list.d/blackfire.list
+    echo "Installation of git-$v complete"
+}
 
-curl --silent --location https://deb.nodesource.com/setup_5.x | bash -
+install_nginx() {
+    # https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-centos-7
+    yum install -y nginx
+    sudo systemctl enable nginx
+    sudo systemctl start nginx
 
-# Update Package Lists
+    firewall-cmd --permanent --zone=public --add-service=http
+    firewall-cmd --permanent --zone=public --add-service=https
+    # firewall-cmd --reload
 
-apt-get update
+    # Server Block Configuration
 
-# Install Some Basic Packages
+    # Any additional server blocks, known as Virtual Hosts in Apache, can be added by creating new configuration files in /etc/nginx/conf.d.
+    # Files that end with .conf in that directory will be loaded when Nginx is started.
 
-apt-get install -y build-essential dos2unix gcc git libmcrypt4 libpcre3-dev \
-make python2.7-dev python-pip re2c supervisor unattended-upgrades whois vim libnotify-bin
+    # Nginx Global Configuration
 
-# Set My Timezone
+    # The main Nginx configuration file is located at /etc/nginx/nginx.conf.
+    # This is where you can change settings like the user that runs the Nginx daemon processes,
+    # and the number of worker processes that get spawned when Nginx is running, among other things.
+}
 
-ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+install_supervisor() {
 
-# Install PHP Stuffs
+    # install supervisor
+    # http://vicendominguez.blogspot.com.au/2015/02/supervisord-in-centos-7-systemd-version.html
+    # http://www.alphadevx.com/a/455-Installing-Supervisor-and-Superlance-on-CentOS
+    yum install -y python-setuptools python-pip
+    easy_install supervisor
+    mkdir -p /etc/supervisor
+    echo_supervisord_conf > /etc/supervisor/supervisord.conf
 
-apt-get install -y --force-yes php7.0-cli php7.0-dev \
-php-pgsql php-sqlite3 php-gd php-apcu \
-php-curl php7.0-dev \
-php-imap php-mysql php-memcached php7.0-readline php-xdebug
+    cat << SUPERVISOR_EOF > "/usr/lib/systemd/system/supervisord.service"
+[Unit]
+Description=supervisord - Supervisor process control system for UNIX
+Documentation=http://supervisord.org
+After=network.target
 
-# Install Composer
+[Service]
+Type=forking
+ExecStart=/usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+ExecReload=/usr/bin/supervisorctl reload
+ExecStop=/usr/bin/supervisorctl shutdown
+User=root
 
-curl -sS https://getcomposer.org/installer | php
-mv composer.phar /usr/local/bin/composer
+[Install]
+WantedBy=multi-user.target
+SUPERVISOR_EOF
 
-# Add Composer Global Bin To Path
+    chmod 755 /usr/lib/systemd/system/supervisord.service
+    systemctl enable supervisord
+}
 
-printf "\nPATH=\"/home/vagrant/.composer/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
+install_sqlite() {
+    yum -y install sqlite-devel sqlite
+}
 
-# Install Laravel Envoy & Installer
+install_postgresql95() {
+    # http://tecadmin.net/install-postgresql-9-5-on-centos/
+    rpm -Uvh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-2.noarch.rpm
 
-sudo su vagrant <<'EOF'
-/usr/local/bin/composer global require "laravel/envoy=~1.0"
-/usr/local/bin/composer global require "laravel/installer=~1.1"
+    yum -y install postgresql95-server postgresql95 postgresql95-contrib
+    /usr/pgsql-9.5/bin/postgresql95-setup initdb
+
+    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/9.5/data/postgresql.conf
+
+    sed -ir "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/#local     all       all       peer/g"  /var/lib/pgsql/9.5/data/pg_hba.conf
+
+    echo "local   all        all                                trust" | tee -a /var/lib/pgsql/9.5/data/pg_hba.conf
+    echo "host    all        all        10.0.2.2/32             md5" | tee -a /var/lib/pgsql/9.5/data/pg_hba.conf
+    echo "host    all        all        10.20.1.0/2             md5" | tee -a /var/lib/pgsql/9.5/data/pg_hba.conf
+    echo "host    all        all        10.20.0.0/24            trust" | tee -a /var/lib/pgsql/9.5/data/pg_hba.conf
+    echo "host    all        all        10.0.2.2/32             trust" | tee -a /var/lib/pgsql/9.5/data/pg_hba.conf
+    echo "host    all        all        127.0.0.1/32            trust" | tee -a /var/lib/pgsql/9.5/data/pg_hba.conf
+
+    systemctl start postgresql-9.5
+    systemctl enable postgresql-9.5
+
+    sudo -u postgres psql -c "CREATE ROLE homestead LOGIN UNENCRYPTED PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;"
+    sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead
+
+    systemctl restart postgresql-9.5
+}
+
+install_postgresql95_bdr() {
+    echo "TODO look at bdr extension for pg95"
+}
+
+install_other() {
+    # http://tecadmin.net/install-postgresql-9-5-on-centos/
+    yum -y install redis
+
+    systemctl start redis.service
+    systemctl enable redis.service
+    systemctl restart redis.service
+
+    # install memcache
+    yum -y install memcached
+
+    systemctl enable memcached.service
+    systemctl start memcached.service
+    systemctl restart memcached.service
+
+
+    # install beanstalk
+    yum -y install beanstalkd
+
+    systemctl enable beanstalkd.service
+    systemctl start beanstalkd.service
+    systemctl restart beanstalkd.service
+
+}
+
+install_php_remi() {
+    # https://www.cloudinsidr.com/content/how-to-install-php-7-on-centos-7-red-hat-rhel-7-fedora/
+
+    #rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+
+    yum-config-manager --enable remi-php70
+
+    yum -y install \
+        php70-php \
+        php70-php-cli \
+        php70-php-common \
+        php70-php-intl \
+        php70-php-fpm \
+        php70-php-xml \
+        php70-php-xmlrpc \
+        php70-php-pdo \
+        php70-php-gmp \
+        php70-php-process \
+        php70-php-devel \
+        php70-php-mbstring \
+        php70-php-mcrypt \
+        php70-php-gd \
+        php70-php-readline \
+        php70-php-pecl-imagick \
+        php70-php-opcache \
+        php70-php-memcached \
+        php70-php-pecl-apcu \
+        php70-php-imap \
+        php70-php-pecl-jsond \
+        php70-php-pecl-jsond-devel \
+        php70-php-pecl-xdebug \
+        php70-php-bcmath \
+        php70-php-mysqlnd \
+        php70-php-pgsql \
+        php70-php-imap \
+        php70-php-pear
+
+    systemctl enable php70-php-fpm
+
+    systemctl start php70-php-fpm
+
+    ln -s /usr/bin/php70 /usr/bin/php
+
+    # Set Some PHP CLI Settings
+
+    sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/opt/remi/php70/php.ini
+    sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/opt/remi/php70/php.ini
+    sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/opt/remi/php70/php.ini
+    sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/opt/remi/php70/php.ini
+
+
+    # Setup Some PHP-FPM Options
+
+    sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.0/fpm/php.ini
+    sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.0/fpm/php.ini
+    sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/7.0/fpm/php.ini
+    sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.0/fpm/php.ini
+    sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/7.0/fpm/php.ini
+    sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/7.0/fpm/php.ini
+    sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.0/fpm/php.ini
+
+
+    # Set The Nginx & PHP-FPM User
+
+    sed -i "s/user www-data;/user vagrant;/" /etc/nginx/nginx.conf
+    sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
+
+    sed -i "s/user = www-data/user = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
+    sed -i "s/group = www-data/group = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
+
+    sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
+    sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
+    sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/7.0/fpm/pool.d/www.conf
+
+    service nginx restart
+    service php7.0-fpm restart
+
+}
+
+install_php_webtatic() {
+    #rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
+
+    yum -y install \
+        php70w \
+        php70w-cli \
+        php70w-common \
+        php70w-intl \
+        php70w-fpm \
+        php70w-xml \
+        php70w-pdo \
+        php70w-devel \
+        php70w-xmlrpc \
+        php70w-gd \
+        php70w-pecl-imagick
+        php70w-opcache \
+        php70w-pecl-apcu \
+        php70w-imap \
+        php70w-mysql \
+        php70w-curl \
+        php70w-memcached \
+        php70w-readline \
+        php70w-pecl-xdebug
+}
+
+install_composer() {
+    # Install Composer
+
+    curl -sS https://getcomposer.org/installer | php
+    mv composer.phar /usr/local/bin/composer
+
+     # Install Laravel Envoy & Installer
+    sudo su - vagrant <<'EOF'
+    /usr/local/bin/composer global require "laravel/envoy=~1.0"
+    /usr/local/bin/composer global require "laravel/installer=~1.1"
+    /usr/local/bin/composer global require "phing/phing=~2.9.0"
+
+    # Add Composer Global Bin To Path
+    printf "\nPATH=\"~/.config/composer/vendor/bin/:\$PATH\"\n" | tee -a ~/.bash_profile
 EOF
 
-# Set Some PHP CLI Settings
+     # Install Laravel Envoy & Installer
+    /usr/local/bin/composer global require "laravel/envoy=~1.0"
+    /usr/local/bin/composer global require "laravel/installer=~1.1"
+    /usr/local/bin/composer global require "phing/phing=~2.9.0"
 
-sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.0/cli/php.ini
-sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.0/cli/php.ini
-sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.0/cli/php.ini
-sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.0/cli/php.ini
+    # Add Composer Global Bin To Path
+    printf "\nPATH=\"~/.config/composer/vendor/bin/:\$PATH\"\n" | tee -a ~/.bash_profile
+}
 
-# Install Nginx & PHP-FPM
+install_mysql() {
 
-apt-get install -y --force-yes nginx php7.0-fpm
+    # http://www.tecmint.com/install-latest-mysql-on-rhel-centos-and-fedora/
+    wget http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
+    yum -y localinstall mysql57-community-release-el7-7.noarch.rpm
 
-rm /etc/nginx/sites-enabled/default
-rm /etc/nginx/sites-available/default
-service nginx restart
+    # check repos installed.
+    yum repolist enabled | grep "mysql.*-community.*"
 
-# Add The HHVM Key & Repository
+    yum -y install mysql-community-server
 
-wget -O - http://dl.hhvm.com/conf/hhvm.gpg.key | apt-key add -
-echo deb http://dl.hhvm.com/ubuntu trusty main | tee /etc/apt/sources.list.d/hhvm.list
-apt-get update
-apt-get install -y hhvm
+    systemctl enable mysqld.service
+    systemctl start mysqld.service
 
-# Configure HHVM To Run As Homestead
+    # Configure Centos Mysql 5.7+
 
-service hhvm stop
-sed -i 's/#RUN_AS_USER="www-data"/RUN_AS_USER="vagrant"/' /etc/default/hhvm
-service hhvm start
+    # http://blog.astaz3l.com/2015/03/03/mysql-install-on-centos/
+    echo "default_password_lifetime = 0" >> /etc/mysql/my.cnf
+    echo "bind-address = 0.0.0.0" >> /etc/my.cnf
+    echo "validate_password_policy=LOW;" >> /etc/my.cnf
+    echo "validate_password_length=6" >> /etc/my.cnf
+    systemctl restart mysqld.service
 
-# Start HHVM On System Start
+    # find temporary password
+    mysql_password=`sudo grep 'temporary password' /var/log/mysqld.log | sed 's/.*localhost: //'`
+    mysqladmin -u root -p"$mysql_password" password secret
+    mysqladmin -u root -psecret variables | grep validate_password
 
-update-rc.d hhvm defaults
+    mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
+    systemctl restart mysqld.service
 
-# Setup Some PHP-FPM Options
+    mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"
+    mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
+    mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'%' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
+    mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
+    mysql --user="root" --password="secret" -e "CREATE DATABASE homestead;"
+    systemctl restart mysqld.service
+}
 
-sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.0/fpm/php.ini
-sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.0/fpm/php.ini
-sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/7.0/fpm/php.ini
-sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.0/fpm/php.ini
-sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/7.0/fpm/php.ini
-sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/7.0/fpm/php.ini
-sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.0/fpm/php.ini
+yum_prepare
+yum_install
+install_supervisor
+install_nginx
+install_git2
+install_node5
+install_sqlite
+install_postgresql95
+install_mysql
+install_other
+install_php_remi
+install_composer
 
-# Copy fastcgi_params to Nginx because they broke it on the PPA
-
-cat > /etc/nginx/fastcgi_params << EOF
-fastcgi_param	QUERY_STRING		\$query_string;
-fastcgi_param	REQUEST_METHOD		\$request_method;
-fastcgi_param	CONTENT_TYPE		\$content_type;
-fastcgi_param	CONTENT_LENGTH		\$content_length;
-fastcgi_param	SCRIPT_FILENAME		\$request_filename;
-fastcgi_param	SCRIPT_NAME		\$fastcgi_script_name;
-fastcgi_param	REQUEST_URI		\$request_uri;
-fastcgi_param	DOCUMENT_URI		\$document_uri;
-fastcgi_param	DOCUMENT_ROOT		\$document_root;
-fastcgi_param	SERVER_PROTOCOL		\$server_protocol;
-fastcgi_param	GATEWAY_INTERFACE	CGI/1.1;
-fastcgi_param	SERVER_SOFTWARE		nginx/\$nginx_version;
-fastcgi_param	REMOTE_ADDR		\$remote_addr;
-fastcgi_param	REMOTE_PORT		\$remote_port;
-fastcgi_param	SERVER_ADDR		\$server_addr;
-fastcgi_param	SERVER_PORT		\$server_port;
-fastcgi_param	SERVER_NAME		\$server_name;
-fastcgi_param	HTTPS			\$https if_not_empty;
-fastcgi_param	REDIRECT_STATUS		200;
-EOF
-
-# Set The Nginx & PHP-FPM User
-
-sed -i "s/user www-data;/user vagrant;/" /etc/nginx/nginx.conf
-sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
-
-sed -i "s/user = www-data/user = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-sed -i "s/group = www-data/group = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-
-sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/7.0/fpm/pool.d/www.conf
-sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/7.0/fpm/pool.d/www.conf
-
-service nginx restart
-service php7.0-fpm restart
-
-# Add Vagrant User To WWW-Data
-
-usermod -a -G www-data vagrant
-id vagrant
-groups vagrant
-
-# Install Node
-
-apt-get install -y nodejs
-/usr/bin/npm install -g gulp
-/usr/bin/npm install -g bower
-
-# Install SQLite
-
-apt-get install -y sqlite3 libsqlite3-dev
-
-# Install MySQL
-
-debconf-set-selections <<< "mysql-community-server mysql-community-server/data-dir select ''"
-debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password secret"
-debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password secret"
-apt-get install -y mysql-server
-
-# Configure MySQL Password Lifetime
-
-echo "default_password_lifetime = 0" >> /etc/mysql/my.cnf
-
-# Configure MySQL Remote Access
-
-sed -i '/^bind-address/s/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/my.cnf
-
-mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
-service mysql restart
-
-mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"
-mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
-mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'%' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
-mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
-mysql --user="root" --password="secret" -e "CREATE DATABASE homestead;"
-service mysql restart
-
-# Add Timezone Support To MySQL
-
-mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret mysql
-
-# Install Postgres
-
-apt-get install -y postgresql-9.4 postgresql-contrib-9.4
-
-# Configure Postgres Remote Access
-
-sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/9.4/main/postgresql.conf
-echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/9.4/main/pg_hba.conf
-sudo -u postgres psql -c "CREATE ROLE homestead LOGIN UNENCRYPTED PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;"
-sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead
-service postgresql restart
-
-# Install Blackfire
-
-apt-get install -y blackfire-agent blackfire-php
-
-# Install A Few Other Things
-
-apt-get install -y redis-server memcached beanstalkd
-
-# Configure Beanstalkd
-
-sed -i "s/#START=yes/START=yes/" /etc/default/beanstalkd
-/etc/init.d/beanstalkd start
-
-# Enable Swap Memory
-
-/bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
-/sbin/mkswap /var/swap.1
-/sbin/swapon /var/swap.1
-
-# Minimize The Disk Image
-
-echo "Minimizing disk image..."
-dd if=/dev/zero of=/EMPTY bs=1M
-rm -f /EMPTY
-sync
