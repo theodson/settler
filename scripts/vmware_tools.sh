@@ -15,7 +15,7 @@ if [ -e $HOME_DIR/linux.iso ]; then
     umount /tmp/vmfusion;
 
     /bin/vmware-uninstall-tools.pl
-    /tmp/vmfusion-archive/vmware-tools-distrib/vmware-install.pl -d --force-install;
+    /tmp/vmfusion-archive/vmware-tools-distrib/vmware-install.pl -d
 
 fi
 
