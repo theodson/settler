@@ -373,9 +373,9 @@ install_mysql() {
     # Configure Centos Mysql 5.7+
 
     # http://blog.astaz3l.com/2015/03/03/mysql-install-on-centos/
-    echo "default_password_lifetime = 0" >> /etc/mysql/my.cnf
+    echo "default_password_lifetime = 0" >> /etc/my.cnf
     echo "bind-address = 0.0.0.0" >> /etc/my.cnf
-    echo "validate_password_policy=LOW;" >> /etc/my.cnf
+    echo "validate_password_policy=LOW" >> /etc/my.cnf
     echo "validate_password_length=6" >> /etc/my.cnf
     systemctl restart mysqld.service
 
