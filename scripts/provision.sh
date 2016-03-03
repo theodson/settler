@@ -278,8 +278,14 @@ install_php_remi() {
 
 
     # Set The Nginx & PHP-FPM User
-    sed -i "s/user nginx;/user vagrant;/" /etc/nginx/nginx.conf
-    sed -i "s/http {/http {\n    server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
+#    sed -i "s/user nginx;/user vagrant;/" /etc/nginx/nginx.conf
+#    sed -i "s/http {/http {\n    server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
+    install_nginx_conf
+
+    # fix differences between centos and ubuntu.
+    mkdir -p /etc/nginx/sites-available
+    sudo ln -s /etc/nginx/default.d /etc/nginx/sites-enabled
+
 
     fpm_pool_www=/etc/opt/remi/php70/php-fpm.d/www.conf
 
@@ -303,7 +309,98 @@ install_php_remi() {
     id vagrant
     groups vagrant
 
+
+    # systemd links
+    # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
+    # https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
+
+    #fix different locations used by php-fpm, homestead scripts rely on php70-fpm
+    systemctl disable php70-php-fpm
+    sed -i 's/\[Install\]/\[Install\]\nAlias=php7.0-fpm.service/' /usr/lib/systemd/system/php70-php-fpm.service
+    systemctl enable php70-php-fpm
+    # use new alias to restart service (as homestead would).
+    systemctl restart php7.0-fpm
+
+    mkdir -p /etc/php/7.0/fpm/
+    ln -s /etc/opt/remi/php70/php-fpm.conf /etc/php/7.0/fpm/php-fpm.conf
+
+    # fix different reference to crond to alias as cron
+    ln -s /usr/lib/systemd/system/crond.service /etc/systemd/system/cron.service
+    sed -i 's/\[Install\]/\[Install\]\nAlias=cron.service/' /etc/systemd/system/multi-user.target.wants/crond.service
+
 }
+
+
+install_nginx_conf() {
+
+cat << NGINX > /etc/nginx/nginx.conf
+user vagrant;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+	worker_connections 768;
+	# multi_accept on;
+}
+
+http {
+
+	##
+	# Basic Settings
+	##
+
+	sendfile on;
+	tcp_nopush on;
+	tcp_nodelay on;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+	# server_tokens off;
+
+	server_names_hash_bucket_size 64;
+	# server_name_in_redirect off;
+
+	include /etc/nginx/mime.types;
+	default_type application/octet-stream;
+
+	##
+	# SSL Settings
+	##
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # Dropping SSLv3, ref: POODLE
+	ssl_prefer_server_ciphers on;
+
+	##
+	# Logging Settings
+	##
+
+	access_log /var/log/nginx/access.log;
+	error_log /var/log/nginx/error.log;
+
+	##
+	# Gzip Settings
+	##
+
+	gzip on;
+	gzip_disable "msie6";
+
+	# gzip_vary on;
+	# gzip_proxied any;
+	# gzip_comp_level 6;
+	# gzip_buffers 16 8k;
+	# gzip_http_version 1.1;
+	# gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+	##
+	# Virtual Host Configs
+	##
+
+	include /etc/nginx/conf.d/*.conf;
+	include /etc/nginx/sites-enabled/*;
+}
+
+NGINX
+}
+
 
 install_php_webtatic() {
     #rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
@@ -398,6 +495,16 @@ install_mysql() {
     mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret mysql
 
 }
+
+{
+    touch /home/vagrant/.profile && chown vagrant:vagrant /home/vagrant/.profile
+
+    cat << HOMESTEAD_FIX > "/home/vagrant/.bash_profile"
+    # Homestead fix - incorporate ~/.profile
+    source ~/.profile
+HOMESTEAD_FIX
+}
+
 
 yum_prepare
 yum_install
