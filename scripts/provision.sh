@@ -517,6 +517,7 @@ install_postgresql95
 install_mysql
 install_other
 install_php_remi
-install_composer
 #install_hhvm
+install_composer
+
 
