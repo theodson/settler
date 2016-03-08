@@ -48,10 +48,9 @@ if [ "$1" == "vm" ] || [ "$1" == "all" ]; then
 	rm -f vmware*.log
 	tar cvzf ../../../../../vmware_fusion.box *
 	cd ../../../../../
-
 	ls -lh vmware_fusion.box
-	rm -f linux.iso
 
+	rm -f linux.iso
 	vagrant destroy -f
 	rm -rf .vagrant
 fi
