@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 HOME_DIR="${HOME_DIR:-/home/vagrant}";
 
+#/usr/bin/vmware-config-tools.pl -d || true
 
 update_vmware_tools() {
 
-    echo "[vmware_tools] update and install"
+    echo "[vmware_tools] update and install : START"
 
     yum -y group install 'Development Tools'
+    yum -y install kernel-headers gcc
 
     # Upgrade the VMWare tools if iso is supplied.
     mkdir -p /tmp/vmfusion;
@@ -19,7 +21,7 @@ update_vmware_tools() {
 
     /bin/vmware-uninstall-tools.pl
     /tmp/vmfusion-archive/vmware-tools-distrib/vmware-install.pl -d || true
-
+    echo "[vmware_tools] update and install : FINISH"
 }
 
 
@@ -34,9 +36,6 @@ echo "answer AUTO_KMODS_ENABLED yes" | tee -a /etc/vmware-tools/locations || tru
 if [ -e $HOME_DIR/linux.iso ]; then
     # lets upgrade
     update_vmware_tools
-else
-    echo "[vmware_tools] configure vmware tools"
-    /usr/bin/vmware-config-tools.pl -d || true
 fi
 
 
