@@ -350,6 +350,9 @@ install_php_remi() {
     sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/opt/remi/php70/php.ini
     sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/opt/remi/php70/php.ini
 
+    # disable xdebug
+    sed -i 's/^\(zend_extension.*\)/;\1/' /etc/opt/remi/php70/php.d/15-xdebug.ini
+
 
     # Setup Some PHP-FPM Options
     phpfpm='/etc/opt/remi/php70/php.ini'
@@ -395,6 +398,8 @@ install_php_remi() {
     id vagrant
     groups vagrant
 
+    # nginx write error for vagrant (TODO do we really need to run as vagrant??)
+    chmod -R g+x /var/lib/nginx
 
     # systemd links
     # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
@@ -520,23 +525,33 @@ install_composer() {
     curl -sS https://getcomposer.org/installer | php
     mv composer.phar /usr/local/bin/composer
 
+    cat << COMPOSER_HOME >> /etc/bashrc
+# Add Composer Global Bin To Path
+export COMPOSER_HOME=~/.composer
+export PATH=$COMPOSER_HOME/vendor/bin:$PATH
+COMPOSER_HOME
+
+    /usr/local/bin/composer config --list --global
+
      # Install Laravel Envoy & Installer
     sudo su - vagrant <<'EOF'
+    export COMPOSER_HOME=~/.composer
+    /usr/local/bin/composer config --list --global
+
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
-    /usr/local/bin/composer global require "phing/phing=~2.9.0"
+    /usr/local/bin/composer global require "phing/phing=~2.9"
 
-    # Add Composer Global Bin To Path
-    printf "\nPATH=\"~/.config/composer/vendor/bin/:\$PATH\"\n" | tee -a ~/.bash_profile
 EOF
 
      # Install Laravel Envoy & Installer
+    export COMPOSER_HOME=~/.composer/
+    /usr/local/bin/composer config --list --global
+
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
-    /usr/local/bin/composer global require "phing/phing=~2.9.0"
+    /usr/local/bin/composer global require "phing/phing=~2.9"
 
-    # Add Composer Global Bin To Path
-    printf "\nPATH=\"~/.config/composer/vendor/bin/:\$PATH\"\n" | tee -a ~/.bash_profile
 }
 
 install_mysql() {
@@ -585,12 +600,14 @@ install_mysql() {
 {
     touch /home/vagrant/.profile && chown vagrant:vagrant /home/vagrant/.profile
 
-    cat << HOMESTEAD_FIX > "/home/vagrant/.bash_profile"
-    # Homestead fix - incorporate ~/.profile
-    source ~/.profile
-HOMESTEAD_FIX
-}
+    cat << HOMESTEAD_BASH_FIX >> "/home/vagrant/.bash_profile"
+# User specific environment and startup programs
+PATH=$PATH:$HOME/bin
 
+# Homestead fix - incorporate ~/.profile
+source ~/.profile
+HOMESTEAD_BASH_FIX
+}
 
 yum_prepare
 yum_install
