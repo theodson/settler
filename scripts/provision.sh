@@ -609,6 +609,23 @@ source ~/.profile
 HOMESTEAD_BASH_FIX
 }
 
+expand_disk() {
+    exit
+    # https://ma.ttias.be/increase-expand-xfs-filesystem-in-red-hat-rhel-7-cento7/
+
+    # "/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager" -x 240Gb .vagrant/machines/default/vmware_fusion/*-*-*-*-*/disk.vmdk
+
+    # Steps required to expand the disk
+    # fdisk /dev/sda
+        # steps taken are :  n, p, 3, enter, enter, t, 3, 8e, w
+    # reboot
+    # pvcreate /dev/sda3
+    # vgextend centos /dev/sda3
+    # lvextend /dev/centos/root /dev/sda3
+    # xfs_growfs /dev/mapper/centos-root
+}
+
+
 yum_prepare
 yum_install
 install_supervisor
