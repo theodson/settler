@@ -528,7 +528,7 @@ install_composer() {
     cat << COMPOSER_HOME >> /etc/bashrc
 # Add Composer Global Bin To Path
 export COMPOSER_HOME=~/.composer
-export PATH=$COMPOSER_HOME/vendor/bin:$PATH
+export PATH=\$COMPOSER_HOME/vendor/bin:/usr/local/bin:$PATH
 COMPOSER_HOME
 
     /usr/local/bin/composer config --list --global
@@ -602,7 +602,7 @@ install_mysql() {
 
     cat << HOMESTEAD_BASH_FIX >> "/home/vagrant/.bash_profile"
 # User specific environment and startup programs
-PATH=$PATH:$HOME/bin
+PATH=\$PATH:\$HOME/bin
 
 # Homestead fix - incorporate ~/.profile
 source ~/.profile
