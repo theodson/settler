@@ -20,6 +20,7 @@ if [ "$1" == "vb" ] || [ "$1" == "all" ]; then
 	time vagrant up --provider virtualbox 2>&1 | tee virtualbox-build-output.log
 	vagrant halt
 
+	echo -e "\nTo package the VM into a Vagrant box [and optionally cleanup removing VM] run the following command \n\n./package.sh vb [clean]"
 fi
 
 
@@ -29,12 +30,14 @@ if [ "$1" == "vm" ] || [ "$1" == "all" ]; then
 	vagrant destroy -f
 	rm -rf .vagrant vmware-build-output.log
 	
-	# copy current iso images
+
 	rm -f linux.iso
+	# copy current iso images - if it exists the VMWare libraries will be updated.
 	#ln /Applications/VMware\ Fusion.app/Contents/Library/isoimages/linux.iso .
 
 	time vagrant up --provider vmware_fusion 2>&1 | tee vmware-build-output.log
 	vagrant halt
 
+    echo -e "\nTo package the VM into a Vagrant box [and optionally cleanup removing VM] run the following command \n\n./package.sh vm [clean]"
 fi
 
