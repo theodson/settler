@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-echo "remove any virtualbox.box or vmware_fusion.box files as build will NOT override them"
-
+# install required vagrant plugin to handle reloads during provisioning
+vagrant plugin install vagrant-reload
 if [ "$1" == "plugins" ]; then
-	# install required vagrant plugin to handle reloads during provisioning
-	vagrant plugin install vagrant-reload
 
 	vagrant plugin install vagrant-cachier
 	exit

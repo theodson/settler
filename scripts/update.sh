@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 
+if [ -e /etc/redhat-release ]; then
+    source ./update-centos.sh
+    exit
+fi
+
 # Update Package List
 
-yum -y update
+apt-get update
+
+# Update Grub Bootloader
+
+echo "set grub-pc/install_devices /dev/sda" | debconf-communicate
+apt-get -y remove grub-pc
+apt-get -y install grub-pc
+grub-install /dev/sda
+update-grub
 
 # Upgrade System Packages
 
-yum -y upgrade
-
+apt-get -y upgrade
