@@ -7,8 +7,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Don't Replace The Default Key https://github.com/mitchellh/vagrant/pull/4707
   config.ssh.insert_key = false
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = false
+  end
 
   if Vagrant.has_plugin?("vagrant-cachier")
+
+    # When provisioning using VirtualBox we get an error regarding private network and nfs, this fixes that.
+    config.vm.network "private_network", ip: "192.168.66.10"
+
     # Configure cached packages to be shared between instances of the same base box.
     # More info on http://fgrehm.viewdocs.io/vagrant-cachier/usage
     config.cache.scope = :box
@@ -28,7 +35,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # For more information please check http://docs.vagrantup.com/v2/synced-folders/basic_usage.html
   end
 
-config.vm.provider :virtualbox do |vb|
+  config.vm.provider :virtualbox do |vb|
     vb.customize ['modifyvm', :id, '--memory', '2048']
     vb.customize ['modifyvm', :id, '--natdnsproxy1', 'on']
     vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
@@ -45,10 +52,10 @@ config.vm.provider :virtualbox do |vb|
 
 
   # Configure Port Forwarding
-  config.vm.network 'forwarded_port', guest: 80, host: 8000
-  config.vm.network 'forwarded_port', guest: 3306, host: 33060
-  config.vm.network 'forwarded_port', guest: 5432, host: 54320
-  config.vm.network 'forwarded_port', guest: 35729, host: 35729
+  #config.vm.network 'forwarded_port', guest: 80, host: 8000
+  #config.vm.network 'forwarded_port', guest: 3306, host: 33060
+  #config.vm.network 'forwarded_port', guest: 5432, host: 54320
+  #config.vm.network 'forwarded_port', guest: 35729, host: 35729
 
   config.vm.synced_folder './', '/vagrant', disabled: true
 
