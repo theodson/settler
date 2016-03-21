@@ -610,7 +610,10 @@ HOMESTEAD_BASH_FIX
 }
 
 expand_disk() {
+    echo "Manual process for disc resizing - please read comments"
     exit
+    # Rather than building a new bento/centos-7.2 box with larger disc we will modify existing.
+
     # https://ma.ttias.be/increase-expand-xfs-filesystem-in-red-hat-rhel-7-cento7/
 
     # "/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager" -x 240Gb .vagrant/machines/default/vmware_fusion/*-*-*-*-*/disk.vmdk
@@ -624,7 +627,28 @@ expand_disk() {
     # lvextend /dev/centos/root /dev/sda3
     # xfs_growfs /dev/mapper/centos-root
 }
+expand_disk_virtualbox() {
+    echo "Manual process for disc resizing - please read comments"
+    exit
+    # Rather than building a new bento/centos-7.2 box with larger disc we will modify existing.
 
+    # http://stackoverflow.com/questions/11659005/how-to-resize-a-virtualbox-vmdk-file
+    #buildvm=`ls ~/VirtualBox\ VMs/ | grep $(basename $(pwd))`
+    #pushd ~/VirtualBox\ VMs/${buildvm}
+    #VBoxManage clonehd *.vmdk "cloned.vdi" --format vdi
+    #VBoxManage modifyhd "cloned.vdi" --resize 286720
+    #VBoxManage clonehd cloned.vdi centos-7.2-x86_64-disk_1.vmdk --format vmdk
+    # Manually remove old HD (*disk1.vmdk) and and new HD (*disk_1.vmdk)
+
+    # Steps required to expand the disk
+    # fdisk /dev/sda
+        # steps taken are :  n, p, 3, enter, enter, t, 3, 8e, w
+    # reboot
+    # pvcreate /dev/sda3
+    # vgextend centos /dev/sda3
+    # lvextend /dev/centos/root /dev/sda3
+    # xfs_growfs /dev/mapper/centos-root
+}
 
 yum_prepare
 yum_install
