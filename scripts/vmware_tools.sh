@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-if [ -e /etc/redhat-release ]; then
-    source ./vmware_tools-centos.sh
-    exit
-fi
 
 # Vmware Tools
 

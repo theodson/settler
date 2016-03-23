@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-if [ -e /etc/redhat-release ]; then
-    source ./update-centos.sh
-    exit
-fi
-
 # Update Package List
 
 apt-get update

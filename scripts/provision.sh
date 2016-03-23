@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-if [ -e /etc/redhat-release ]; then
-    source ./provision-centos.sh
-    exit
-fi
-
 export DEBIAN_FRONTEND=noninteractive
 
 # Update Package List
