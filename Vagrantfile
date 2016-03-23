@@ -25,7 +25,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :vmware_fusion do |v|
     v.memory = 2048
     v.cpus = 2
-    v.guestOS = ''
+    v.guestOS = 'centos-64'
     v.gui = true
     v.linked_clone = false
     v.vmx["guestOS"] = "centos-64"
