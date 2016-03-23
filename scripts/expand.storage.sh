@@ -23,11 +23,11 @@ EOF
     fi
 
     pvcreate /dev/sda3
-    vlg=$(vgdisplay | grep 'VG Name'| sed 's/[[:space:]]//g' | sed 's/VGName//')
+    vlg="centos"
     vgextend $vlg /dev/sda3
     pvscan
-    lvextend /dev/${vlg}/LogVol00 /dev/sda3
-    resize2fs /dev/${vlg}/LogVol00
+    lvextend /dev/centos/root /dev/sda3
+    xfs_growfs /dev/mapper/centos-root
 
 fi
 
