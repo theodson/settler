@@ -24,7 +24,8 @@ fi
 if [ "$1" == "vb" ] || [ "$1" == "all" ]; then
 
     vagrant halt
-    vagrant package --base `ls ~/VirtualBox\ VMs | grep $(basename $(pwd))` --output virtualbox.box
+	buildvm_id=$(echo $(VBoxManage list vms | grep $(cat .vagrant/machines/default/virtualbox/id)) | cut -d '"' -f 2)
+    vagrant package --base ${buildvm_id} --output virtualbox.box
 
     ls -lh virtualbox.box
 
