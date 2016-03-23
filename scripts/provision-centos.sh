@@ -528,7 +528,7 @@ install_composer() {
     cat << COMPOSER_HOME >> /etc/bashrc
 # Add Composer Global Bin To Path
 export COMPOSER_HOME=~/.composer
-export PATH=\$COMPOSER_HOME/vendor/bin:/usr/local/bin:$PATH
+export PATH=\$COMPOSER_HOME/vendor/bin:/usr/local/bin:\$PATH
 COMPOSER_HOME
 
     /usr/local/bin/composer config --list --global
@@ -623,9 +623,34 @@ expand_disk() {
         # steps taken are :  n, p, 3, enter, enter, t, 3, 8e, w
     # reboot
     # pvcreate /dev/sda3
+
+    # Centos7 -
     # vgextend centos /dev/sda3
     # lvextend /dev/centos/root /dev/sda3
     # xfs_growfs /dev/mapper/centos-root
+
+    # Centos5 - https://ma.ttias.be/increase-a-vmware-disk-size-vmdk-formatted-as-linux-lvm-without-rebooting/
+    # vgextend VolGroup00 /dev/sda3
+    #
+
+fdisk /dev/sda <<EOF
+n
+p
+3
+
+
+t
+3
+8e
+w
+EOF
+    pvcreate /dev/sda3
+    vlg=$(vgdisplay | grep 'VG Name'| sed 's/[[:space:]]//g' | sed 's/VGName//')
+    vgextend $vlg /dev/sda3
+    pvscan
+    lvextend /dev/${vlg}/LogVol00 /dev/sda3
+    resize2fs /dev/${vlg}/LogVol00
+
 }
 expand_disk_virtualbox() {
     echo "Manual process for disc resizing - please read comments"
