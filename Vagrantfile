@@ -13,13 +13,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.scope = :box
   end
 
+  # Order is important (must come after Homestead.configure)
+  os_type = ENV['box_os'] ||= "centos"
+
   config.vm.provider :virtualbox do |vb|
     vb.customize ['modifyvm', :id, '--memory', '2048']
     vb.customize ['modifyvm', :id, '--natdnsproxy1', 'on']
     vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
-    vb.customize ["modifyvm", :id, "--ostype", "RedHat_64"]
     vb.gui = true
     vb.linked_clone = false if Vagrant::VERSION =~ /^1.8/
+
+    if (os_type == "centos")
+      vb.customize ["modifyvm", :id, "--ostype", "RedHat_64"]
+    end
   end
 
   config.vm.provider :vmware_fusion do |v|
@@ -28,7 +34,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.guestOS = 'centos-64'
     v.gui = true
     v.linked_clone = false
-    v.vmx["guestOS"] = "centos-64"
+
+    if (os_type == "centos")
+      v.vmx["guestOS"] = "centos-64"
+    end
   end
 
   # Configure Port Forwarding
@@ -47,18 +56,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provision 'shell', inline: "sudo yum -y install kernel-devel gcc"
   end
 
-  if ENV['HOMESTEADVM'] != 'centos'
-    config.vm.provision 'shell', path: './scripts/update.sh'
-    config.vm.provision :reload
-    config.vm.provision 'shell', path: './scripts/vmware_tools.sh'
-    config.vm.provision :reload
-    config.vm.provision 'shell', path: './scripts/provision.sh'
-  else
+  if (os_type == "centos")
     config.vm.provision 'shell', path: './scripts/update-centos.sh'
     config.vm.provision :reload
     config.vm.provision 'shell', path: './scripts/vmware_tools-centos.sh'
     config.vm.provision :reload
     config.vm.provision 'shell', path: './scripts/provision-centos.sh'
+  else
+    config.vm.provision 'shell', path: './scripts/update.sh'
+    config.vm.provision :reload
+    config.vm.provision 'shell', path: './scripts/vmware_tools.sh'
+    config.vm.provision :reload
+    config.vm.provision 'shell', path: './scripts/provision.sh'
   end
 
 end
