@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
 
+echo "ensure you have run '$0 plugins' to install required vagrant plugins'"
+if [ $# -eq 0 ]; then
+    echo -e "\nUsage: $0 plugins | [vb|virtualbox] | [vm|vmware_fusion] | all"
+    echo -e "\tplugins          - install required vagrant plugins"
+    echo -e "\tvirtualbox|vb    - build virtualbox"
+    echo -e "\tvirtualbox|vb    - build vmware"
+    echo -e "\tall              - install plugins and build both virtualbox and vmware"
+    exit
+fi
+
 # install required vagrant plugin to handle reloads during provisioning
-vagrant plugin install vagrant-reload
-if [ "$1" == "plugins" ]; then
+if [ "$1" == "plugins" ] || [ "$1" == "all" ]; then
+    vagrant plugin install vagrant-reload
 
 	vagrant plugin install vagrant-cachier
-	exit
 fi
 
 
-if [ "$1" == "vb" ] || [ "$1" == "all" ]; then
+if [ "$1" == "vb" ] || [ "$1" == "virtualbox" ] || [ "$1" == "all" ]; then
 
 	# start with no machines
 	vagrant destroy -f
@@ -22,7 +31,7 @@ if [ "$1" == "vb" ] || [ "$1" == "all" ]; then
 fi
 
 
-if [ "$1" == "vm" ] || [ "$1" == "all" ]; then
+if [ "$1" == "vm" ] || [ "$1" == "vmware_fusion" ] || [ "$1" == "all" ]; then
 
 	# start with no machines
 	vagrant destroy -f
