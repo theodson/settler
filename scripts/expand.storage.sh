@@ -53,9 +53,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
         echo "VBoxManage clonehd \"${buildhdd_path}\""
         VBoxManage clonehd "${buildhdd_path}" "cloned.vdi" --format vdi
+        if [ $? -ne 0 ]; then
+            echo "Failed to clone - cannot progress." && exit;
+        fi
 
-        echo "VBoxManage modifyhd $((1024 * $hddsize))"
+        echo "VBoxManage modifyhd `((1024 * $hddsize))`"
         VBoxManage modifyhd "cloned.vdi" --resize "$((1024 * $hddsize))"
+        if [ $? -ne 0 ]; then
+            echo "Failed to resize cloned disc - cannot progress." && exit;
+        fi
+
 
         {
             # remove original DISK from VM and archive it just in case.
@@ -68,9 +75,17 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
         }
 
         if [ $? -eq 0 ]; then
+
+            # Attach newly resized HD
             VBoxManage clonehd cloned.vdi "${buildhdd_path}" --format vmdk && VBoxManage storageattach "${buildvm_id}" \
                 --medium "${buildhdd_path}" --storagectl "SATA Controller" --port 0 --type hdd
-            # Attach newly resized HD
+
+            # Look for clone hdd and close the medium
+            clonehdd_uuid=$(VBoxManage list hdds | grep -B4 $buildvm_id | grep -B4 'clone.vdi' | grep '^UUID' | head -1 | cut -d ':' -f 2- | sed 's/ //g')
+
+            echo "Close the cloned disk medium ${clonehdd_uuid}"
+            VBoxManage closemedium disk "${clonehdd_uuid}"
+
             echo -e "Restart the VM without provisioning\nRun the commands $0 grow in the GUEST CentOS VM"
             echo -e "\n You might want to remove '${buildhdd_path}_original' before packaging"
         fi
