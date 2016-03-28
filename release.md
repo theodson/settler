@@ -24,8 +24,17 @@ Most dependencies are addressed where possible, some however are not, see Includ
 
 ## Build
 
-Add `alias vagrant='HOMESTEADVM='\''centos'\'' vagrant' ` to you host aliases file to allow the build script to choose 
+Default behaviour is to build against a CentOS specific version, the same can be achieved explicitly with the __box_os__ env variable.
+
+    export box_os='centos'
+    vagrant up
+
+To build using the Ubuntu version modify the __box_os__  
 appropriate provisioning files.
+
+    export box_os='ubuntu'
+    vagrant up
+
 
 # Releases
 
