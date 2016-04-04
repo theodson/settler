@@ -36,8 +36,9 @@ if [ $? -eq 0 ]; then
     else
         # An issue 'Waiting for HGFS kernel module to load...' exists when privisioning VMware based vagrant box -
         # this might fix it - http://dantehranian.wordpress.com/2014/08/19/vagrant-vmware-resolving-waiting-for-hgfs-kernel-module-timeouts/
+        sed -i.bak 's/answer AUTO_KMODS_ENABLED_ANSWER no/answer AUTO_KMODS_ENABLED_ANSWER yes/g' /etc/vmware-tools/locations
+        #sed -i 's/answer AUTO_KMODS_ENABLED no/answer AUTO_KMODS_ENABLED yes/g' /etc/vmware-tools/locations
         echo "answer AUTO_KMODS_ENABLED yes" | tee -a /etc/vmware-tools/locations || true
-
         /usr/bin/vmware-config-tools.pl -d || true
     fi
 fi

@@ -13,6 +13,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.scope = :box
   end
 
+  # Ensure that VMWare Tools recompiles kernel modules
+  # when we update the linux images
+  $fix_vmware_tools_script = <<SCRIPT
+sed -i.bak 's/answer AUTO_KMODS_ENABLED_ANSWER no/answer AUTO_KMODS_ENABLED_ANSWER yes/g' /etc/vmware-tools/locations
+sed -i 's/answer AUTO_KMODS_ENABLED no/answer AUTO_KMODS_ENABLED yes/g' /etc/vmware-tools/locations
+SCRIPT
+
+
   # Order is important (must come after Homestead.configure)
   os_type = ENV['box_os'] ||= "centos"
 
@@ -58,7 +66,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   if (os_type == "centos")
     config.vm.provision 'shell', path: './scripts/update-centos.sh'
-    config.vm.provision :reload
+    #config.vm.provision "shell", inline: $fix_vmware_tools_script
     config.vm.provision 'shell', path: './scripts/vmware_tools-centos.sh'
     config.vm.provision :reload
     config.vm.provision 'shell', path: './scripts/provision-centos.sh'
