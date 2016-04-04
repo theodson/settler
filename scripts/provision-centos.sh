@@ -10,9 +10,6 @@ yum_prepare() {
     # ensure build tools are installed.
     yum -y group install 'Development Tools'
 
-    # nodes repo
-    curl --silent --location https://rpm.nodesource.com/setup_5.x | bash -
-
     yum -y update
 }
 
@@ -26,7 +23,13 @@ yum_install() {
 install_node5() {
     # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
 
+    yum remove -y nodejs npm
+    curl --silent --location https://rpm.nodesource.com/setup_5.x | bash -
+
+    # install nodejs and update npm to the latest version.
     yum install -y nodejs
+    npm install npm -g
+
     /usr/bin/npm install -g gulp
     /usr/bin/npm install -g bower
 }
