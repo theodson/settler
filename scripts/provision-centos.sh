@@ -17,7 +17,8 @@ yum_install() {
     yum -y install autoconf make automake sendmail sendmail-cf m4 virt-what
 
     yum -y install vim mlocate curl htop wget dos2unix tree
-    yum -y install ntp nmap nc whois libnotify inotify-tools telnet ngrep
+    yum -y install ntp nmap nc whois libnotify inotify-tools telnet ngrep bind-utils traceroute
+    yum -y install cyrus-sasl-plain supervisord
 }
 
 install_node5() {
