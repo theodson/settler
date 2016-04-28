@@ -15,6 +15,7 @@ if [ "$1" == "vm" ] || [ "$1" == "all" ]; then
     ls -lh vmware_fusion.box
 
     if [ "$2" == "clean" ]; then
+        echo "cleaning"
         vagrant destroy -f
         rm -rf .vagrant
     fi
