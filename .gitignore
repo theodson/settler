@@ -2,3 +2,8 @@
 *.box
 *.log
 /.idea/
+
+
+/scratch/
+/hs/
+/homestead-centos.iml
