@@ -18,7 +18,7 @@ yum_install() {
 
     yum -y install vim mlocate curl htop wget dos2unix tree
     yum -y install ntp nmap nc whois libnotify inotify-tools telnet ngrep bind-utils traceroute
-    yum -y install cyrus-sasl-plain supervisor
+    yum -y install cyrus-sasl-plain supervisor mailx
 }
 
 install_node5() {
