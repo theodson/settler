@@ -17,7 +17,7 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * Sqlite3
 * Postgres 9.5
 * Composer
-* Node 5 (Bower and Gulp)
+* Node 6 (Bower and Gulp)
 * Redis
 * Memcached
 * Beanstalkd
@@ -38,4 +38,5 @@ appropriate provisioning files.
 
 # Releases
 
-__0.1__ - initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).
+__0.4.1__ - initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).
+__0.4.4__ - 
