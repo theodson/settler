@@ -5,7 +5,7 @@ if [ $# -eq 0 ]; then
     echo -e "\nUsage: $0 plugins | [vb|virtualbox] | [vm|vmware_fusion] | all"
     echo -e "\tplugins          - install required vagrant plugins"
     echo -e "\tvirtualbox|vb    - build virtualbox"
-    echo -e "\tvirtualbox|vb    - build vmware"
+    echo -e "\tvmware_fusion|vm    - build vmware"
     echo -e "\tall              - install plugins and build both virtualbox and vmware"
     exit
 fi

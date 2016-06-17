@@ -31,7 +31,7 @@ EOF
 
 fi
 
-hddsize=120
+hddsize=85
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # On the HOST

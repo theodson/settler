@@ -679,6 +679,22 @@ expand_disk_virtualbox() {
     # xfs_growfs /dev/mapper/centos-root
 }
 
+update_yum_0.1_fix_1() {
+
+    # updates to base OS
+    sudo yum -y install bind-utils traceroute cyrus-sasl-plain supervisor
+
+    # add mail command for system management.
+    sudo yum -y install mailx mutt
+
+    # Add postgres contribution extensions
+    sudo yum -y install postgresql95-contrib
+
+    # update php install php-imagick and ensure mod_ssl
+    sudo yum -y install php-imagick mod_ssl
+
+}
+
 yum_prepare
 yum_install
 install_supervisor
@@ -692,5 +708,5 @@ install_other
 install_php_remi
 #install_hhvm
 install_composer
-
+update_yum_0.1_fix_1
 
