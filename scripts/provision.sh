@@ -32,7 +32,7 @@ sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" >> /
 curl -s https://packagecloud.io/gpg.key | apt-key add -
 echo "deb http://packages.blackfire.io/debian any main" | tee /etc/apt/sources.list.d/blackfire.list
 
-curl --silent --location https://deb.nodesource.com/setup_5.x | bash -
+curl --silent --location https://deb.nodesource.com/setup_6.x | bash -
 
 # Update Package Lists
 
@@ -51,8 +51,9 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 apt-get install -y --force-yes php7.0-cli php7.0-dev \
 php-pgsql php-sqlite3 php-gd php-apcu \
-php-curl php7.0-dev \
-php-imap php-mysql php-memcached php7.0-readline php-xdebug
+php-curl php7.0-mcrypt \
+php-imap php-mysql php-memcached php7.0-readline php-xdebug \
+php-mbstring php-xml php7.0-zip php7.0-intl php7.0-bcmath php-soap
 
 # Install Composer
 
@@ -61,7 +62,7 @@ mv composer.phar /usr/local/bin/composer
 
 # Add Composer Global Bin To Path
 
-printf "\nPATH=\"/home/vagrant/.composer/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
+printf "\nPATH=\"$(sudo su - vagrant -c 'composer config -g home 2>/dev/null')/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
 
 # Install Laravel Envoy & Installer
 
@@ -104,6 +105,11 @@ update-rc.d hhvm defaults
 
 # Setup Some PHP-FPM Options
 
+echo "xdebug.remote_enable = 1" >> /etc/php/7.0/fpm/conf.d/20-xdebug.ini
+echo "xdebug.remote_connect_back = 1" >> /etc/php/7.0/fpm/conf.d/20-xdebug.ini
+echo "xdebug.remote_port = 9000" >> /etc/php/7.0/fpm/conf.d/20-xdebug.ini
+echo "xdebug.max_nesting_level = 512" >> /etc/php/7.0/fpm/conf.d/20-xdebug.ini
+
 sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.0/fpm/php.ini
 sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.0/fpm/php.ini
 sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/7.0/fpm/php.ini
@@ -111,6 +117,10 @@ sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.0/fpm/php.ini
 sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/7.0/fpm/php.ini
 sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/7.0/fpm/php.ini
 sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.0/fpm/php.ini
+
+# Disable XDebug On The CLI
+
+sudo phpdismod -s cli xdebug
 
 # Copy fastcgi_params to Nginx because they broke it on the PPA
 
@@ -198,12 +208,12 @@ mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret my
 
 # Install Postgres
 
-apt-get install -y postgresql-9.4 postgresql-contrib-9.4
+apt-get install -y postgresql-9.5 postgresql-contrib-9.5
 
 # Configure Postgres Remote Access
 
-sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/9.4/main/postgresql.conf
-echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/9.4/main/pg_hba.conf
+sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/9.5/main/postgresql.conf
+echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/9.5/main/pg_hba.conf
 sudo -u postgres psql -c "CREATE ROLE homestead LOGIN UNENCRYPTED PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;"
 sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead
 service postgresql restart
