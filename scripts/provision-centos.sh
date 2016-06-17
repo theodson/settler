@@ -35,6 +35,20 @@ install_node5() {
     /usr/bin/npm install -g bower
 }
 
+install_node6() {
+    # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
+
+    yum remove -y nodejs npm
+    curl --silent --location https://rpm.nodesource.com/setup_6.x | bash -
+
+    # install nodejs and update npm to the latest version.
+    yum install -y nodejs
+    npm install npm -g
+
+    /usr/bin/npm install -g gulp
+    /usr/bin/npm install -g bower
+}
+
 install_git2() {
     # http://tecadmin.net/install-git-2-0-on-centos-rhel-fedora/
     v=2.5.4
@@ -714,7 +728,7 @@ yum_install
 install_supervisor
 install_nginx
 install_git2
-install_node5
+install_node6
 install_sqlite
 install_postgresql95
 install_mysql
