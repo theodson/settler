@@ -693,6 +693,10 @@ update_yum_0.1_fix_1() {
     # update php install php-imagick and ensure mod_ssl
     sudo yum -y install php-imagick mod_ssl
 
+    sudo ln -s /usr/bin/php70-pear /usr/bin/pear
+    sudo ln -s /usr/bin/php70-phar /usr/bin/phar
+    sudo ln -s /opt/remi/php70/root/usr/bin/pecl /usr/bin/php70-pecl
+    sudo ln -s /usr/bin/php70-pecl /usr/bin/pecl
 }
 
 yum_prepare
