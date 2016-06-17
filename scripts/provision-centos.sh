@@ -697,6 +697,16 @@ update_yum_0.1_fix_1() {
     sudo ln -s /usr/bin/php70-phar /usr/bin/phar
     sudo ln -s /opt/remi/php70/root/usr/bin/pecl /usr/bin/php70-pecl
     sudo ln -s /usr/bin/php70-pecl /usr/bin/pecl
+
+    # install mongodb extension
+    /opt/remi/php70/root/usr/bin/pecl install mongodb
+    if [ ! -e /etc/opt/remi/php70/php.d/20-mongodb.ini ]; then
+        cat << MONGOD >>  /etc/opt/remi/php70/php.d/20-mongodb.ini
+    ; Enabled mongodb extension module
+    extension=mongodb.so
+MONGOD
+    fi
+
 }
 
 yum_prepare
