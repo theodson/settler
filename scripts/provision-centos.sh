@@ -736,6 +736,16 @@ EOF
 
 }
 
+addbuild_meta() {
+    pushd /vagrant/
+    git rev-parse --verify HEAD > /home/vagrant/build.info
+    git config --get remote.origin.url >> /home/vagrant/build.info
+    date >> /home/vagrant/build.info
+    popd
+
+}
+
+
 yum_prepare
 yum_install
 install_supervisor
@@ -750,4 +760,5 @@ install_php_remi
 #install_hhvm
 install_composer
 update_yum_0.1_fix_1
+addbuild_meta
 

@@ -3,7 +3,9 @@
 if [ "$1" == "vm" ] || [ "$1" == "all" ]; then
 
     # TODO include Vagrantfile.package automatically in the build process, see `vagrant package --vagrantfile`,
-    # currently manual process modifying an installed box and changing it's Vagrantfile.
+    # currently manual process of modifying an installed box and changing it's Vagrantfile, the call `vagrant repackage`.
+
+    # clear bash history before package `cat /dev/null > ~/.bash_history && history -c && exit`
 
     vagrant halt
     # defrag disk (assumes running on osx)
