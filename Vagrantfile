@@ -5,8 +5,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = 'bento/centos-7.2'
   config.vm.hostname = 'homestead-co7'
 
+  #config.ssh.username = 'vagrant'
+  #config.ssh.password = 'vagrant'
+
   # Don't Replace The Default Key https://github.com/mitchellh/vagrant/pull/4707
-  config.ssh.insert_key = false
+  config.ssh.insert_key = true
 
   if Vagrant.has_plugin?("vagrant-cachier")
     # More info on http://fgrehm.viewdocs.io/vagrant-cachier/usage
@@ -55,7 +58,7 @@ SCRIPT
   config.vm.network 'forwarded_port', guest: 5432, host: 54320, auto_correct: true
   config.vm.network 'forwarded_port', guest: 35729, host: 35729, auto_correct: true
 
-  config.vm.synced_folder './', '/vagrant', disabled: true
+  config.vm.synced_folder './', '/vagrant', disabled: false
 
   # Run The Base Provisioning Script
 
@@ -65,9 +68,9 @@ SCRIPT
   end
 
   if (os_type == "centos")
-    config.vm.provision 'shell', path: './scripts/update-centos.sh'
-    #config.vm.provision "shell", inline: $fix_vmware_tools_script
-    config.vm.provision 'shell', path: './scripts/vmware_tools-centos.sh'
+    # config.vm.provision 'shell', path: './scripts/update-centos.sh'
+    config.vm.provision "shell", inline: $fix_vmware_tools_script
+    #config.vm.provision 'shell', path: './scripts/vmware_tools-centos.sh'
     config.vm.provision :reload
     config.vm.provision 'shell', path: './scripts/provision-centos.sh'
   else

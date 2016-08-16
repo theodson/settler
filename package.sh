@@ -2,6 +2,9 @@
 
 if [ "$1" == "vm" ] || [ "$1" == "all" ]; then
 
+    # TODO include Vagrantfile.package automatically in the build process, see `vagrant package --vagrantfile`,
+    # currently manual process modifying an installed box and changing it's Vagrantfile.
+
     vagrant halt
     # defrag disk (assumes running on osx)
     /Applications/VMware\ Fusion.app/Contents/Library/vmware-vdiskmanager -d .vagrant/machines/default/vmware_fusion/*-*-*-*-*/disk.vmdk

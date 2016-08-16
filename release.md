@@ -39,4 +39,4 @@ appropriate provisioning files.
 # Releases
 
 __0.4.1__ - initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).  
-__0.4.4__ - 
+__0.4.4__ - os updates, better vmware support by adding `config.ssh.password` and `config.ssh.username` to the packaged Vagrant file. 

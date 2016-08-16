@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+hddsize=85
+
 if [ -e /etc/redhat-release ] && [ "$1" == "grow" ] ; then
 
     # On the GUEST
@@ -18,7 +20,7 @@ t
 8e
 w
 EOF
-        touch fdisk_done
+        echo "$hddsize" > fdisk_done
         reboot
     fi
 
@@ -31,7 +33,7 @@ EOF
 
 fi
 
-hddsize=85
+
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # On the HOST

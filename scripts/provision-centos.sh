@@ -696,7 +696,7 @@ expand_disk_virtualbox() {
 update_yum_0.1_fix_1() {
 
     # updates to base OS
-    sudo yum -y install bind-utils traceroute cyrus-sasl-plain supervisor
+    sudo yum -y install bind-utils traceroute cyrus-sasl-plain supervisor netcat
 
     # add mail command for system management.
     sudo yum -y install mailx mutt
@@ -720,6 +720,19 @@ update_yum_0.1_fix_1() {
     extension=mongodb.so
 MONGOD
     fi
+
+    # install xdebug, port 10000 to avoid clash with phpfpm
+    cat << EOF >> $(php -i | grep 'Loaded Configuration File' | cut -d '>' -f 2- | xargs)
+xdebug.max_nesting_level=250
+xdebug.remote_enable=1
+;xdebug.remote_host="YOUR CLIENT DEV IP ADDRESS"
+xdebug.remote_host="127.0.0.1"
+xdebug.remote_port=10000
+xdebug.idekey="PHPSTORM"
+EOF
+
+    # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
+    sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
 
 }
 
