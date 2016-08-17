@@ -731,9 +731,6 @@ xdebug.remote_port=10000
 xdebug.idekey="PHPSTORM"
 EOF
 
-    # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
-    sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
-
 }
 
 addbuild_meta() {
@@ -742,7 +739,11 @@ addbuild_meta() {
     git config --get remote.origin.url >> /home/vagrant/build.info
     date >> /home/vagrant/build.info
     popd
+}
 
+httpd_vagrant_fix() {
+    # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
+    sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
 }
 
 
@@ -760,5 +761,6 @@ install_php_remi
 #install_hhvm
 install_composer
 update_yum_0.1_fix_1
+httpd_vagrant_fix
 addbuild_meta
 
