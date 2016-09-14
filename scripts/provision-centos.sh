@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+if [ $# -gt 0 ] && [ $1 = "config" ]; then
+    CONFIG_ONLY=1
+fi
 
 yum_prepare() {
 
@@ -43,6 +46,9 @@ install_node6() {
 
     # install nodejs and update npm to the latest version.
     yum install -y nodejs
+}
+
+configure_node6() {
     npm install npm -g
 
     /usr/bin/npm install -g gulp
@@ -65,9 +71,16 @@ install_git2() {
     echo "Installation of git-$v complete"
 }
 
+configure_git2() {
+    install_git2
+}
+
 install_nginx() {
     # https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-centos-7
     yum install -y nginx
+}
+
+configure_nginx() {
     sudo systemctl enable nginx
     sudo systemctl start nginx
 
@@ -146,6 +159,10 @@ install_supervisor() {
     # http://vicendominguez.blogspot.com.au/2015/02/supervisord-in-centos-7-systemd-version.html
     # http://www.alphadevx.com/a/455-Installing-Supervisor-and-Superlance-on-CentOS
     yum install -y python-setuptools python-pip
+}
+
+configure_supervisor() {
+
     easy_install supervisor
     mkdir -p /etc/supervisor
     echo_supervisord_conf > /etc/supervisor/supervisord.conf
@@ -180,6 +197,11 @@ install_postgresql95() {
     rpm -Uvh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-2.noarch.rpm
 
     yum -y install postgresql95-server postgresql95 postgresql95-contrib
+}
+
+
+configure_postgresql95() {
+
     /usr/pgsql-9.5/bin/postgresql95-setup initdb
 
     sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/9.5/data/postgresql.conf
@@ -288,30 +310,36 @@ install_postgresql95_bdr() {
     echo "TODO look at bdr extension for pg95"
 }
 
-install_other() {
+install_cache_queue() {
     # http://tecadmin.net/install-postgresql-9-5-on-centos/
     yum -y install redis
-
-    systemctl start redis.service
-    systemctl enable redis.service
-    systemctl restart redis.service
 
     # install memcache
     yum -y install memcached
 
+    # install beanstalk
+    yum -y install beanstalkd
+}
+
+configure_cache_queue() {
+
+    # configure redis
+    systemctl start redis.service
+    systemctl enable redis.service
+    systemctl restart redis.service
+
+    # configure memcache
     systemctl enable memcached.service
     systemctl start memcached.service
     systemctl restart memcached.service
 
-
-    # install beanstalk
-    yum -y install beanstalkd
-
+    # configure beanstalk
     systemctl enable beanstalkd.service
     systemctl start beanstalkd.service
     systemctl restart beanstalkd.service
 
 }
+
 
 install_php_remi() {
     # https://www.cloudinsidr.com/content/how-to-install-php-7-on-centos-7-red-hat-rhel-7-fedora/
@@ -354,6 +382,12 @@ install_php_remi() {
         php70-php-pgsql \
         php70-php-imap \
         php70-php-pear
+
+}
+
+
+configure_php_remi() {
+    yum-config-manager --enable remi-php70
 
     systemctl enable php70-php-fpm
 
@@ -582,6 +616,9 @@ install_mysql() {
     yum repolist enabled | grep "mysql.*-community.*"
 
     yum -y install mysql-community-server
+}
+
+configure_mysql() {
 
     systemctl enable mysqld.service
     systemctl start mysqld.service
@@ -613,18 +650,6 @@ install_mysql() {
     # Add Timezone Support To MySQL
     mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret mysql
 
-}
-
-{
-    touch /home/vagrant/.profile && chown vagrant:vagrant /home/vagrant/.profile
-
-    cat << HOMESTEAD_BASH_FIX >> "/home/vagrant/.bash_profile"
-# User specific environment and startup programs
-PATH=\$PATH:\$HOME/bin
-
-# Homestead fix - incorporate ~/.profile
-source ~/.profile
-HOMESTEAD_BASH_FIX
 }
 
 expand_disk() {
@@ -693,7 +718,7 @@ expand_disk_virtualbox() {
     # xfs_growfs /dev/mapper/centos-root
 }
 
-update_yum_0.1_fix_1() {
+install_yum_updates_1() {
 
     # updates to base OS
     sudo yum -y install bind-utils traceroute cyrus-sasl-plain supervisor netcat
@@ -706,6 +731,10 @@ update_yum_0.1_fix_1() {
 
     # update php install php-imagick and ensure mod_ssl
     sudo yum -y install php-imagick mod_ssl
+}
+
+
+configure_yum_updates_1() {
 
     sudo ln -s /usr/bin/php70-pear /usr/bin/pear
     sudo ln -s /usr/bin/php70-phar /usr/bin/phar
@@ -734,10 +763,10 @@ EOF
 }
 
 addbuild_meta() {
-    pushd /vagrant/
-    git rev-parse --verify HEAD > /home/vagrant/build.info
-    git config --get remote.origin.url >> /home/vagrant/build.info
-    date >> /home/vagrant/build.info
+    pushd ~
+    git rev-parse --verify HEAD > ~/build.info
+    git config --get remote.origin.url >> ~/build.info
+    date >> ~/build.info
     popd
 }
 
@@ -747,20 +776,55 @@ httpd_vagrant_fix() {
 }
 
 
-yum_prepare
-yum_install
-install_supervisor
-install_nginx
-install_git2
-install_node6
-install_sqlite
-install_postgresql95
-install_mysql
-install_other
-install_php_remi
+set_profile() {
+    touch /home/vagrant/.profile && chown vagrant:vagrant /home/vagrant/.profile
+
+    cat << HOMESTEAD_BASH_FIX >> "/home/vagrant/.bash_profile"
+# User specific environment and startup programs
+PATH=\$PATH:\$HOME/bin
+
+# Homestead fix - incorporate ~/.profile
+source ~/.profile
+HOMESTEAD_BASH_FIX
+}
+
+set_profile
+
+[[ $CONFIG_ONLY ]] || yum_prepare
+[[ $CONFIG_ONLY ]] || yum_install
+
+[[ $CONFIG_ONLY ]] || install_supervisor
+configure_supervisor
+
+[[ $CONFIG_ONLY ]] || install_nginx
+configure_nginx
+
+[[ $CONFIG_ONLY ]] || install_git2
+configure_git2
+
+[[ $CONFIG_ONLY ]] || install_node6
+configure_node6
+
+[[ $CONFIG_ONLY ]] || install_sqlite
+
+[[ $CONFIG_ONLY ]] || install_postgresql95
+configure_postgresql95
+
+[[ $CONFIG_ONLY ]] || install_mysql
+configure_mysql
+
+[[ $CONFIG_ONLY ]] || install_cache_queue
+configure_cache_queue
+
+[[ $CONFIG_ONLY ]] || install_php_remi
+configure_php_remi
+
 #install_hhvm
 install_composer
-update_yum_0.1_fix_1
+
+[[ $CONFIG_ONLY ]] || install_yum_updates_1
+configure_yum_updates_1
+
 httpd_vagrant_fix
 addbuild_meta
 
