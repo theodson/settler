@@ -1,11 +1,17 @@
 # Laravel Settler
 
-The scripts that build the Laravel Homestead development environment.
+The scripts that builds a Laravel Homestead development environment using `CentOS`.
 
 ## Usage
 
-You probably don't want this repo.
+This build tool clones the `bento` git project and inserts the `scripts/provision.sh` file into the packer build sequence. The `bento` project uses the [Vagrant](https://www.vagrant.io/)  teams [Packer](https://www.packer.io/)  tool.
 
-* Run `./bin/copy-to-bento.sh`
-* Add `scripts/homestead.sh` to `provisioners.scripts` after `"scripts/hyperv.sh",` in file `ubuntu/ubuntu-16.04-amd64.json`
-* Follow normal [Packer](https://www.packer.io/) practice of building `ubuntu/ubuntu-16.04-amd64.json`
+We rely on the `bento` packer project for delivering stable and upto date Virtualized Environments.
+
+### Quick start
+
+* Run `./build.sh`
+
+### Custom 
+* Review the `scripts/provision.sh` - this runs CentOS build commands. 
+* Review in file `./build.sh` as it follows the normal [Packer](https://www.packer.io/) practice of building  with `centos/centos-7.5-x86_64.json`. 
