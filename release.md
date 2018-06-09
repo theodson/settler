@@ -17,10 +17,18 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * Sqlite3
 * Postgres 9.5
 * Composer
-* Node 6 (Bower and Gulp)
+* Node 8 (Bower, Gulp, Yarn, Grunt)
 * Redis
 * Memcached
 * Beanstalkd
+* Blackfire
+* Mailhog
+* Ngrok
+* Flyway
+* wp_cli
+* oh_my_zsh
+* Browsershot dependencies (via puppeteer)
+
 
 ## Build
 

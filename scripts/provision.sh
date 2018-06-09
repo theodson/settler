@@ -36,13 +36,15 @@ yum_install() {
 YUM
 }
 
-install_node6() {
+install_node8() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
     sudo su - <<'YUM'
-    node -v | grep 'v6' || (
-        yum remove -y nodejs npm
-        curl --silent --location https://rpm.nodesource.com/setup_6.x | bash -
+    nv=8
+    node -v | grep "v${nv}" || (
+        find /etc/yum.repos.d/ -type f -name 'node*' | xargs rm -f {} && \
+        curl --silent --location https://rpm.nodesource.com/setup_${nv}.x | sudo bash - && \
+        yum remove -y nodejs npm && yum clean all && yum install -y nodejs
 
         # install nodejs and update npm to the latest version.
         yum install -y nodejs
@@ -53,7 +55,7 @@ install_node6() {
         /usr/bin/npm install -g yarn
         /usr/bin/npm install -g grunt-cli
 
-    ) && echo "node 6 appears installed.. moving on"
+    ) && echo "node ${nv} appears installed.. moving on"
 YUM
 }
 
@@ -555,8 +557,7 @@ install_composer() {
 
     cat << COMPOSER_HOME >> /etc/bashrc
 # Add Composer Global Bin To Path
-export COMPOSER_HOME=~/.composer
-export PATH=\$COMPOSER_HOME/vendor/bin:/usr/local/bin:\$PATH
+export PATH=~/.composer/vendor/bin:/usr/local/bin:\$PATH
 COMPOSER_HOME
 
     # Install Laravel Envoy & Installer
@@ -629,6 +630,127 @@ configure_mysql() {
     # Add Timezone Support To MySQL
     mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret mysql
 
+}
+
+install_blackfire() {
+    sudo yum -y install pygpgme
+    wget -O - "http://packages.blackfire.io/fedora/blackfire.repo" | sudo tee /etc/yum.repos.d/blackfire.repo
+    sudo yum -y install blackfire-agent blackfire-php
+}
+
+install_mailhog() {
+    sudo su - << MAILHOG
+    wget --quiet -O /usr/local/bin/mailhog https://github.com/mailhog/MailHog/releases/download/v0.2.1/MailHog_linux_amd64
+    chmod +x /usr/local/bin/mailhog
+    tee /etc/systemd/system/mailhog.service <<EOL
+[Unit]
+Description=Mailhog
+After=network.target
+[Service]
+User=vagrant
+ExecStart=/usr/bin/env /usr/local/bin/mailhog > /dev/null 2>&1 &
+[Install]
+WantedBy=multi-user.target
+EOL
+    systemctl daemon-reload
+    systemctl enable mailhog
+MAILHOG
+}
+
+install_ngrok() {
+    wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+    unzip ngrok-stable-linux-amd64.zip -d /usr/local/bin
+    rm -rf ngrok-stable-linux-amd64.zip
+}
+
+install_flyway() {
+    wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
+    tar -zxvf flyway-commandline-4.2.0-linux-x64.tar.gz -C /usr/local
+    [ ! -e /usr/local/bin/flyway ] && ln -s /usr/local/flyway-4.2.0/flyway /usr/local/bin/flyway || echo 'flyway already installed'
+    rm -rf flyway-commandline-4.2.0-linux-x64.tar.gz
+}
+
+install_wp_cli() {
+    sudo su - << WPCLI
+    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    chmod +x wp-cli.phar
+    [ ! -e /usr/local/bin/wp ] && mv wp-cli.phar /usr/local/bin/wp || echo 'WP-CLI already installed'
+WPCLI
+}
+
+
+install_oh_my_zsh() {
+    sudo su - << MYZSH
+    git clone git://github.com/robbyrussell/oh-my-zsh.git /home/vagrant/.oh-my-zsh
+    cp /home/vagrant/.oh-my-zsh/templates/zshrc.zsh-template /home/vagrant/.zshrc
+    printf "\nsource ~/.bash_aliases\n" | tee -a /home/vagrant/.zshrc
+    chown -R vagrant:vagrant /home/vagrant/.oh-my-zsh
+    chown vagrant:vagrant /home/vagrant/.zshrc
+MYZSH
+}
+
+install_browsershot_dependencies() {
+    # install puppeteer
+    sudo npm install --global --unsafe-perm puppeteer
+
+    # NOTES
+    # https://chromium.googlesource.com/native_client/src/native_client.git/+/master/docs/linux_outer_sandbox.md
+    # https://forum.unity.com/threads/why-does-chrome-sandbox-need-root-rights-suid-set.365818/
+    # https://github.com/GoogleChrome/puppeteer/issues/391
+    # https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
+
+    # Suggested puppeteer Ubuntu libraries required
+    # ca-certificates fonts-liberation gconf-service libappindicator libasound libatk libc libcairo libcups libdbus libexpat libfontconfig libgcc libgconf libgdk-pixbuf libglib libgtk libnspr libnss libpango libpangocairo libstdc++ libx libx11-xcb libxcb libxcomposite libxcursor libxdamage libxext libxfixes libxi libxrandr libxrender libxss libxtst lsb-release nodejs wget xdg-utils
+
+    # UBUNTU MISSING LIBS - fonts-liberation gconf-service libasound libatk libc libcairo libcups libdbus libexpat libfontconfig libgconf libgdk-pixbuf libglib libgtk libnspr libnss libpango libpangocairo libx libx11-xcb libxss lsb-release
+
+    # EQUIVALENT RHEL LIBS - liberation-fonts-common alsa-lib atk cairo cups-libs fontconfig GConf2 gdk-pixbuf2 glib2 gtk3 nspr pango libX11 redhat-lsb-core glibc dbus-libs expat nss libXScrnSaver
+
+    sudo yum install -y \
+         ipa-gothic-fonts xorg-x11-fonts-100dpi xorg-x11-fonts-75dpi xorg-x11-utils xorg-x11-fonts-cyrillic xorg-x11-fonts-Type1 xorg-x11-fonts-misc \
+         at-spi2-atk libXtst liberation-fonts-common alsa-lib atk cairo cups-libs fontconfig GConf2 gdk-pixbuf2 glib2 gtk3 nspr pango libX11 redhat-lsb-core glibc dbus-libs expat nss libXScrnSaver
+
+# libxpm4 libxrender1 libgtk2.0-0 \
+# libnss3 libgconf-2-4 chromium-browser \
+# xvfb gtk2-engines-pixbuf xfonts-cyrillic \
+# xfonts-100dpi xfonts-75dpi xfonts-base \
+# xfonts-scalable imagemagick x11-apps
+
+
+    # SANDBOX ISSUE -  no solution on Virtualized CENTOS/RHEL run
+    # https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
+    # Use the Spatie ->noSandbox()` option
+
+    CHROME_DEVEL_SANDBOX="/usr/lib/node_modules/puppeteer/.local-chromium/linux-*/chrome-linux/chrome_sandbox"
+    sudo chown root $CHROME_DEVEL_SANDBOX
+    sudo chmod u+s,a+rx,g+rx $CHROME_DEVEL_SANDBOX
+    sudo chmod a+rx,g+rx ${CHROME_DEVEL_SANDBOX%/*}/chrome
+    sudo chmod u+r,a+r -R ${CHROME_DEVEL_SANDBOX%/*}
+}
+
+generate_chromium_test_script() {
+    cat << SCRIPT >> test_chromium.sh
+#!/bin/bash
+
+VALUE=$(cat /boot/config-$(uname -r) | grep CONFIG_USER_NS)
+
+if [[ -z "$VALUE" ]]
+then
+  echo 'You do not have namespacing in the kernel. You will need to enable the SUID sandbox or upgrade your kernel.';
+  exit 1
+fi
+
+USER_NS_AVAILABLE="${VALUE: -1}"
+
+if [[ "$USER_NS_AVAILABLE" -eq "y" ]]
+then
+  echo 'You have user namespacing in the kernel. You should be good to go.';
+  exit 0
+else
+  echo 'You do not have namespacing in the kernel. You will need to enable the SUID sandbox or upgrade your kernel.';
+  exit 1
+fi
+SCRIPT
 }
 
 expand_disk() {
@@ -740,6 +862,7 @@ source ~/.profile
 HOMESTEAD_BASH_FIX
 }
 
+
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 set +u
 set_profile
@@ -748,7 +871,7 @@ yum_prepare
 yum_install
 
 #install_supervisor
-install_node6
+install_node8
 install_nginx
 
 install_php_remi
@@ -769,6 +892,14 @@ install_cache_queue
 configure_cache_queue
 
 install_yum_updates_1
+
+install_blackfire
+install_mailhog
+install_ngrok
+install_flyway
+install_wp_cli
+install_oh_my_zsh
+install_browsershot_dependencies
 
 finish_build_meta
 set -u
