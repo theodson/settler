@@ -369,8 +369,8 @@ configure_php_remi() {
     [ -h /usr/bin/phar ] && rm -f /usr/bin/phar
     ln -s /usr/bin/php${PHP_VERSION}-phar /usr/bin/phar
 
-    [ -h /usr/bin/php70-pecl ] && rm -f /usr/bin/php70-pecl
-    ln -s /opt/remi/php${PHP_VERSION}/root/usr/bin/pecl /usr/bin/php70-pecl
+    [ -h /usr/bin/php${PHP_VERSION}-pecl ] && rm -f /usr/bin/php${PHP_VERSION}-pecl
+    ln -s /opt/remi/php${PHP_VERSION}/root/usr/bin/pecl /usr/bin/php${PHP_VERSION}-pecl
 
     [ -h /usr/bin/pecl ] && rm -f /usr/bin/pecl
     ln -s /usr/bin/php${PHP_VERSION}-pecl /usr/bin/pecl
