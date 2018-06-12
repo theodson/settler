@@ -516,36 +516,6 @@ SERVICES
 
 }
 
-
-
-install_php_webtatic() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-
-    #rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    sudo rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
-
-    sudo yum -y install \
-        php70w \
-        php70w-cli \
-        php70w-common \
-        php70w-intl \
-        php70w-fpm \
-        php70w-xml \
-        php70w-pdo \
-        php70w-devel \
-        php70w-xmlrpc \
-        php70w-gd \
-        php70w-pecl-imagick
-        php70w-opcache \
-        php70w-pecl-apcu \
-        php70w-imap \
-        php70w-mysql \
-        php70w-curl \
-        php70w-memcached \
-        php70w-readline \
-        php70w-pecl-xdebug
-}
-
 install_composer() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
 
@@ -567,7 +537,7 @@ COMPOSER_HOME
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
     /usr/local/bin/composer global require "drush/drush=~8"
-    /usr/local/bin/composer global require "phing/phing=~2.9"
+    /usr/local/bin/composer global require "phing/phing"
 COMPOSER
 
     /usr/local/bin/composer config --list --global
@@ -580,7 +550,7 @@ COMPOSER
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
     /usr/local/bin/composer global require "drush/drush=~8"
-    /usr/local/bin/composer global require "phing/phing=~2.9"
+    /usr/local/bin/composer global require "phing/phing"
 
 EOF
 
@@ -915,7 +885,7 @@ install_flyway
 install_wp_cli
 install_oh_my_zsh
 install_browsershot_dependencies
-# install_zend_zray # not compatible with centos7
+# install_zend_zray # not compatible with centos7 - libssl clash
 
 finish_build_meta
 set -u
