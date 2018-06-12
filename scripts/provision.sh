@@ -50,7 +50,7 @@ install_node8() {
         yum install -y nodejs
 
         /usr/bin/npm install -g npm
-        /usr/bin/npm install -g gulp
+        /usr/bin/npm install -g gulp-cli
         /usr/bin/npm install -g bower
         /usr/bin/npm install -g yarn
         /usr/bin/npm install -g grunt-cli
@@ -566,6 +566,7 @@ COMPOSER_HOME
 
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
+    /usr/local/bin/composer global require "drush/drush=~8"
     /usr/local/bin/composer global require "phing/phing=~2.9"
 COMPOSER
 
@@ -578,6 +579,7 @@ COMPOSER
 
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
+    /usr/local/bin/composer global require "drush/drush=~8"
     /usr/local/bin/composer global require "phing/phing=~2.9"
 
 EOF
@@ -667,6 +669,7 @@ install_flyway() {
     wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
     tar -zxvf flyway-commandline-4.2.0-linux-x64.tar.gz -C /usr/local
     [ ! -e /usr/local/bin/flyway ] && ln -s /usr/local/flyway-4.2.0/flyway /usr/local/bin/flyway || echo 'flyway already installed'
+    chmod +x /usr/local/flyway-4.2.0/flyway
     rm -rf flyway-commandline-4.2.0-linux-x64.tar.gz
 }
 
@@ -684,6 +687,7 @@ install_oh_my_zsh() {
     git clone git://github.com/robbyrussell/oh-my-zsh.git /home/vagrant/.oh-my-zsh
     cp /home/vagrant/.oh-my-zsh/templates/zshrc.zsh-template /home/vagrant/.zshrc
     printf "\nsource ~/.bash_aliases\n" | tee -a /home/vagrant/.zshrc
+    printf "\nsource ~/.profile\n" | tee -a /home/vagrant/.zshrc
     chown -R vagrant:vagrant /home/vagrant/.oh-my-zsh
     chown vagrant:vagrant /home/vagrant/.zshrc
 MYZSH
@@ -726,6 +730,17 @@ install_browsershot_dependencies() {
     sudo chmod u+s,a+rx,g+rx $CHROME_DEVEL_SANDBOX
     sudo chmod a+rx,g+rx ${CHROME_DEVEL_SANDBOX%/*}/chrome
     sudo chmod u+r,a+r -R ${CHROME_DEVEL_SANDBOX%/*}
+}
+
+install_zend_zray() {
+    # Install Zend Z-Ray -
+    # doesnt work in centos 7 due to openssl libssl 1.0.0 dependency - co7 use 1.0.2
+
+    sudo wget http://repos.zend.com/zend-server/early-access/ZRay-Homestead/zray-standalone-php72.tar.gz -O - | sudo tar -xzf - -C /opt
+    sudo ln -sf /opt/zray/zray.ini /etc/php/7.2/cli/conf.d/zray.ini
+    sudo ln -sf /opt/zray/zray.ini /etc/php/7.2/fpm/conf.d/zray.ini
+    sudo ln -sf /opt/zray/lib/zray.so /usr/lib/php/20170718/zray.so
+    sudo chown -R vagrant:vagrant /opt/zray
 }
 
 generate_chromium_test_script() {
@@ -900,6 +915,7 @@ install_flyway
 install_wp_cli
 install_oh_my_zsh
 install_browsershot_dependencies
+# install_zend_zray # not compatible with centos7
 
 finish_build_meta
 set -u
