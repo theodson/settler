@@ -1,50 +1,16 @@
 #!/usr/bin/env bash
+git clone https://github.com/chef/bento.git
 
-echo "ensure you have run '$0 plugins' to install required vagrant plugins'"
-if [ $# -eq 0 ]; then
-    echo -e "\nUsage: $0 plugins | [vb|virtualbox] | [vm|vmware_fusion] | all"
-    echo -e "\tplugins          - install required vagrant plugins"
-    echo -e "\tvirtualbox|vb    - build virtualbox"
-    echo -e "\tvmware_fusion|vm    - build vmware"
-    echo -e "\tall              - install plugins and build both virtualbox and vmware"
-    exit
-fi
+packer_options=' --on-error=abort '
 
-# install required vagrant plugin to handle reloads during provisioning
-if [ "$1" == "plugins" ] || [ "$1" == "all" ]; then
-    vagrant plugin install vagrant-reload
+cp -rf scripts/provision.sh bento/centos/scripts/homestead.sh
 
-	vagrant plugin install vagrant-cachier
-fi
+pushd bento/centos
+# Add `scripts/homestead.sh` to `provisioners.scripts` after `"scripts/hyperv.sh",` in file `centos/centos-7.5-x86_64.json`
+grep 'homestead.sh' centos-7.5-x86_64.json &> /dev/null || (
+    lineno=$(grep -n '"scripts/cleanup.sh"' centos-7.5-x86_64.json | cut -d: -f1) && \
+    echo "Attempting insert of homestead settler script at ${lineno}" && \
+    ex -sc "${lineno}i|\"scripts/homestead.sh\"," -cx centos-7.5-x86_64.json )
 
-
-if [ "$1" == "vb" ] || [ "$1" == "virtualbox" ] || [ "$1" == "all" ]; then
-
-	# start with no machines
-	vagrant destroy -f
-	rm -rf .vagrant virtualbox-build-output.log
-
-	time vagrant up --provider virtualbox 2>&1 | tee virtualbox-build-output.log
-	vagrant halt
-
-	echo -e "\nTo package the VM into a Vagrant box [and optionally cleanup removing VM] run the following command \n\n./package.sh vb [clean]"
-fi
-
-
-if [ "$1" == "vm" ] || [ "$1" == "vmware_fusion" ] || [ "$1" == "all" ]; then
-
-	# start with no machines
-	vagrant destroy -f
-	rm -rf .vagrant vmware-build-output.log
-	
-
-	rm -f linux.iso
-	# copy current iso images - if it exists the VMWare libraries will be updated.
-	#ln /Applications/VMware\ Fusion.app/Contents/Library/isoimages/linux.iso .
-
-	time vagrant up --provider vmware_fusion 2>&1 | tee vmware-build-output.log
-	vagrant halt
-
-    echo -e "\nTo package the VM into a Vagrant box [and optionally cleanup removing VM] run the following command \n\n./package.sh vm [clean]"
-fi
-
+packer build $packer_options centos-7.5-x86_64.json
+popd

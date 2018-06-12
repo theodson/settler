@@ -7,9 +7,9 @@ Most dependencies are addressed where possible, some however are not, see Includ
 
 ## Included Software
 
-* CentOS 7.2
+* CentOS 7.5
 * Git
-* PHP 7.0
+* PHP 7.2
 * ~~HHVM~~
 * Nginx
 * MySQL
@@ -17,26 +17,27 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * Sqlite3
 * Postgres 9.5
 * Composer
-* Node 6 (Bower and Gulp)
+* Node 8 (Bower, Gulp, Yarn, Grunt)
 * Redis
 * Memcached
 * Beanstalkd
+* Blackfire
+* Mailhog
+* Ngrok
+* Flyway
+* wp_cli
+* oh_my_zsh
+* Browsershot dependencies (via puppeteer)
+
 
 ## Build
 
-Default behaviour is to build against a CentOS specific version, the same can be achieved explicitly with the __box_os__ env variable.
-
-    export box_os='centos'
-    vagrant up
-
-To build using the Ubuntu version modify the __box_os__  
-appropriate provisioning files.
-
-    export box_os='ubuntu'
-    vagrant up
-
+Run `build.sh`.
 
 # Releases
 
-__0.4.1__ - initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).  
+__5.0.0__ - using packer php 7.2
+
 __0.4.4__ - os updates, better vmware support by adding `config.ssh.password` and `config.ssh.username` to the packaged Vagrant file. 
+
+__0.4.1__ - initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).  
