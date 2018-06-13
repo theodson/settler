@@ -2,6 +2,8 @@
 
 The scripts that builds a Laravel Homestead development environment using `CentOS`.
 
+See [release.md](release.md) for build details.
+
 ## Usage
 
 This build tool clones the `bento` git project and inserts the `scripts/provision.sh` file into the packer build sequence. The `bento` project uses the [Vagrant](https://www.vagrant.io/)  teams [Packer](https://www.packer.io/)  tool.

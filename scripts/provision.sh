@@ -45,7 +45,7 @@ install_node() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
     sudo su - <<'YUM'
-    nv=8
+    nv=9
     node -v | grep "v${nv}" || (
         find /etc/yum.repos.d/ -type f -name 'node*' | xargs rm -f {} && \
         curl --silent --location https://rpm.nodesource.com/setup_${nv}.x | sudo bash - && \
