@@ -33,7 +33,7 @@ yum_install() {
         ntp nmap nc whois libnotify inotify-tools telnet ngrep bind-utils traceroute \
         cyrus-sasl-plain supervisor mailx mutt netcat \
         bash-completion-extras mcrypt vim cifs-utils zsh re2c pv \
-        jq httpie mod_ssl httpd
+        jq httpie mod_ssl httpd ntpdate
 
     # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
     sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
@@ -158,61 +158,132 @@ install_sqlite() {
     sudo yum -y install sqlite-devel sqlite
 }
 
-install_postgresql95() {
+install_postgresql10() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
 
-    # http://tecadmin.net/install-postgresql-9-5-on-centos/
-    sudo rpm -Uvh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-2.noarch.rpm || echo 'postgresql95 repo already exists'
+    sudo rpm -Uvh http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm || echo 'postgresql10 repo already exists'
 
-    sudo yum -y install postgresql95-server postgresql95 postgresql95-contrib
+    sudo yum -y install postgresql10-server postgresql10 postgresql10-contrib
 }
 
 
-configure_postgresql95() {
+configure_postgresql10() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    PGDG_VERSION=10
 
-    sudo /usr/pgsql-9.5/bin/postgresql95-setup initdb && ( \
+    sudo su - <<POSTGRESQL10
+    /usr/pgsql-${PGDG_VERSION}/bin/postgresql-${PGDG_VERSION}-setup initdb && ( \
 
-        sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/9.5/data/postgresql.conf
+        sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/${PGDG_VERSION}/data/postgresql.conf
 
-        sudo sed -ir "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/#local     all       all       peer/g"  /var/lib/pgsql/9.5/data/pg_hba.conf
+        sed -ir "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/#local     all       all       peer/g"  /var/lib/pgsql/${PGDG_VERSION}/data/pg_hba.conf
 
-        sudo cat << POSTGRESQL > "/var/lib/pgsql/9.5/data/pg_hba.conf"
+        cat << POSTGRESQL > "/var/lib/pgsql/${PGDG_VERSION}/data/pg_hba.conf"
 # PostgreSQL Client Authentication Configuration File
 # ===================================================
+#
+# Refer to the "Client Authentication" section in the PostgreSQL
+# documentation for a complete description of this file.  A short
+# synopsis follows.
+#
+# This file controls: which hosts are allowed to connect, how clients
+# are authenticated, which PostgreSQL user names they can use, which
+# databases they can access.  Records take one of these forms:
+#
+# local      DATABASE  USER  METHOD  [OPTIONS]
+# host       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostssl    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnossl  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+#
+# (The uppercase items must be replaced by actual values.)
+#
+# The first field is the connection type: "local" is a Unix-domain
+# socket, "host" is either a plain or SSL-encrypted TCP/IP socket,
+# "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
+# plain TCP/IP socket.
+#
+# DATABASE can be "all", "sameuser", "samerole", "replication", a
+# database name, or a comma-separated list thereof. The "all"
+# keyword does not match "replication". Access to replication
+# must be enabled in a separate record (see example below).
+#
+# USER can be "all", a user name, a group name prefixed with "+", or a
+# comma-separated list thereof.  In both the DATABASE and USER fields
+# you can also write a file name prefixed with "@" to include names
+# from a separate file.
+#
+# ADDRESS specifies the set of hosts the record matches.  It can be a
+# host name, or it is made up of an IP address and a CIDR mask that is
+# an integer (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that
+# specifies the number of significant bits in the mask.  A host name
+# that starts with a dot (.) matches a suffix of the actual host name.
+# Alternatively, you can write an IP address and netmask in separate
+# columns to specify the set of hosts.  Instead of a CIDR-address, you
+# can write "samehost" to match any of the server's own IP addresses,
+# or "samenet" to match any address in any subnet that the server is
+# directly connected to.
+#
+# METHOD can be "trust", "reject", "md5", "password", "scram-sha-256",
+# "gss", "sspi", "ident", "peer", "pam", "ldap", "radius" or "cert".
+# Note that "password" sends passwords in clear text; "md5" or
+# "scram-sha-256" are preferred since they send encrypted passwords.
+#
+# OPTIONS are a set of options for the authentication in the format
+# NAME=VALUE.  The available options depend on the different
+# authentication methods -- refer to the "Client Authentication"
+# section in the documentation for a list of which options are
+# available for which authentication methods.
+#
+# Database and user names containing spaces, commas, quotes and other
+# special characters must be quoted.  Quoting one of the keywords
+# "all", "sameuser", "samerole" or "replication" makes the name lose
+# its special character, and just match a database or username with
+# that name.
+#
+# This file is read on server startup and when the server receives a
+# SIGHUP signal.  If you edit the file on a running system, you have to
+# SIGHUP the server for the changes to take effect, run "pg_ctl reload",
+# or execute "SELECT pg_reload_conf()".
+#
+# Put your actual configuration here
+# ----------------------------------
+#
+# If you want to allow non-local connections, you need to add more
+# "host" records.  In that case you will also need to make PostgreSQL
+# listen on a non-local interface via the listen_addresses
+# configuration parameter, or via the -i or -h command line switches.
+
+
 
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-local	all             postgres		                        trust
-local	all             root                                    trust
-local	homestead	    homestead                               md5
 
-# Replication server settings.
-local   replication     postgres                                peer
-host    replication     postgres        127.0.0.1/32            ident
-host    replication     postgres        ::1/128                 ident
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            ident
+# IPv6 local connections:
+host    all             all             ::1/128                 ident
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            ident
+host    replication     all             ::1/128                 ident
 
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    homestead	    all             127.0.0.1/32            md5
-host    homestead	    all             ::1/128			        md5
-host    homestead	    all             10.0.0.0/8		        md5
-host    homestead	    all             192.168.0.0/16		    md5
+# Homestead
+host    all             all             10.0.2.2/32               md5
 
 POSTGRESQL
     ) || echo ""
-    sudo systemctl start postgresql-9.5
-    sudo systemctl enable postgresql-9.5
+    systemctl start postgresql-${PGDG_VERSION}
+    systemctl enable postgresql-${PGDG_VERSION}
 
-    sudo -u postgres psql -c "CREATE ROLE homestead LOGIN UNENCRYPTED PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;" || echo 'homestead role already exists'
+    pushd /tmp && sudo -u postgres psql -c "CREATE ROLE homestead LOGIN PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;" 2>/dev/null || echo 'homestead role already exists'
     sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead || echo 'homestead DB already exists'
 
-    sudo systemctl restart postgresql-9.5
+    systemctl restart postgresql-${PGDG_VERSION}
+POSTGRESQL10
 }
 
-install_postgresql95_bdr() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-
-    echo "TODO look at bdr extension for pg95"
-}
 
 install_cache_queue() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
@@ -489,6 +560,8 @@ COMPOSER_HOME
 
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
+    /usr/local/bin/composer global require "laravel/lumen-installer=~1.0"
+    /usr/local/bin/composer global require "laravel/spark-installer=~2.0"
     /usr/local/bin/composer global require "drush/drush=~8"
     /usr/local/bin/composer global require "phing/phing"
 COMPOSER
@@ -502,6 +575,8 @@ COMPOSER
 
     /usr/local/bin/composer global require "laravel/envoy=~1.0"
     /usr/local/bin/composer global require "laravel/installer=~1.1"
+    /usr/local/bin/composer global require "laravel/lumen-installer=~1.0"
+    /usr/local/bin/composer global require "laravel/spark-installer=~2.0"
     /usr/local/bin/composer global require "drush/drush=~8"
     /usr/local/bin/composer global require "phing/phing"
 
@@ -558,12 +633,14 @@ configure_mysql() {
 }
 
 install_blackfire() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     sudo yum -y install pygpgme
     wget -O - "http://packages.blackfire.io/fedora/blackfire.repo" | sudo tee /etc/yum.repos.d/blackfire.repo
     sudo yum -y install blackfire-agent blackfire-php
 }
 
 install_mailhog() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     sudo su - << MAILHOG
     wget --quiet -O /usr/local/bin/mailhog https://github.com/mailhog/MailHog/releases/download/v0.2.1/MailHog_linux_amd64
     chmod +x /usr/local/bin/mailhog
@@ -583,12 +660,14 @@ MAILHOG
 }
 
 install_ngrok() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
     unzip ngrok-stable-linux-amd64.zip -d /usr/local/bin
     rm -rf ngrok-stable-linux-amd64.zip
 }
 
 install_flyway() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
     tar -zxvf flyway-commandline-4.2.0-linux-x64.tar.gz -C /usr/local
     [ ! -e /usr/local/bin/flyway ] && ln -s /usr/local/flyway-4.2.0/flyway /usr/local/bin/flyway || echo 'flyway already installed'
@@ -597,6 +676,7 @@ install_flyway() {
 }
 
 install_wp_cli() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     sudo su - << WPCLI
     curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
     chmod +x wp-cli.phar
@@ -606,6 +686,7 @@ WPCLI
 
 
 install_oh_my_zsh() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     sudo su - << MYZSH
     git clone git://github.com/robbyrussell/oh-my-zsh.git /home/vagrant/.oh-my-zsh
     cp /home/vagrant/.oh-my-zsh/templates/zshrc.zsh-template /home/vagrant/.zshrc
@@ -617,6 +698,7 @@ MYZSH
 }
 
 install_browsershot_dependencies() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # install puppeteer
     sudo npm install --global --unsafe-perm puppeteer
 
@@ -656,6 +738,7 @@ install_browsershot_dependencies() {
 }
 
 install_zend_zray() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     echo 'skipping zend zray - conficting libssl dependency'
     return 0;
 
@@ -670,7 +753,8 @@ install_zend_zray() {
 }
 
 install_pghashlib() {
-    PGVER=9.5
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    PGVER=10
     PGVER_DEVEL_LIB="postgresql$(echo $PGVER | tr -d '.')-devel"
     PGLIB="/usr/pgsql-${PGVER}"
     sudo su - << PGHASHLIB
@@ -680,8 +764,8 @@ install_pghashlib() {
         && unzip pghashlib.zip \
         && cd pghashlib-master \
         && yum install -y $PGVER_DEVEL_LIB \
-        && PG_PATH=(/usr/pgsql-*/bin/) \
-        && echo "PATH=$PATH:$PG_PATH" >> ~/.bashrc \
+        && PG_PATH=($PGLIB/bin/) \
+        && echo "PATH=$PATH:\$PG_PATH" >> ~/.bashrc \
         && source ~/.bashrc \
         && make \
         && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
@@ -695,7 +779,84 @@ install_pghashlib() {
 PGHASHLIB
 }
 
+install_golang() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    # Install Golang
+    GO_VERSION='1.10'
+    sudo su - << GOLANG
+    wget https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz  -O - | tar -xz -C /usr/local
+    echo "export PATH=/usr/local/go/bin:\$PATH" >> /etc/bashrc
+    touch /home/vagrant/.profile && echo "export PATH=/usr/local/go/bin:\$PATH" >> /home/vagrant/.profile
+GOLANG
+}
+
+install_postfix() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    # Install & Configure Postfix
+    FQDN='homestead.test'
+    sudo su - << POSTFIX
+    echo "myhostname = ${FQDN}" >> /etc/postfix/main.cf
+    yum install -y postfix &&
+        systemctl disable sendmail &&
+        systemctl stop sendmail
+
+    grep '^relayhost' /etc/postfix/main.cf \
+        && (echo 'relayhost appears to be configured already - will comment out' \
+        && sed -i 's/^relayhost/#relayhost/g' /etc/postfix/main.cf)
+
+    echo "relayhost = [localhost]:1025" >> /etc/postfix/main.cf && echo "postfix configured to send mail to localhost MailHog"
+
+    touch /etc/postfix/sasl_passwd.db
+    sudo chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+    sudo chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+
+    systemctl restart postfix
+POSTFIX
+}
+
+configure_postfix_for_sendgrid() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    USERNAME=${1:-username}
+    PASSWORD=${2:-password}
+    sudo su - << POSTFIX
+    grep '^relayhost' /etc/postfix/main.cf \
+        && (echo 'relayhost appears to be configured already - will comment out' \
+        && sed -i 's/^relayhost/#relayhost/g' /etc/postfix/main.cf)
+
+    cat << POSTFIX_SENDGRID >> /etc/postfix/main.cf
+# SendGrid - Configuration - START
+relayhost = [smtp.sendgrid.net]:587
+
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+smtp_sasl_tls_security_options = noanonymous
+smtp_tls_security_level = encrypt
+header_size_limit = 4096000
+
+# SendGrid - Configuration - END
+POSTFIX_SENDGRID
+
+    # comment out any existing credentials
+    sed -i 's/^\[smtp.sendgrid/#\[smtp.sendgrid/g' /etc/postfix/sasl_passwd
+    echo "[smtp.sendgrid.net]:587 $USERNAME:$PASSWORD" >> /etc/postfix/sasl_passwd
+
+    # build passwords
+    postmap /etc/postfix/sasl_passwd
+
+    sudo chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+    sudo chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+
+    systemctl restart postfix
+
+
+POSTFIX
+
+ # echo "Test Email from - $(hostname)" | mail -s "Test Email - ($(date))" -r "$(whoami)@$(hostname)" test@gmail.com
+}
+
 generate_chromium_test_script() {
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     cat << SCRIPT >> test_chromium.sh
 #!/bin/bash
 
@@ -758,9 +919,9 @@ install_git2
 
 install_sqlite
 
-install_postgresql95
+install_postgresql10
 install_pghashlib
-configure_postgresql95
+configure_postgresql10
 
 install_mysql
 configure_mysql
@@ -776,6 +937,8 @@ install_wp_cli
 install_oh_my_zsh
 install_browsershot_dependencies
 install_zend_zray # not compatible with centos7 - libssl clash
-
+install_golang
+install_postfix
+# configure_postfix_for_sendgrid $sendgrid_user $sendgrid_pass
 finish_build_meta
 set -u

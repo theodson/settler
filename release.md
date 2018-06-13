@@ -15,7 +15,7 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * MySQL
 * ~~MariaDB~~
 * Sqlite3
-* Postgres 9.5 
+* Postgres 10
 * Postgres PGHashLib
 * Composer
 * Node 9 (Bower, Gulp, Yarn, Grunt)
@@ -30,6 +30,10 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * oh_my_zsh
 * Browsershot dependencies (via puppeteer)
 * Drush
+* Laravel Lumen
+* Laravel Spark
+* Postfix (mail)
+* Go Language
 * ~~Zend Z-Ray~~
 
 
@@ -38,6 +42,7 @@ Most dependencies are addressed where possible, some however are not, see Includ
 Run `build.sh`.
 
 # Releases
+__5.2.0__ - Postgresql-10, Lumen, Spark, Postfix (mail), GoLang
 
 __5.1.0__ - Node 9, Drush, PGHashLib and Zend Z-Ray (not compatible)
 
