@@ -19,6 +19,8 @@ yum_prepare() {
     # ensure build tools are installed.
     yum -y group install 'Development Tools'
 
+    # (info) to mark a group as being non-installed use - yum groups mark-remove install "Development Tools"
+
     yum -y update
 YUM
 }
@@ -31,12 +33,15 @@ yum_install() {
         ntp nmap nc whois libnotify inotify-tools telnet ngrep bind-utils traceroute \
         cyrus-sasl-plain supervisor mailx mutt netcat \
         bash-completion-extras mcrypt vim cifs-utils zsh re2c pv \
-        jq httpie
+        jq httpie mod_ssl httpd
 
+    # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
+    sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
 YUM
+
 }
 
-install_node8() {
+install_node() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
     sudo su - <<'YUM'
@@ -108,60 +113,7 @@ install_nginx() {
     # and the number of worker processes that get spawned when Nginx is running, among other things.
 YUM
 
-
 }
-
-install_hhvm() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-    # TODO Can We Install from RPM????
-
-    # OR Build from source
-    # https://github.com/facebook/hhvm/wiki/Building-and-installing-hhvm-on-CentOS-7.x
-    # http://lifeandshell.com/php-hhvm-aka-the-hiphop-virtual-machine-on-centos-7/
-
-    # Build The HHVM Key & Repository
-
-    yum -y install cpp gcc-c++ cmake git psmisc {binutils,boost,jemalloc,numactl}-devel \
-    {ImageMagick,sqlite,tbb,bzip2,openldap,readline,elfutils-libelf,gmp,lz4,pcre}-devel \
-    lib{xslt,event,yaml,vpx,png,zip,icu,mcrypt,memcached,cap,dwarf}-devel \
-    {unixODBC,expat,mysql}-devel lib{edit,curl,xml2,xslt}-devel \
-    glog-devel oniguruma-devel ocaml gperf enca libjpeg-turbo-devel openssl-devel \
-    mysql mysql-server make
-
-    # Optional dependencies (these extensions are not built by default)
-
-    yum -y install {fribidi,libc-client}-devel
-
-    # Get our hhvm
-    cd /tmp
-    git clone https://github.com/facebook/hhvm -b master  hhvm  --recursive
-    cd hhvm
-
-    # Okay let's go
-    cmake .
-    # Multithreads compiling
-    make -j$(($(nproc)+1))
-    # Compiled?
-    ./hphp/hhvm/hhvm --version
-    # Install it
-    make install
-    # Final
-    hhvm --version
-
-    exit;
-
-    # TODO Configure HHVM To Run As Homestead
-
-    service hhvm stop
-    sed -i 's/#RUN_AS_USER="www-data"/RUN_AS_USER="vagrant"/' /etc/default/hhvm
-    service hhvm start
-
-    # Start HHVM On System Start
-
-    update-rc.d hhvm defaults
-
-}
-
 
 install_supervisor() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
@@ -340,6 +292,7 @@ install_php_remi() {
         php72-php-pgsql \
         php72-php-imap \
         php72-php-pear
+
 }
 
 
@@ -703,6 +656,9 @@ install_browsershot_dependencies() {
 }
 
 install_zend_zray() {
+    echo 'skipping zend zray - conficting libssl dependency'
+    return 0;
+
     # Install Zend Z-Ray -
     # doesnt work in centos 7 due to openssl libssl 1.0.0 dependency - co7 use 1.0.2
 
@@ -711,6 +667,32 @@ install_zend_zray() {
     sudo ln -sf /opt/zray/zray.ini /etc/php/7.2/fpm/conf.d/zray.ini
     sudo ln -sf /opt/zray/lib/zray.so /usr/lib/php/20170718/zray.so
     sudo chown -R vagrant:vagrant /opt/zray
+}
+
+install_pghashlib() {
+    PGVER=9.5
+    PGVER_DEVEL_LIB="postgresql$(echo $PGVER | tr -d '.')-devel"
+    PGLIB="/usr/pgsql-${PGVER}"
+    sudo su - << PGHASHLIB
+        pushd /tmp/ &&
+        wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip \
+        && rm -rf pghashlib-master \
+        && unzip pghashlib.zip \
+        && cd pghashlib-master \
+        && yum install -y $PGVER_DEVEL_LIB \
+        && PG_PATH=(/usr/pgsql-*/bin/) \
+        && echo "PATH=$PATH:$PG_PATH" >> ~/.bashrc \
+        && source ~/.bashrc \
+        && make \
+        && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
+        && chown $(whoami) ${PGLIB}/lib/ \
+        && chown $(whoami) ${PGLIB}/share/extension \
+        && chown $(whoami) ${PGLIB}/doc/extension \
+        && make install \
+        && cd .. \
+        && rm -rf pghashlib-master \
+        && rm -f pghashlib.zip
+PGHASHLIB
 }
 
 generate_chromium_test_script() {
@@ -738,100 +720,10 @@ fi
 SCRIPT
 }
 
-expand_disk() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-
-    echo "Manual process for disc resizing - please read comments"
-    exit
-    # Rather than building a new bento/centos-7.2 box with larger disc we will modify existing.
-
-    # https://ma.ttias.be/increase-expand-xfs-filesystem-in-red-hat-rhel-7-cento7/
-
-    # "/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager" -x 240Gb .vagrant/machines/default/vmware_fusion/*-*-*-*-*/disk.vmdk
-
-    # Steps required to expand the disk
-    # fdisk /dev/sda
-        # steps taken are :  n, p, 3, enter, enter, t, 3, 8e, w
-    # reboot
-    # pvcreate /dev/sda3
-
-    # Centos7 -
-    # vgextend centos /dev/sda3
-    # lvextend /dev/centos/root /dev/sda3
-    # xfs_growfs /dev/mapper/centos-root
-
-    # Centos5 - https://ma.ttias.be/increase-a-vmware-disk-size-vmdk-formatted-as-linux-lvm-without-rebooting/
-    # vgextend VolGroup00 /dev/sda3
-    #
-
-fdisk /dev/sda <<EOF
-n
-p
-3
-
-
-t
-3
-8e
-w
-EOF
-    pvcreate /dev/sda3
-    vlg=$(vgdisplay | grep 'VG Name'| sed 's/[[:space:]]//g' | sed 's/VGName//')
-    vgextend $vlg /dev/sda3
-    pvscan
-    lvextend /dev/${vlg}/LogVol00 /dev/sda3
-    resize2fs /dev/${vlg}/LogVol00
-
-}
-expand_disk_virtualbox() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-
-    echo "Manual process for disc resizing - please read comments"
-    exit
-    # Rather than building a new bento/centos-7.2 box with larger disc we will modify existing.
-
-    # http://stackoverflow.com/questions/11659005/how-to-resize-a-virtualbox-vmdk-file
-    #buildvm=`ls ~/VirtualBox\ VMs/ | grep $(basename $(pwd))`
-    #pushd ~/VirtualBox\ VMs/${buildvm}
-    #VBoxManage clonehd *.vmdk "cloned.vdi" --format vdi
-    #VBoxManage modifyhd "cloned.vdi" --resize 286720
-    #VBoxManage clonehd cloned.vdi centos-7.2-x86_64-disk_1.vmdk --format vmdk
-    # Manually remove old HD (*disk1.vmdk) and and new HD (*disk_1.vmdk)
-
-    # Steps required to expand the disk
-    # fdisk /dev/sda
-        # steps taken are :  n, p, 3, enter, enter, t, 3, 8e, w
-    # reboot
-    # pvcreate /dev/sda3
-    # vgextend centos /dev/sda3
-    # lvextend /dev/centos/root /dev/sda3
-    # xfs_growfs /dev/mapper/centos-root
-}
-
-install_yum_updates_1() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-
-    # updates to base OS
-    sudo yum -y install bind-utils traceroute cyrus-sasl-plain supervisor netcat
-
-    # add mail command for system management.
-    sudo yum -y install mailx mutt
-
-    # Add postgres contribution extensions
-    sudo yum -y install postgresql95-contrib
-
-    # update php install php-imagick and ensure mod_ssl
-    sudo yum -y install php-imagick mod_ssl httpd
-
-    # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
-    sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
-}
-
 finish_build_meta() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     date >> ~/build.info
 }
-
 
 set_profile() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
@@ -856,18 +748,18 @@ yum_prepare
 yum_install
 
 #install_supervisor
-install_node8
+install_node
 install_nginx
 
 install_php_remi
 configure_php_remi
-#install_hhvm
 install_composer
 install_git2
 
 install_sqlite
 
 install_postgresql95
+install_pghashlib
 configure_postgresql95
 
 install_mysql
@@ -876,8 +768,6 @@ configure_mysql
 install_cache_queue
 configure_cache_queue
 
-install_yum_updates_1
-
 install_blackfire
 install_mailhog
 install_ngrok
@@ -885,7 +775,7 @@ install_flyway
 install_wp_cli
 install_oh_my_zsh
 install_browsershot_dependencies
-# install_zend_zray # not compatible with centos7 - libssl clash
+install_zend_zray # not compatible with centos7 - libssl clash
 
 finish_build_meta
 set -u

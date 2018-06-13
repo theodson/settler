@@ -15,7 +15,8 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * MySQL
 * ~~MariaDB~~
 * Sqlite3
-* Postgres 9.5
+* Postgres 9.5 
+* Postgres PGHashLib
 * Composer
 * Node 8 (Bower, Gulp, Yarn, Grunt)
 * Redis
@@ -38,7 +39,7 @@ Run `build.sh`.
 
 # Releases
 
-__5.1.0__ - Drush and Zend Z-Ray (not compatible)
+__5.1.0__ - Drush, PGHashLib and Zend Z-Ray (not compatible)
 
 __5.0.0__ - using packer php 7.2
 
