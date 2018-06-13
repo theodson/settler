@@ -13,4 +13,7 @@ grep 'homestead.sh' centos-7.5-x86_64.json &> /dev/null || (
     ex -sc "${lineno}i|\"scripts/homestead.sh\"," -cx centos-7.5-x86_64.json )
 
 packer build $packer_options centos-7.5-x86_64.json
+[ -e packer_cache/*.iso ] && (ln packer_cache/*.iso ../../;echo "ISO linked to safe re download")
 popd
+
+# echo "adding your built box to local vagrant boxes" && vagrant box add bento/builds/centos-7.5.vmware.box --name bgdevlab/homestead-co7
