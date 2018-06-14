@@ -79,7 +79,7 @@ install_git2() {
         pushd "git-$v" && \
         make prefix=/usr/local/git all && \
         make prefix=/usr/local/git install && \
-        echo "export PATH=\$PATH:/usr/local/git/bin" >> /etc/bashrc && \
+        echo 'export PATH=/usr/local/git/bin:$PATH' >> /etc/bashrc && \
         source /etc/bashrc && \
         echo "Installation of git-$v complete" )
 EOF
@@ -271,6 +271,8 @@ host    replication     all             ::1/128                 ident
 
 # Homestead
 host    all             all             10.0.2.2/32               md5
+host    all             all             192.168.0.0/16            md5
+
 
 POSTGRESQL
     ) || echo ""
@@ -549,7 +551,7 @@ install_composer() {
     curl -sS https://getcomposer.org/installer | php
     mv composer.phar /usr/local/bin/composer
 
-    cat << COMPOSER_HOME >> /etc/bashrc
+    cat << 'COMPOSER_HOME' >> /etc/bashrc
 # Add Composer Global Bin To Path
 export PATH=~/.composer/vendor/bin:/usr/local/bin:\$PATH
 COMPOSER_HOME
@@ -757,6 +759,7 @@ install_pghashlib() {
     PGVER=10
     PGVER_DEVEL_LIB="postgresql$(echo $PGVER | tr -d '.')-devel"
     PGLIB="/usr/pgsql-${PGVER}"
+    PG_PATH="${PGLIB}/bin/"
     sudo su - << PGHASHLIB
         pushd /tmp/ &&
         wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip \
@@ -764,8 +767,7 @@ install_pghashlib() {
         && unzip pghashlib.zip \
         && cd pghashlib-master \
         && yum install -y $PGVER_DEVEL_LIB \
-        && PG_PATH=($PGLIB/bin/) \
-        && echo "PATH=$PATH:\$PG_PATH" >> ~/.bashrc \
+        && echo 'export PATH=${PG_PATH}:\$PATH' >> ~/.bashrc \
         && source ~/.bashrc \
         && make \
         && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
@@ -785,8 +787,7 @@ install_golang() {
     GO_VERSION='1.10'
     sudo su - << GOLANG
     wget https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz  -O - | tar -xz -C /usr/local
-    echo "export PATH=/usr/local/go/bin:\$PATH" >> /etc/bashrc
-    touch /home/vagrant/.profile && echo "export PATH=/usr/local/go/bin:\$PATH" >> /home/vagrant/.profile
+    echo 'export PATH=/usr/local/go/bin:\$PATH' >> /etc/bashrc
 GOLANG
 }
 
@@ -798,7 +799,8 @@ install_postfix() {
     echo "myhostname = ${FQDN}" >> /etc/postfix/main.cf
     yum install -y postfix &&
         systemctl disable sendmail &&
-        systemctl stop sendmail
+        systemctl stop sendmail &&
+        yum erase -y sendmail
 
     grep '^relayhost' /etc/postfix/main.cf \
         && (echo 'relayhost appears to be configured already - will comment out' \
@@ -806,10 +808,11 @@ install_postfix() {
 
     echo "relayhost = [localhost]:1025" >> /etc/postfix/main.cf && echo "postfix configured to send mail to localhost MailHog"
 
-    touch /etc/postfix/sasl_passwd.db
+    touch /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
     sudo chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
     sudo chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 
+    systemctl enable postfix
     systemctl restart postfix
 POSTFIX
 }
