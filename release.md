@@ -42,12 +42,17 @@ Most dependencies are addressed where possible, some however are not, see Includ
 Run `build.sh`.
 
 # Releases
-__5.2.0__ - Postgresql-10, Lumen, Spark, Postfix (mail), GoLang
+## 5.2.0
+Postgresql-10, Lumen, Spark, Postfix (mail), GoLang, _sendmail_ removed.
 
-__5.1.0__ - Node 9, Drush, PGHashLib and Zend Z-Ray (not compatible)
+## 5.1.0
+Node 9, Drush, PGHashLib and Zend Z-Ray (not compatible)
 
-__5.0.0__ - using packer php 7.2
+## 5.0.0
+using packer php 7.2
 
-__0.4.4__ - os updates, better vmware support by adding `config.ssh.password` and `config.ssh.username` to the packaged Vagrant file. 
+## 0.4.4
+os updates, better vmware support by adding `config.ssh.password` and `config.ssh.username` to the packaged Vagrant file. 
 
-__0.4.1__ - initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).  
+## 0.4.1
+initial attempt to mirror ubuntu homestead (differs with no hhvm and updated postgres to 9.5).  
