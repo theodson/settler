@@ -176,21 +176,58 @@ install_sqlite() {
     sudo yum -y install sqlite-devel sqlite
 }
 
-install_postgresql10() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+install_postgresql() {
 
-    sudo rpm -Uvh http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm || echo 'postgresql10 repo already exists'
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+    };
+    echo $1 | egrep '9.5$|9.6$|10$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@) - install postgresql\n";
+    
+    sudo systemctl stop postgresql-9.5 2> /dev/null || echo "";sudo systemctl disable postgresql-9.5 2> /dev/null || echo ""
+    sudo systemctl stop postgresql-9.6 2> /dev/null || echo "";sudo systemctl disable postgresql-9.6 2> /dev/null || echo ""
+    sudo systemctl stop postgresql-10  2> /dev/null || echo "";sudo systemctl disable postgresql-10  2> /dev/null || echo ""
 
-    sudo yum -y install postgresql10-server postgresql10 postgresql10-contrib
+    PGDG_VERSION=$1
+
+    case "$PGDG_VERSION" in
+        9.5) sudo rpm -Uvh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm || echo 'postgresql95 repo already exists'
+            sudo yum -y install postgresql95-server postgresql95 postgresql95-contrib
+            ;;
+        9.6) sudo rpm -Uvh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm || echo 'postgresql96 repo already exists'
+            sudo yum -y install postgresql96-server postgresql96 postgresql96-contrib
+            ;;
+        10) sudo rpm -Uvh http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm || echo 'postgresql10 repo already exists'
+            sudo yum -y install postgresql10-server postgresql10 postgresql10-contrib
+            ;;
+    esac
+
 }
 
+configure_postgresql() {
 
-configure_postgresql10() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-    PGDG_VERSION=10
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+    };
+    echo $1 | egrep '9.5$|9.6$|10$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@) - configure postgresql\n";
 
-    sudo su - <<POSTGRESQL10
-    /usr/pgsql-${PGDG_VERSION}/bin/postgresql-${PGDG_VERSION}-setup initdb && ( \
+    PGDG_VERSION=$1
+    case "$PGDG_VERSION" in
+        9.5) setup_script=postgresql95-setup
+        ;;
+        9.6) setup_script=postgresql96-setup
+        ;;
+        10) setup_script=postgresql-10-setup
+        ;;
+    esac
+    
+    sudo su - <<PGINSTALL
+    /usr/pgsql-${PGDG_VERSION}/bin/$setup_script initdb && ( \
 
         sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/${PGDG_VERSION}/data/postgresql.conf
 
@@ -294,15 +331,51 @@ host    all             all             192.168.0.0/16            md5
 
 POSTGRESQL
     ) || echo ""
-    systemctl start postgresql-${PGDG_VERSION}
-    systemctl enable postgresql-${PGDG_VERSION}
+    systemctl start postgresql-${PGDG_VERSION}  2> /dev/null || echo 'failed to start postgresql-${PGDG_VERSION}'
+    systemctl enable postgresql-${PGDG_VERSION} 2> /dev/null || echo 'failed to enable postgresql-${PGDG_VERSION}'
 
     pushd /tmp && sudo -u postgres psql -c "CREATE ROLE homestead LOGIN PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;" 2>/dev/null || echo 'homestead role already exists'
-    sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead || echo 'homestead DB already exists'
-
-    systemctl restart postgresql-${PGDG_VERSION}
-POSTGRESQL10
+    sudo -u postgres /usr/bin/createdb --owner=homestead homestead || echo 'homestead DB already exists' 
+    systemctl restart postgresql-${PGDG_VERSION} 2> /dev/null || echo 'failed to restart postgresql-${PGDG_VERSION}'
+PGINSTALL
 }
+
+switch_postgres() {
+
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+    };
+    echo $1 | egrep '9.5$|9.6$|10$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@) - switch postgresql\n";
+    PGDG_VERSION=$1
+
+    sudo systemctl stop postgresql-9.5 2> /dev/null || echo "" && echo "stopped postgresql-9.5";
+    sudo systemctl disable postgresql-9.5 2> /dev/null || echo "" && echo "disabled postgresql-9.5"
+    
+    sudo systemctl stop postgresql-9.6 2> /dev/null || echo "" && echo "stopped postgresql-9.6";
+    sudo systemctl disable postgresql-9.6 2> /dev/null || echo "" && echo "disabled postgresql-9.6"
+    
+    sudo systemctl stop postgresql-10  2> /dev/null || echo "" && echo "stopped postgresql-9.5";
+    sudo systemctl disable postgresql-10  2> /dev/null || echo "" && echo "disabled postgresql-10"
+    
+    sudo systemctl enable postgresql-${PGDG_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDG_VERSION}"
+    sudo systemctl start postgresql-${PGDG_VERSION}  2> /dev/null || echo "failed to start postgresql-${PGDG_VERSION}"    
+    
+
+    for pgsql_bin in $(find /etc/alternatives/ -name 'pgsql-*' -exec basename {} \; ); 
+    do 
+        # alternatives --display $pgsql_bin; 
+        position=$(alternatives --display $pgsql_bin | grep 'priority' | grep -n ${PGDG_VERSION} | cut -d':' -f1)
+        
+        # goto be a better way than this - expecting 2 versions installed, choose older 9.5 to enabled by default (idx 2)
+        sudo alternatives --config ${pgsql_bin} <<< $position > /dev/null && echo "switching $pgsql_bin to $position";
+    done
+    ls -l /etc/alternatives/pg*
+    echo "you are now using postgresql-${PGDG_VERSION}"
+}
+
 
 
 install_cache_queue() {
@@ -853,8 +926,15 @@ install_zend_zray() {
 }
 
 install_pghashlib() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
-    PGVER=10
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+    };
+    echo $1 | egrep '9.5$|9.6$|10$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@) - install pghashlib\n";
+
+    PGVER=$1
     PGVER_DEVEL_LIB="postgresql$(echo $PGVER | tr -d '.')-devel"
     PGLIB="/usr/pgsql-${PGVER}"
     PG_PATH="${PGLIB}/bin/"
@@ -865,7 +945,7 @@ install_pghashlib() {
         && unzip pghashlib.zip \
         && cd pghashlib-master \
         && yum install -y $PGVER_DEVEL_LIB \
-        && echo 'export PATH=${PG_PATH}:\$PATH' >> ~/.bashrc \
+        && echo '#export PATH=${PG_PATH}:\$PATH; # rely on linux alternatives command' >> ~/.bashrc \
         && source ~/.bashrc \
         && make \
         && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
@@ -983,6 +1063,8 @@ SCRIPT
 }
 
 install_crystal() {
+
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # Fast as C, Slick as Ruby - https://crystal-lang.org
     curl https://dist.crystal-lang.org/rpm/setup.sh | sudo bash
     sudo yum -y install crystal
@@ -990,7 +1072,15 @@ install_crystal() {
 }
 
 install_heroku_tooling() {
-    curl https://cli-assets.heroku.com/install.sh | sudo sh
+
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    sudo su - <<'HEROKU'
+    PATH=$PATH:/usr/local/bin;
+    export PATH;
+    env | grep PATH
+    curl https://cli-assets.heroku.com/install.sh | sh
+HEROKU
+
 }
 
 install_lucky() {
@@ -1048,16 +1138,27 @@ install_php_remi 7.1 && configure_php_remi 7.1
 install_php_remi 7.2 && configure_php_remi 7.2
 switch_php 7.0
 # install switch_php for root - take current function from this script and export to file
-declare -f switch_php > /usr/bin/switch_php.sh && echo "source /usr/bin/switch_php.sh" >> /root/.bash_profile
+declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >> /root/.bash_profile
 
 install_composer
 install_git2
 
 install_sqlite
 
-install_postgresql10
-install_pghashlib
-configure_postgresql10
+install_postgresql 9.5
+install_pghashlib 9.5
+configure_postgresql 9.5
+
+install_postgresql 9.6
+install_pghashlib 9.6
+configure_postgresql 9.6
+
+install_postgresql 10
+install_pghashlib 10
+configure_postgresql 10
+
+switch_postgres 9.5
+declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >> /root/.bash_profile
 
 install_mysql
 configure_mysql
