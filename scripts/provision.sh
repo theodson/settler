@@ -882,7 +882,7 @@ PGHASHLIB
 install_golang() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # Install Golang
-    GO_VERSION='1.10'
+    GO_VERSION='1.10.3'
     sudo su - << GOLANG
     wget https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz  -O - | tar -xz -C /usr/local
     echo 'export PATH=/usr/local/go/bin:\$PATH' >> /etc/bashrc
