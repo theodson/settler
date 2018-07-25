@@ -395,6 +395,7 @@ install_php_remi() {
         php${PHP_VERSION}-php-mysqlnd \
         php${PHP_VERSION}-php-pgsql \
         php${PHP_VERSION}-php-imap \
+        php${PHP_VERSION}-php-ldap \
         php${PHP_VERSION}-php-pear
 
     switch_php $PHP_DOT_VERSION
