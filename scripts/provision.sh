@@ -982,6 +982,36 @@ fi
 SCRIPT
 }
 
+install_crystal() {
+    # Fast as C, Slick as Ruby - https://crystal-lang.org
+    curl https://dist.crystal-lang.org/rpm/setup.sh | sudo bash
+    sudo yum -y install crystal
+
+}
+
+install_heroku_tooling() {
+    curl https://cli-assets.heroku.com/install.sh | sudo sh
+}
+
+install_lucky() {
+ 
+    echo -e "\n${FUNCNAME[ 0 ]}()\n"
+    # Install Lucky Framework for Crystal
+    sudo su - <<'LUCKY'
+yum -y install libpng-devel
+go_version=0.11.0
+tmpdir=/tmp/lucky_cli-${go_version}
+
+wget -qO- https://github.com/luckyframework/lucky_cli/archive/v${go_version}.tar.gz | tar xz -C /tmp
+pushd $tmpdir
+shards install && crystal build src/lucky.cr --release --no-debug
+[ -e ${tmpdir}/lucky ] && mv ${tmpdir}/lucky /usr/local/bin/. || echo "Cant find ${tmpdir}/lucky"
+popd
+rm -rf ${tmpdir}
+
+LUCKY
+}
+
 finish_build_meta() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     date >> ~/build.info
@@ -1046,5 +1076,9 @@ install_zend_zray # not compatible with centos7 - libssl clash
 install_golang
 install_postfix
 # configure_postfix_for_sendgrid $sendgrid_user $sendgrid_pass
+install_crystal
+install_heroku_tooling
+install_lucky
+
 finish_build_meta
 set -u
