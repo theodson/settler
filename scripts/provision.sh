@@ -33,11 +33,29 @@ yum_install() {
         ntp nmap nc whois libnotify inotify-tools telnet ngrep bind-utils traceroute \
         cyrus-sasl-plain supervisor mailx mutt netcat \
         bash-completion-extras mcrypt vim cifs-utils zsh re2c pv \
-        jq httpie mod_ssl httpd ntpdate
+        jq httpie mod_ssl httpd ntpdate poppler-utils
 
     # Fix small file cache issue on vagrant mounts - http://stackoverflow.com/questions/6298933/shared-folder-in-virtualbox-for-apache
     sed -i 's/^EnableSendfile on/EnableSendfile off/'  /etc/httpd/conf/httpd.conf
 YUM
+
+    sudo su - << SERVICES
+    # systemd links
+    # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
+    # https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
+
+    # Homestead scripts rely on different systemd names in Ubuntu compared to CentOS - add Aliases for CentOS.
+    # Fix different reference to crond to alias as cron (Ubuntu uses cron)
+
+    rm -f /etc/systemd/system/multi-user.target.wants/crond.service || echo '..'
+    [ -e /usr/lib/systemd/system/crond.service ] && ln -fs /usr/lib/systemd/system/crond.service /etc/systemd/system/multi-user.target.wants/crond.service
+    [ -e /usr/lib/systemd/system/crond.service ] && ln -fs /usr/lib/systemd/system/crond.service /etc/systemd/system/cron.service
+
+    grep '^Alias=cron.service' /etc/systemd/system/multi-user.target.wants/crond.service &>/dev/null || sed -i 's/\[Install\]/\[Install\]\nAlias=cron.service/' /etc/systemd/system/multi-user.target.wants/crond.service
+
+    systemctl daemon-reload
+    systemctl status cron.service
+SERVICES
 
 }
 
@@ -322,87 +340,96 @@ configure_cache_queue() {
 
 
 install_php_remi() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
 
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 7.0|7.1|7.2" && return 1
+    };
+    echo $1 | egrep '7\.[0,1,2]' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 7.0|7.1|7.2" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@)\n";
+
+    # https://developers.redhat.com/blog/2017/10/18/use-software-collections-without-bothering-alternative-path/
     # https://www.cloudinsidr.com/content/how-to-install-php-7-on-centos-7-red-hat-rhel-7-fedora/
 
     #rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     sudo rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-7.rpm || echo "Repo already installed....continuing"
 
-    sudo yum-config-manager --disable remi-php70
-    sudo yum-config-manager --disable remi-php71
-    sudo yum-config-manager --enable remi-php72
+    PHP_DOT_VERSION=$1
+    PHP_VERSION=`echo $PHP_DOT_VERSION | tr -d '.'`
 
-    sudo yum --enablerepo=remi-php72 install -y php72-php-xml php72-php-soap php72-php-xmlrpc php72-php-mbstring php72-php-json php72-php-gd php72-php-mcrypt \
-        php72-php-cli \
-        php72-php-common \
-        php72-php-intl \
-        php72-php-fpm \
-        php72-php-xml \
-        php72-php-xmlrpc \
-        php72-php-pdo \
-        php72-php-gmp \
-        php72-php-process \
-        php72-php-devel \
-        php72-php-mbstring \
-        php72-php-pecl-mcrypt \
-        php72-php-gd \
-        php72-php-readline \
-        php72-php-pecl-imagick \
-        php72-php-opcache \
-        php72-php-memcached \
-        php72-php-pecl-apcu \
-        php72-php-imap \
-        php72-php-dba \
-        php72-php-enchant \
-        php72-php-soap \
-        php72-php-pecl-zip \
-        php72-php-pecl-jsond \
-        php72-php-pecl-jsond-devel \
-        php72-php-pecl-xdebug \
-        php72-php-bcmath \
-        php72-php-mysqlnd \
-        php72-php-pgsql \
-        php72-php-imap \
-        php72-php-pear
+    #sudo yum-config-manager --disable remi-php70
+    #sudo yum-config-manager --disable remi-php71
+    # disable all remi-php repos.
+    for repo in `find /etc/yum.repos.d/ -type f -name 'remi-php*' -exec basename -s '.repo' {} \;`; do echo $repo;sudo yum-config-manager --disable $repo &> /dev/null || echo "disabled already $repo"; done
+    sudo yum-config-manager --enable remi-php${PHP_VERSION}
+
+    sudo yum --enablerepo=remi-php${PHP_VERSION} install -y php${PHP_VERSION}-php-xml php${PHP_VERSION}-php-soap php${PHP_VERSION}-php-xmlrpc php${PHP_VERSION}-php-mbstring php${PHP_VERSION}-php-json php${PHP_VERSION}-php-gd php${PHP_VERSION}-php-mcrypt \
+        php${PHP_VERSION}-php-cli \
+        php${PHP_VERSION}-php-common \
+        php${PHP_VERSION}-php-intl \
+        php${PHP_VERSION}-php-fpm \
+        php${PHP_VERSION}-php-xml \
+        php${PHP_VERSION}-php-xmlrpc \
+        php${PHP_VERSION}-php-pdo \
+        php${PHP_VERSION}-php-gmp \
+        php${PHP_VERSION}-php-process \
+        php${PHP_VERSION}-php-devel \
+        php${PHP_VERSION}-php-mbstring \
+        php${PHP_VERSION}-php-pecl-mcrypt \
+        php${PHP_VERSION}-php-gd \
+        php${PHP_VERSION}-php-readline \
+        php${PHP_VERSION}-php-pecl-imagick \
+        php${PHP_VERSION}-php-opcache \
+        php${PHP_VERSION}-php-memcached \
+        php${PHP_VERSION}-php-pecl-apcu \
+        php${PHP_VERSION}-php-imap \
+        php${PHP_VERSION}-php-dba \
+        php${PHP_VERSION}-php-enchant \
+        php${PHP_VERSION}-php-soap \
+        php${PHP_VERSION}-php-pecl-zip \
+        php${PHP_VERSION}-php-pecl-jsond \
+        php${PHP_VERSION}-php-pecl-jsond-devel \
+        php${PHP_VERSION}-php-pecl-xdebug \
+        php${PHP_VERSION}-php-bcmath \
+        php${PHP_VERSION}-php-mysqlnd \
+        php${PHP_VERSION}-php-pgsql \
+        php${PHP_VERSION}-php-imap \
+        php${PHP_VERSION}-php-pear
+
+    switch_php $PHP_DOT_VERSION
 
 }
 
 
 configure_php_remi() {
-    echo -e "\n${FUNCNAME[ 0 ]}()\n"
 
-    PHP_DOT_VERSION=7.2
-    PHP_VERSION=72
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 7.0|7.1|7.2" && return 1
+    };
+    echo $1 | egrep '7\.[0,1,2]' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 7.0|7.1|7.2" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@) - configure nginx php-fpm\n";
+
+    PHP_DOT_VERSION=$1
+    PHP_VERSION=`echo $PHP_DOT_VERSION | tr -d '.'`
     # phpfpm="$(php -i | grep 'Loaded Configuration File' | cut -d '>' -f 2- | xargs)"
     phpfpm="/etc/opt/remi/php${PHP_VERSION}/php.ini"
+    echo "configure $phpfpm"
+
     sudo su - <<PHP
 
     # Setup Some PHP-FPM Options
     phpfpm='$phpfpm'
 
-    yum-config-manager --enable remi-php${PHP_VERSION}
+    yum-config-manager --enable remi-php${PHP_VERSION} &> /dev/null
 
     systemctl enable php${PHP_VERSION}-php-fpm
     systemctl start php${PHP_VERSION}-php-fpm
 
-    [ -h /usr/bin/php ] && rm -f /usr/bin/php
-    ln -s /usr/bin/php${PHP_VERSION} /usr/bin/php || echo 'php already exists ..moving on!'
-
-    [ -h /usr/bin/pear ] && rm -f /usr/bin/pear
-    ln -s /usr/bin/php${PHP_VERSION}-pear /usr/bin/pear
-
-    [ -h /usr/bin/phar ] && rm -f /usr/bin/phar
-    ln -s /usr/bin/php${PHP_VERSION}-phar /usr/bin/phar
-
-    [ -h /usr/bin/php${PHP_VERSION}-pecl ] && rm -f /usr/bin/php${PHP_VERSION}-pecl
-    ln -s /opt/remi/php${PHP_VERSION}/root/usr/bin/pecl /usr/bin/php${PHP_VERSION}-pecl
-
-    [ -h /usr/bin/pecl ] && rm -f /usr/bin/pecl
-    ln -s /usr/bin/php${PHP_VERSION}-pecl /usr/bin/pecl
-
-    # install xdebug, port 10000 to avoid clash with phpfpm
-    cat << EOF >> $phpfpm
+    # configure xdebug if not already, port 10000 to avoid clash with phpfpm
+    grep 'xdebug.idekey' $phpfpm || cat << EOF >> $phpfpm
 xdebug.max_nesting_level=250
 xdebug.remote_enable=1
 ;xdebug.remote_host="YOUR CLIENT DEV IP ADDRESS"
@@ -410,8 +437,6 @@ xdebug.remote_host="127.0.0.1"
 xdebug.remote_port=10000
 xdebug.idekey="PHPSTORM"
 EOF
-
-
 
     # Set Some PHP CLI Settings
     sed -i "s/error_reporting = .*/error_reporting = E_ALL/" $phpfpm
@@ -428,10 +453,11 @@ EOF
     sed -i "s/post_max_size = .*/post_max_size = 100M/" $phpfpm
 
     # disable xdebug
-    sed -i 's/^\(zend_extension.*\)/;\1/' /etc/opt/remi/php${PHP_VERSION}/php.d/15-xdebug.ini
+    sed -i 's/^\(zend_extension.*\)/;\1/' /etc/opt/remi/php${PHP_VERSION}/php.d/15-xdebug.ini || echo "XDEBUG not available for /etc/opt/remi/php${PHP_VERSION}/php.d/15-xdebug.ini"
 
 PHP
 
+    echo "Overwrite /etc/nginx/nginx.conf"
     # Set The Nginx & PHP-FPM User
     #    sed -i "s/user nginx;/user vagrant;/" /etc/nginx/nginx.conf
     #    sed -i "s/http {/http {\n    server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
@@ -500,7 +526,6 @@ EOF
     grep 'listen.group = vagrant' $fpm_pool_www || echo "listen.group = vagrant" >> $fpm_pool_www
     grep 'listen.mode = 0666' $fpm_pool_www || echo "listen.mode = 0666" >> $fpm_pool_www
 
-    cat $fpm_pool_www | egrep -v '^;|^[[:space:]]*$'
     systemctl restart nginx
     systemctl restart php${PHP_VERSION}-php-fpm
 
@@ -509,38 +534,110 @@ EOF
 
     usermod -a -G nginx vagrant
     usermod -a -G apache vagrant
-NGINXDIFF
-    id vagrant
-    groups vagrant
 
-    sudo su - << SERVICES
-    # nginx write error for vagrant (TODO do we really need to run as vagrant??)
     chmod -R g+x /var/lib/nginx
 
+NGINXDIFF
+    # output useful details
+    id vagrant
+    groups vagrant
+    egrep -v '^;|^[[:space:]]*$' $fpm_pool_www
+
+}
+
+
+switch_php ()
+{
+    [ $# -lt 1 ] && {
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 7.0|7.1|7.2" && return 1
+    };
+    echo $1 | egrep '7\.[0,1,2]' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 7.0|7.1|7.2" && return 2
+    };
+    echo -e "\n${FUNCNAME[ 0 ]}($@) - changing system php version\n";
+
+    # https://access.redhat.com/solutions/528643 - /etc/alternatives and the dynamic software collections framework
+
+    PHP_DOT_VERSION=$1;
+    PHP_VERSION=`echo $PHP_DOT_VERSION | tr -d '.'`;
+    sudo su -  <<SWITCH_PHP
+    unset X_SCLS && export X_SCLS="`scl enable php${PHP_VERSION} 'echo $X_SCLS'`"    
+    source scl_source enable php${PHP_VERSION}
+
+    # Update Link - possibly better handled with "alternatives"
+    for phpbin in debugclient pear peardev pecl php-cgi php-config phpize
+    do
+        echo "confirming symbolic links for remi \${phpbin} to /usr/bin/php${PHP_VERSION}-\${phpbin}"
+        [ -f /opt/remi/php${PHP_VERSION}/root/usr/bin/\${phpbin} ] \
+            && ln -fs /opt/remi/php${PHP_VERSION}/root/usr/bin/\${phpbin} /usr/bin/php${PHP_VERSION}-\${phpbin} \
+            || { rm -f /usr/bin/php${PHP_VERSION}-\${phpbin} && echo "/usr/bin/php${PHP_VERSION}-\${phpbin} does not exist ..removing link"; }
+    done
+    [ -f /opt/remi/php${PHP_VERSION}/root/usr/bin/php ] &&          ln -fs /opt/remi/php${PHP_VERSION}/root/usr/bin/php          /usr/bin/php${PHP_VERSION}
+    [ -f /opt/remi/php${PHP_VERSION}/root/usr/bin/phar.phar ] &&    ln -fs /opt/remi/php${PHP_VERSION}/root/usr/bin/phar.phar    /usr/bin/php${PHP_VERSION}-phar
+
+    # set defaults
+    for phpbin in debugclient pear peardev pecl php-cgi php-config phpize phar
+    do
+        echo "making default \${phpbin} to /usr/bin/php${PHP_VERSION}-\${phpbin}"
+        [ -h /usr/bin/php${PHP_VERSION}-\${phpbin} ] && ln -fs /usr/bin/php${PHP_VERSION}-\${phpbin} /usr/bin/\${phpbin} || echo "/usr/bin/\${phpbin} already exists ..moving on!"
+    done
+    [ -h /usr/bin/php${PHP_VERSION} ] && ln -fs /usr/bin/php${PHP_VERSION} /usr/bin/php || echo "/usr/bin/php already exists ..moving on!"
+    # TODO /bin/php, /bin/pecl need reviewing - what creates those links.
+SWITCH_PHP
+
+    # https://access.redhat.com/solutions/527703 - Enabling userspace environment automatically after logout/reboot
+
+    sudo su -  <<SWITCH_BASHENV
+    # remove previous SCL and set PHP VERSION to use by default using SoftwareCollections commands
+    echo "Updating /etc/bashrc source scl_source enable php${PHP_VERSION} call."
+    echo "unset X_SCLS;source scl_source enable php${PHP_VERSION} || echo 'scl_enable php having problems' > /dev/stderr " > /etc/profile.d/scl_enablephp7.sh
+SWITCH_BASHENV
+
+    sudo su  <<'PHP_SYSCTL'
+    # check SCL for installed PHP versions, stop and disable all of them.
+    echo "Reconfigure php-fpm services"
+    phpversions=`scl --list | grep 'php' | tr -d 'php'`
+    for ver in $phpversions
+    do
+        systemctl stop    php${ver}-php-fpm && echo "service php${ver} stopped " || echo "service php{$ver} failed to stop"
+        systemctl disable php${ver}-php-fpm && echo "service php${ver} disabled" || echo "service php{\}$ver} disablement failed"
+    done
+PHP_SYSCTL
+
+    sudo su -  <<PHP_FPM
     # systemd links
     # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
     # https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
 
-    # Homestead scripts rely on different systemd names in Ubuntu compared to CentOS - add Aliases for CentOS.
-
     # fix different locations used by php-fpm, Homestead scripts rely on php${PHP_VERSION}-fpm
-    systemctl disable php${PHP_VERSION}-php-fpm
-    sed -i 's/\[Install\]/\[Install\]\nAlias=php${PHP_DOT_VERSION}-fpm.service/' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service
+    echo "Support Homestead dependency on php-fpm naming - add Alias php${PHP_DOT_VERSION}-fpm.service"
+    grep '^Alias=php${PHP_DOT_VERSION}-fpm.service' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service &>/dev/null || sed -i 's/\[Install\]/\[Install\]\nAlias=php${PHP_DOT_VERSION}-fpm.service/' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service
+    systemctl daemon-reload
+
+    # enable the required PHP version (needs to be filename php${PHP_VERSION}-php-fpm.service) - then alias can be used
     systemctl enable php${PHP_VERSION}-php-fpm
 
-    # use new alias to restart service (as homestead would).
+    # use new alias to restart service (as homestead would - e.g. its uses php70-fpm).
     systemctl restart php${PHP_DOT_VERSION}-fpm
 
+    # Homestead relies on /etc/php/${PHP_DOT_VERSION}/fpm/php-fpm.conf
     mkdir -p /etc/php/${PHP_DOT_VERSION}/fpm/
-    ln -fs /etc/opt/remi/php${PHP_VERSION}/php-fpm.conf /etc/php/${PHP_DOT_VERSION}/fpm/php-fpm.conf
+    [ -e /etc/opt/remi/php${PHP_VERSION}/php-fpm.conf ] && ln -fs /etc/opt/remi/php${PHP_VERSION}/php-fpm.conf /etc/php/${PHP_DOT_VERSION}/fpm/php-fpm.conf
+PHP_FPM
 
-    # fix different reference to crond to alias as cron
-    ln -fs /usr/lib/systemd/system/crond.service /etc/systemd/system/cron.service
-    sed -i 's/\[Install\]/\[Install\]\nAlias=cron.service/' /etc/systemd/system/multi-user.target.wants/crond.service
-    systemctl status cron.service
-SERVICES
+    # keep ENV vars tidy when allowing multiple switch_php calls 
+    unset X_SCLS;
+    LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed 's#/opt/remi/php[0-9][0-9]/root/usr/lib64:*##g')
+    PATH=$(echo $PATH | sed 's#/opt/remi/php[0-9][0-9]/root/usr/[s]*bin:*##g')
+    MANPATH=$(echo $MANPATH | sed 's#/opt/remi/php[0-9][0-9]/root/usr/share/man:*##g')
+    export LD_LIBRARY_PATH PATH MANPATH
 
+    source scl_source enable php${PHP_VERSION} || echo 'scl_enable php having problems' > /dev/stderr
+    systemctl status php${PHP_VERSION}-php-fpm
+
+    return 0;
 }
+
 
 install_composer() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
@@ -747,7 +844,7 @@ install_zend_zray() {
     # Install Zend Z-Ray -
     # doesnt work in centos 7 due to openssl libssl 1.0.0 dependency - co7 use 1.0.2
 
-    sudo wget http://repos.zend.com/zend-server/early-access/ZRay-Homestead/zray-standalone-php72.tar.gz -O - | sudo tar -xzf - -C /opt
+    sudo wget http://repos.zend.com/zend-server/early-access/ZRay-Homestead/zray-standalone-${PHP_VERSION}.tar.gz -O - | sudo tar -xzf - -C /opt
     sudo ln -sf /opt/zray/zray.ini /etc/php/7.2/cli/conf.d/zray.ini
     sudo ln -sf /opt/zray/zray.ini /etc/php/7.2/fpm/conf.d/zray.ini
     sudo ln -sf /opt/zray/lib/zray.so /usr/lib/php/20170718/zray.so
@@ -915,8 +1012,13 @@ yum_install
 install_node
 install_nginx
 
-install_php_remi
-configure_php_remi
+install_php_remi 7.0 && configure_php_remi 7.0
+install_php_remi 7.1 && configure_php_remi 7.1
+install_php_remi 7.2 && configure_php_remi 7.2
+switch_php 7.0
+# install switch_php for root - take current function from this script and export to file
+declare -f switch_php > /usr/bin/switch_php.sh && echo "source /usr/bin/switch_php.sh" >> /root/.bash_profile
+
 install_composer
 install_git2
 
