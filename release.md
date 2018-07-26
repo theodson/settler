@@ -42,6 +42,13 @@ Most dependencies are addressed where possible, some however are not, see Includ
 Run `build.sh`.
 
 # Releases
+## 5.2.1
+
+Support php 7.0, 7.1, 7.2
+```
+sudo su - -c "switch_php 7.0"
+```
+
 ## 5.2.0
 Postgresql-10, Lumen, Spark, Postfix (mail), GoLang, _sendmail_ removed.
 
