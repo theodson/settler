@@ -35,16 +35,31 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * Postfix (mail)
 * Go Language
 * ~~Zend Z-Ray~~
-
+* Heroku Tooling
+* Crystal
+* Lucky
 
 ## Build
 
 Run `build.sh`.
 
 # Releases
+
+
+## 6.1
+GoLang (1.10.3), Heroku Tooling, Crystal, Lucky
+
+Support postgresql 9.5, 9.6, 10 - defaults to 10
+```
+sudo su - -c "switch_postgres 9.5"
+```
+
+## 6.0
+_Skipped_
+
 ## 5.2.1
 
-Support php 7.0, 7.1, 7.2
+Support php 7.0, 7.1, 7.2 - defaults to 7.2
 ```
 sudo su - -c "switch_php 7.0"
 ```
