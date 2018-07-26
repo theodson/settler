@@ -9,13 +9,13 @@ Most dependencies are addressed where possible, some however are not, see Includ
 
 * CentOS 7.5
 * Git
-* PHP 7.2
+* PHP 7.0, 7.1, 7.2
 * ~~HHVM~~
 * Nginx
 * MySQL
 * ~~MariaDB~~
 * Sqlite3
-* Postgres 10
+* Postgres 9.5, 9.6, 10
 * Postgres PGHashLib
 * Composer
 * Node 9 (Bower, Gulp, Yarn, Grunt)
