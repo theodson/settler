@@ -55,6 +55,8 @@ YUM
 
     systemctl daemon-reload
     systemctl status cron.service
+
+    echo 'export HISTTIMEFORMAT="%Y-%m-%d - %H:%M:%S "' >> /etc/profile
 SERVICES
 
 }
@@ -1136,7 +1138,7 @@ install_nginx
 install_php_remi 7.0 && configure_php_remi 7.0
 install_php_remi 7.1 && configure_php_remi 7.1
 install_php_remi 7.2 && configure_php_remi 7.2
-switch_php 7.0
+switch_php 7.2
 # install switch_php for root - take current function from this script and export to file
 declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >> /root/.bash_profile
 
@@ -1157,7 +1159,7 @@ install_postgresql 10
 install_pghashlib 10
 configure_postgresql 10
 
-switch_postgres 9.5
+switch_postgres 10
 declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >> /root/.bash_profile
 
 install_mysql
