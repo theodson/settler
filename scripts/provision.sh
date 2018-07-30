@@ -192,9 +192,9 @@ install_postgresql() {
     sudo systemctl stop postgresql-9.6 2> /dev/null || echo "";sudo systemctl disable postgresql-9.6 2> /dev/null || echo ""
     sudo systemctl stop postgresql-10  2> /dev/null || echo "";sudo systemctl disable postgresql-10  2> /dev/null || echo ""
 
-    PGDG_VERSION=$1
+    PGDB_VERSION=$1
 
-    case "$PGDG_VERSION" in
+    case "$PGDB_VERSION" in
         9.5) sudo rpm -Uvh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm || echo 'postgresql95 repo already exists'
             sudo yum -y install postgresql95-server postgresql95 postgresql95-contrib
             ;;
@@ -218,8 +218,8 @@ configure_postgresql() {
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - configure postgresql\n";
 
-    PGDG_VERSION=$1
-    case "$PGDG_VERSION" in
+    PGDB_VERSION=$1
+    case "$PGDB_VERSION" in
         9.5) setup_script=postgresql95-setup
         ;;
         9.6) setup_script=postgresql96-setup
@@ -229,13 +229,13 @@ configure_postgresql() {
     esac
     
     sudo su - <<PGINSTALL
-    /usr/pgsql-${PGDG_VERSION}/bin/$setup_script initdb && ( \
+    /usr/pgsql-${PGDB_VERSION}/bin/$setup_script initdb && ( \
 
-        sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/${PGDG_VERSION}/data/postgresql.conf
+        sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/${PGDB_VERSION}/data/postgresql.conf
 
-        sed -ir "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/#local     all       all       peer/g"  /var/lib/pgsql/${PGDG_VERSION}/data/pg_hba.conf
+        sed -ir "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/#local     all       all       peer/g"  /var/lib/pgsql/${PGDB_VERSION}/data/pg_hba.conf
 
-        cat << POSTGRESQL > "/var/lib/pgsql/${PGDG_VERSION}/data/pg_hba.conf"
+        cat << POSTGRESQL > "/var/lib/pgsql/${PGDB_VERSION}/data/pg_hba.conf"
 # PostgreSQL Client Authentication Configuration File
 # ===================================================
 #
@@ -333,12 +333,12 @@ host    all             all             192.168.0.0/16            md5
 
 POSTGRESQL
     ) || echo ""
-    systemctl start postgresql-${PGDG_VERSION}  2> /dev/null || echo 'failed to start postgresql-${PGDG_VERSION}'
-    systemctl enable postgresql-${PGDG_VERSION} 2> /dev/null || echo 'failed to enable postgresql-${PGDG_VERSION}'
+    systemctl start postgresql-${PGDB_VERSION}  2> /dev/null || echo 'failed to start postgresql-${PGDB_VERSION}'
+    systemctl enable postgresql-${PGDB_VERSION} 2> /dev/null || echo 'failed to enable postgresql-${PGDB_VERSION}'
 
     pushd /tmp && sudo -u postgres psql -c "CREATE ROLE homestead LOGIN PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;" 2>/dev/null || echo 'homestead role already exists'
     sudo -u postgres /usr/bin/createdb --owner=homestead homestead || echo 'homestead DB already exists' 
-    systemctl restart postgresql-${PGDG_VERSION} 2> /dev/null || echo 'failed to restart postgresql-${PGDG_VERSION}'
+    systemctl restart postgresql-${PGDB_VERSION} 2> /dev/null || echo 'failed to restart postgresql-${PGDB_VERSION}'
 PGINSTALL
 }
 
@@ -351,7 +351,13 @@ switch_postgres() {
         echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - switch postgresql\n";
-    PGDG_VERSION=$1
+    PGDB_VERSION=$1
+    SWITCH_DATE=$(date +"%Y-%m-%d - %H:%M:%S")
+
+    # Update environment that will not be overwritten in any yum/rpm updates, use /var/lib/pgsql/.bash_profile
+    sudo su postgres - <<PGDATA_CHANGE
+    echo -e '# switched postgresql version to (${PGDB_VERSION}) on (${SWITCH_DATE}).\nPGVERSION=${PGDB_VERSION}\nPGDATA=/var/lib/pgsql/${PGDB_VERSION}/data\nexport PGDATA PGVERSION' > /var/lib/pgsql/.pgsql_profile
+PGDATA_CHANGE
 
     sudo systemctl stop postgresql-9.5 2> /dev/null || echo "" && echo "stopped postgresql-9.5";
     sudo systemctl disable postgresql-9.5 2> /dev/null || echo "" && echo "disabled postgresql-9.5"
@@ -362,20 +368,20 @@ switch_postgres() {
     sudo systemctl stop postgresql-10  2> /dev/null || echo "" && echo "stopped postgresql-9.5";
     sudo systemctl disable postgresql-10  2> /dev/null || echo "" && echo "disabled postgresql-10"
     
-    sudo systemctl enable postgresql-${PGDG_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDG_VERSION}"
-    sudo systemctl start postgresql-${PGDG_VERSION}  2> /dev/null || echo "failed to start postgresql-${PGDG_VERSION}"    
+    sudo systemctl enable postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
+    sudo systemctl start postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to start postgresql-${PGDB_VERSION}"    
     
 
     for pgsql_bin in $(find /etc/alternatives/ -name 'pgsql-*' -exec basename {} \; ); 
     do 
         # alternatives --display $pgsql_bin; 
-        position=$(alternatives --display $pgsql_bin | grep 'priority' | grep -n ${PGDG_VERSION} | cut -d':' -f1)
+        position=$(alternatives --display $pgsql_bin | grep 'priority' | grep -n ${PGDB_VERSION} | cut -d':' -f1)
         
         # goto be a better way than this - expecting 2 versions installed, choose older 9.5 to enabled by default (idx 2)
         sudo alternatives --config ${pgsql_bin} <<< $position > /dev/null && echo "switching $pgsql_bin to $position";
     done
     ls -l /etc/alternatives/pg*
-    echo "you are now using postgresql-${PGDG_VERSION}"
+    echo "you are now using postgresql-${PGDB_VERSION}"
 }
 
 
