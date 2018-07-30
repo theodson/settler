@@ -1112,7 +1112,13 @@ LUCKY
 
 finish_build_meta() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
-    date >> ~/build.info
+    [ $# -lt 1 ] && HSVER=$(date +%s) || HSVER=$1
+    sudo su - << BUILD_META
+echo 'HOMESTEAD_CENTOS_VERSION=${HSVER}' > ~/build.info
+echo 'HOMESTEAD_CENTOS_DATE=$(date)' >> ~/build.info
+[ -f ~/build.info ] && ln ~/build.info /etc/homestead_co7
+BUILD_META
+
 }
 
 set_profile() {
@@ -1189,5 +1195,5 @@ install_crystal
 install_heroku_tooling
 install_lucky
 
-finish_build_meta
+finish_build_meta 6.1.1
 set -u
