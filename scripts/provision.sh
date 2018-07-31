@@ -693,7 +693,7 @@ PHP_SYSCTL
 
     # fix different locations used by php-fpm, Homestead scripts rely on php${PHP_VERSION}-fpm
     echo "Support Homestead dependency on php-fpm naming - add Alias php${PHP_DOT_VERSION}-fpm.service"
-    grep '^Alias=php${PHP_DOT_VERSION}-fpm.service' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service &>/dev/null || sed -i 's/\[Install\]/\[Install\]\nAlias=php${PHP_DOT_VERSION}-fpm.service/' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service
+    grep '^Alias=php${PHP_DOT_VERSION}-fpm.service' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service &>/dev/null || sed -i 's/\[Install\]/\[Install\]\nAlias=php${PHP_DOT_VERSION}-fpm.service\nAlias=php-fpm.service/' /usr/lib/systemd/system/php${PHP_VERSION}-php-fpm.service
     systemctl daemon-reload
 
     # enable the required PHP version (needs to be filename php${PHP_VERSION}-php-fpm.service) - then alias can be used
