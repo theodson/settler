@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-hddsize=85
+hddsize=75
 
 if [ -e /etc/redhat-release ] && [ "$1" == "grow" ] ; then
 
@@ -99,6 +99,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
         "/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager" -x ${hddsize}Gb .vagrant/machines/default/vmware_fusion/*-*-*-*-*/disk.vmdk
         echo "Restart the VM without provisioning"
         echo "Run the commands $0 grow in the GUEST CentOS VM"
+        # actually do this, vagrant ssh; sudo su -;/vagrant/scripts/expand.storage.sh grow;reboot and repeat;
 
     fi
 
