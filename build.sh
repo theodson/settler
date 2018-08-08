@@ -23,10 +23,22 @@ grep 'homestead.sh' centos-7.5-x86_64.json &> /dev/null || (
     echo "Attempting insert of homestead settler script at ${lineno}" && \
     ex -sc "${lineno}i|\"scripts/homestead.sh\"," -cx centos-7.5-x86_64.json )
 
+# Ensure simple partitioning
+grep 'autopart --nohome' http/7/ks.cfg &> /dev/null || (
+    lineno=$(grep -n '^autopart' http/7/ks.cfg | cut -d: -f1) && \
+    echo "Attempting insert of simple auto partition for kickstart file at ${lineno}" && \
+    ex -sc "${lineno}d|${lineno}i|autopart --nohome" -cx http/7/ks.cfg )
+
+
+# Add VERSIONING information into homestead.sh
 grep 'PACKER_BOX_VERSION=' scripts/homestead.sh &> /dev/null || (
     lineno=4 && \
     echo "Attempting insert of PACKER_BOX_VERSION into homestead settler script at ${lineno}" && \
     ex -sc "${lineno}i|PACKER_BOX_VERSION=${PACKER_BOX_VERSION=}" -cx scripts/homestead.sh )
+
+
+
+
 
 echo packer build ${packer_options} ${packer_vars} centos-7.5-x86_64.json
 
