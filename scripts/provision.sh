@@ -2,6 +2,7 @@
 set -e
 set +u
 
+
 if [ $# -gt 0 ] && [ $1 = "config" ]; then
     CONFIG_ONLY=1
 fi
@@ -1137,8 +1138,10 @@ HOMESTEAD_BASH_FIX
 }
 
 
+
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 set +u
+echo -e "Starting build for version: ${PACKER_BOX_VERSION}\n"
 set_profile
 
 yum_prepare
@@ -1196,5 +1199,5 @@ install_crystal
 install_heroku_tooling
 install_lucky
 
-finish_build_meta 6.1.1
+finish_build_meta ${PACKER_BOX_VERSION}
 set -u

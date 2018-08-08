@@ -12,7 +12,13 @@ We rely on the `bento` packer project for delivering stable and upto date Virtua
 
 ### Quick start
 
-* Run `./build.sh`
+* specify version and run `build.sh`
+
+```
+VERSION=6.1.1
+./build.sh $VERSION
+```
+
 
 ### Custom 
 * Review the `scripts/provision.sh` - this runs CentOS build commands. 

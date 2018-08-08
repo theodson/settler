@@ -45,6 +45,8 @@ Run `build.sh`.
 
 # Releases
 
+## 6.1.1
+pecl stomp
 
 ## 6.1
 GoLang (1.10.3), Heroku Tooling, Crystal, Lucky
