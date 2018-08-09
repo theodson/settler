@@ -778,6 +778,8 @@ install_mysql() {
     yum repolist enabled | grep "mysql.*-community.*"
 
     yum -y install mysql-community-server
+
+    rm -f mysql57-community-release-el7-7.noarch.rpm 
 }
 
 configure_mysql() {
