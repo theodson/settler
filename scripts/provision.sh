@@ -188,7 +188,7 @@ install_postgresql() {
         echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - install postgresql\n";
-    
+
     sudo systemctl stop postgresql-9.5 2> /dev/null || echo "";sudo systemctl disable postgresql-9.5 2> /dev/null || echo ""
     sudo systemctl stop postgresql-9.6 2> /dev/null || echo "";sudo systemctl disable postgresql-9.6 2> /dev/null || echo ""
     sudo systemctl stop postgresql-10  2> /dev/null || echo "";sudo systemctl disable postgresql-10  2> /dev/null || echo ""
@@ -228,7 +228,7 @@ configure_postgresql() {
         10) setup_script=postgresql-10-setup
         ;;
     esac
-    
+
     sudo su - <<PGINSTALL
     /usr/pgsql-${PGDB_VERSION}/bin/$setup_script initdb && ( \
 
@@ -338,7 +338,7 @@ POSTGRESQL
     systemctl enable postgresql-${PGDB_VERSION} 2> /dev/null || echo 'failed to enable postgresql-${PGDB_VERSION}'
 
     pushd /tmp && sudo -u postgres psql -c "CREATE ROLE homestead LOGIN PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;" 2>/dev/null || echo 'homestead role already exists'
-    sudo -u postgres /usr/bin/createdb --owner=homestead homestead || echo 'homestead DB already exists' 
+    sudo -u postgres /usr/bin/createdb --owner=homestead homestead || echo 'homestead DB already exists'
     systemctl restart postgresql-${PGDB_VERSION} 2> /dev/null || echo 'failed to restart postgresql-${PGDB_VERSION}'
 PGINSTALL
 }
@@ -362,22 +362,22 @@ PGDATA_CHANGE
 
     sudo systemctl stop postgresql-9.5 2> /dev/null || echo "" && echo "stopped postgresql-9.5";
     sudo systemctl disable postgresql-9.5 2> /dev/null || echo "" && echo "disabled postgresql-9.5"
-    
+
     sudo systemctl stop postgresql-9.6 2> /dev/null || echo "" && echo "stopped postgresql-9.6";
     sudo systemctl disable postgresql-9.6 2> /dev/null || echo "" && echo "disabled postgresql-9.6"
-    
+
     sudo systemctl stop postgresql-10  2> /dev/null || echo "" && echo "stopped postgresql-9.5";
     sudo systemctl disable postgresql-10  2> /dev/null || echo "" && echo "disabled postgresql-10"
-    
-    sudo systemctl enable postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
-    sudo systemctl start postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to start postgresql-${PGDB_VERSION}"    
-    
 
-    for pgsql_bin in $(find /etc/alternatives/ -name 'pgsql-*' -exec basename {} \; ); 
-    do 
-        # alternatives --display $pgsql_bin; 
+    sudo systemctl enable postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
+    sudo systemctl start postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to start postgresql-${PGDB_VERSION}"
+
+
+    for pgsql_bin in $(find /etc/alternatives/ -name 'pgsql-*' -exec basename {} \; );
+    do
+        # alternatives --display $pgsql_bin;
         position=$(alternatives --display $pgsql_bin | grep 'priority' | grep -n ${PGDB_VERSION} | cut -d':' -f1)
-        
+
         # goto be a better way than this - expecting 2 versions installed, choose older 9.5 to enabled by default (idx 2)
         sudo alternatives --config ${pgsql_bin} <<< $position > /dev/null && echo "switching $pgsql_bin to $position";
     done
@@ -645,7 +645,7 @@ switch_php ()
     PHP_DOT_VERSION=$1;
     PHP_VERSION=`echo $PHP_DOT_VERSION | tr -d '.'`;
     sudo su -  <<SWITCH_PHP
-    unset X_SCLS && export X_SCLS="`scl enable php${PHP_VERSION} 'echo $X_SCLS'`"    
+    unset X_SCLS && export X_SCLS="`scl enable php${PHP_VERSION} 'echo $X_SCLS'`"
     source scl_source enable php${PHP_VERSION}
 
     # Update Link - possibly better handled with "alternatives"
@@ -709,7 +709,7 @@ PHP_SYSCTL
     [ -e /etc/opt/remi/php${PHP_VERSION}/php-fpm.conf ] && ln -fs /etc/opt/remi/php${PHP_VERSION}/php-fpm.conf /etc/php/${PHP_DOT_VERSION}/fpm/php-fpm.conf
 PHP_FPM
 
-    # keep ENV vars tidy when allowing multiple switch_php calls 
+    # keep ENV vars tidy when allowing multiple switch_php calls
     unset X_SCLS;
     LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed 's#/opt/remi/php[0-9][0-9]/root/usr/lib64:*##g')
     PATH=$(echo $PATH | sed 's#/opt/remi/php[0-9][0-9]/root/usr/[s]*bin:*##g')
@@ -779,7 +779,7 @@ install_mysql() {
 
     yum -y install mysql-community-server
 
-    rm -f mysql57-community-release-el7-7.noarch.rpm 
+    rm -f mysql57-community-release-el7-7.noarch.rpm
 }
 
 configure_mysql() {
@@ -957,8 +957,8 @@ install_pghashlib() {
         && unzip pghashlib.zip \
         && cd pghashlib-master \
         && yum install -y $PGVER_DEVEL_LIB \
-        && echo '#export PATH=${PG_PATH}:\$PATH; # rely on linux alternatives command' >> ~/.bashrc \
-        && source ~/.bashrc \
+        && echo -e "PG_PATH=${PG_PATH}\nPATH=\$PATH:\$PG_PATH\n" > /tmp/postgres_hashlib.sh \
+        && source /tmp/postgres_hashlib.sh \
         && make \
         && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
         && chown $(whoami) ${PGLIB}/lib/ \
@@ -1096,7 +1096,7 @@ HEROKU
 }
 
 install_lucky() {
- 
+
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     # Install Lucky Framework for Crystal
     sudo su - <<'LUCKY'
