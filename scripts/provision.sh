@@ -355,9 +355,20 @@ switch_postgres() {
     PGDB_VERSION=$1
     SWITCH_DATE=$(date +"%Y-%m-%d - %H:%M:%S")
 
+    # rely on .pgsql_profile to set env - remove entry in bash_profile as created by yum install script for postgresNn
+    grep '/var/lib/pgsql/.pgsql_profile' /var/lib/pgsql/.bash_profile &> /dev/null
+    if [ $? -eq 0 ]; then
+            sed -i '/^PGDATA/d' /var/lib/pgsql/.bash_profile && echo 'removed redundant PGDATA' || echo 'no PGDATA found'
+            sed -i '/export PGDATA/d' /var/lib/pgsql/.bash_profile && echo 'removed export PGDATA' || echo 'no export PGDATA found'
+    fi
+
+    # rpm -q --scripts postgresql10-server shows the scripts used during installation - these set the postgresql's env .bash_profile
     # Update environment that will not be overwritten in any yum/rpm updates, use /var/lib/pgsql/.bash_profile
     sudo su postgres - <<PGDATA_CHANGE
-    echo -e '# switched postgresql version to (${PGDB_VERSION}) on (${SWITCH_DATE}).\nPGVERSION=${PGDB_VERSION}\nPGDATA=/var/lib/pgsql/${PGDB_VERSION}/data\nexport PGDATA PGVERSION' > /var/lib/pgsql/.pgsql_profile
+    echo -e '# switched postgresql version to (${PGDB_VERSION}) on (${SWITCH_DATE}).\nPGVERSION=${PGDB_VERSION}\nPGDATA=/var/lib/pgsql/${PGDB_VERSION}/data' > /var/lib/pgsql/.pgsql_profile
+    echo -e 'PGVER=${PGDB_VERSION}\nPGLIB=/usr/pgsql-${PGDB_VERSION}\nPG_PATH=/usr/pgsql-${PGDB_VERSION}/bin/' >> /var/lib/pgsql/.pgsql_profile
+    echo -e '\nexport PGDATA PGVERSION PGVER PGLIB PG_PATH' >> /var/lib/pgsql/.pgsql_profile
+
 PGDATA_CHANGE
 
     sudo systemctl stop postgresql-9.5 2> /dev/null || echo "" && echo "stopped postgresql-9.5";
@@ -366,7 +377,7 @@ PGDATA_CHANGE
     sudo systemctl stop postgresql-9.6 2> /dev/null || echo "" && echo "stopped postgresql-9.6";
     sudo systemctl disable postgresql-9.6 2> /dev/null || echo "" && echo "disabled postgresql-9.6"
 
-    sudo systemctl stop postgresql-10  2> /dev/null || echo "" && echo "stopped postgresql-9.5";
+    sudo systemctl stop postgresql-10  2> /dev/null || echo "" && echo "stopped postgresql-10";
     sudo systemctl disable postgresql-10  2> /dev/null || echo "" && echo "disabled postgresql-10"
 
     sudo systemctl enable postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
@@ -946,10 +957,17 @@ install_pghashlib() {
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - install pghashlib\n";
 
+    # old installer added script to profile.d - this is redundant and should have only be used during installation of pghashlib
+    [ /etc/profile.d/postgres_hashlib.sh ] && rm -f /etc/profile.d/postgres_hashlib.sh || echo 'old hashlib installer not found..moving on'
+
     PGVER=$1
     PGVER_DEVEL_LIB="postgresql$(echo $PGVER | tr -d '.')-devel"
     PGLIB="/usr/pgsql-${PGVER}"
     PG_PATH="${PGLIB}/bin/"
+    #echo "\$PGVER_DEVEL_LIB: $PGVER_DEVEL_LIB"
+    #echo "\$PGLIB:           $PGLIB"
+    #echo "\$PG_PATH:         $PG_PATH"
+    #echo "\$PGVER:           $PGVER"
     sudo su - << PGHASHLIB
         pushd /tmp/ &&
         wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip \
@@ -957,7 +975,7 @@ install_pghashlib() {
         && unzip pghashlib.zip \
         && cd pghashlib-master \
         && yum install -y $PGVER_DEVEL_LIB \
-        && echo -e "PG_PATH=${PG_PATH}\nPATH=\$PATH:\$PG_PATH\n" > /tmp/postgres_hashlib.sh \
+        && echo -e "PG_PATH=${PG_PATH}\nPATH=\\\$PATH:\\\$PG_PATH\n" > /tmp/postgres_hashlib.sh \
         && source /tmp/postgres_hashlib.sh \
         && make \
         && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
@@ -969,6 +987,10 @@ install_pghashlib() {
         && rm -rf pghashlib-master \
         && rm -f pghashlib.zip
 PGHASHLIB
+
+    echo -e "\n===============\ncheck hashlib is installed using commands\n"
+    echo "psql -U postgres -c 'CREATE EXTENSION hashlib;'"
+    echo "psql -U postgres -c \"select encode(hash128_string('abcdefg', 'murmur3'), 'hex');\""
 }
 
 install_golang() {
