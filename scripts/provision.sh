@@ -958,7 +958,7 @@ install_pghashlib() {
     echo -e "\n${FUNCNAME[ 0 ]}($@) - install pghashlib\n";
 
     # old installer added script to profile.d - this is redundant and should have only be used during installation of pghashlib
-    [ /etc/profile.d/postgres_hashlib.sh ] && rm -f /etc/profile.d/postgres_hashlib.sh || echo 'old hashlib installer not found..moving on'
+    [ -e /etc/profile.d/postgres_hashlib.sh ] && rm -f /etc/profile.d/postgres_hashlib.sh || echo 'old hashlib installer not found..moving on'
 
     PGVER=$1
     PGVER_DEVEL_LIB="postgresql$(echo $PGVER | tr -d '.')-devel"
