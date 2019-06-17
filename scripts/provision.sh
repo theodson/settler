@@ -838,7 +838,7 @@ install_blackfire() {
 install_mailhog() {
     echo -e "\n${FUNCNAME[ 0 ]}()\n"
     sudo su - << MAILHOG
-    wget --quiet -O /usr/local/bin/mailhog https://github.com/mailhog/MailHog/releases/download/v0.2.1/MailHog_linux_amd64
+    wget --quiet -O /usr/local/bin/mailhog https://github.com/mailhog/MailHog/releases/download/v1.0.0/MailHog_linux_amd64
     chmod +x /usr/local/bin/mailhog
     tee /etc/systemd/system/mailhog.service <<EOL
 [Unit]
@@ -846,7 +846,8 @@ Description=Mailhog
 After=network.target
 [Service]
 User=vagrant
-ExecStart=/usr/bin/env /usr/local/bin/mailhog > /dev/null 2>&1 &
+#ExecStart=/usr/bin/env /usr/local/bin/mailhog -storage=maildir -maildir-path=/tmp/mailhog > /var/log/maillog 2>&1 &
+ExecStart=/usr/bin/env /usr/local/bin/mailhog > /var/log/maillog 2>&1 &
 [Install]
 WantedBy=multi-user.target
 EOL
