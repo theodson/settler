@@ -182,16 +182,18 @@ install_sqlite() {
 install_postgresql() {
 
     [ $# -lt 1 ] && {
-        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 1
     };
-    echo $1 | egrep '9.5$|9.6$|10$' || {
-        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    echo $1 | egrep '9.5$|9.6$|10$|11$|12$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 2
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - install postgresql\n";
 
     sudo systemctl stop postgresql-9.5 2> /dev/null || echo "";sudo systemctl disable postgresql-9.5 2> /dev/null || echo ""
     sudo systemctl stop postgresql-9.6 2> /dev/null || echo "";sudo systemctl disable postgresql-9.6 2> /dev/null || echo ""
     sudo systemctl stop postgresql-10  2> /dev/null || echo "";sudo systemctl disable postgresql-10  2> /dev/null || echo ""
+    sudo systemctl stop postgresql-11  2> /dev/null || echo "";sudo systemctl disable postgresql-11  2> /dev/null || echo ""
+    sudo systemctl stop postgresql-12  2> /dev/null || echo "";sudo systemctl disable postgresql-12  2> /dev/null || echo ""
 
     PGDB_VERSION=$1
 
@@ -205,6 +207,12 @@ install_postgresql() {
         10) sudo rpm -Uvh http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm || echo 'postgresql10 repo already exists'
             sudo yum -y install postgresql10-server postgresql10 postgresql10-contrib
             ;;
+        11) sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql11 repo already exists'
+            sudo yum -y install postgresql11-server postgresql11 postgresql11-contrib
+            ;;
+        12) sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql12 repo already exists'
+            sudo yum -y install postgresql12-server postgresql12 postgresql12-contrib
+            ;;
     esac
 
 }
@@ -212,10 +220,10 @@ install_postgresql() {
 configure_postgresql() {
 
     [ $# -lt 1 ] && {
-        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 1
     };
-    echo $1 | egrep '9.5$|9.6$|10$' || {
-        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    echo $1 | egrep '9.5$|9.6$|10$|11$|12$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 2
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - configure postgresql\n";
 
@@ -226,6 +234,10 @@ configure_postgresql() {
         9.6) setup_script=postgresql96-setup
         ;;
         10) setup_script=postgresql-10-setup
+        ;;
+        11) setup_script=postgresql-11-setup
+        ;;
+        12) setup_script=postgresql-12-setup
         ;;
     esac
 
@@ -346,10 +358,10 @@ PGINSTALL
 switch_postgres() {
 
     [ $# -lt 1 ] && {
-        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 1
     };
-    echo $1 | egrep '9.5$|9.6$|10$' || {
-        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    echo $1 | egrep '9.5$|9.6$|10$|11$|12$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 2
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - switch postgresql\n";
     PGDB_VERSION=$1
@@ -379,6 +391,12 @@ PGDATA_CHANGE
 
     sudo systemctl stop postgresql-10  2> /dev/null || echo "" && echo "stopped postgresql-10";
     sudo systemctl disable postgresql-10  2> /dev/null || echo "" && echo "disabled postgresql-10"
+
+    sudo systemctl stop postgresql-11  2> /dev/null || echo "" && echo "stopped postgresql-11";
+    sudo systemctl disable postgresql-11  2> /dev/null || echo "" && echo "disabled postgresql-11"
+
+    sudo systemctl stop postgresql-12  2> /dev/null || echo "" && echo "stopped postgresql-12";
+    sudo systemctl disable postgresql-12  2> /dev/null || echo "" && echo "disabled postgresql-12"
 
     sudo systemctl enable postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
     sudo systemctl start postgresql-${PGDB_VERSION}  2> /dev/null || echo "failed to start postgresql-${PGDB_VERSION}"
@@ -951,10 +969,10 @@ install_zend_zray() {
 
 install_pghashlib() {
     [ $# -lt 1 ] && {
-        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 1
+        echo -e "missing argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 1
     };
-    echo $1 | egrep '9.5$|9.6$|10$' || {
-        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10" && return 2
+    echo $1 | egrep '9.5$|9.6$|10$|11$|12$' || {
+        echo -e "invalid argument\nusage: ${FUNCNAME[ 0 ]} 9.5|9.6|10|11|12" && return 2
     };
     echo -e "\n${FUNCNAME[ 0 ]}($@) - install pghashlib\n";
 
@@ -1200,7 +1218,16 @@ install_postgresql 10
 install_pghashlib 10
 configure_postgresql 10
 
-switch_postgres 10
+install_postgresql 11
+install_pghashlib 11
+configure_postgresql 11
+
+install_postgresql 12
+install_pghashlib 12
+configure_postgresql 12
+
+
+switch_postgres 12
 declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >> /root/.bash_profile
 
 install_mysql
