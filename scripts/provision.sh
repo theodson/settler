@@ -429,31 +429,29 @@ PGDATA_CHANGE
   sudo systemctl enable postgresql-${PGDB_VERSION} 2>/dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
   sudo systemctl start postgresql-${PGDB_VERSION} 2>/dev/null || echo "failed to start postgresql-${PGDB_VERSION}"
 
-  [ "${mode}" -eq 1 ] && {
-    # rely on installed alternatives
-    for pgsql_bin in $(find /etc/alternatives/ -name 'pgsql-*' -exec basename {} \;); do
-      # alternatives --display $pgsql_bin;
-      position=$(alternatives --display $pgsql_bin | grep 'priority' | grep -n ${PGDB_VERSION} | cut -d':' -f1)
+  # rely on installed alternatives
+  for pgsql_bin in $(find /etc/alternatives/ -name 'pgsql-*' -exec basename {} \;); do
+    # alternatives --display $pgsql_bin;
+    position=$(alternatives --display $pgsql_bin | grep 'priority' | grep -n ${PGDB_VERSION} | cut -d':' -f1)
 
-      # goto be a better way than this - expecting 2 versions installed, choose older 9.5 to enabled by default (idx 2)
-      sudo alternatives --config ${pgsql_bin} <<<$position >/dev/null && echo "switching $pgsql_bin to $position"
-    done
+    # goto be a better way than this - expecting 2 versions installed, choose older 9.5 to enabled by default (idx 2)
+    sudo alternatives --config ${pgsql_bin} <<<$position >/dev/null && echo "switching $pgsql_bin to $position"
+  done
 
-    # PG 9.5 and 9.6 have createlang and droplang commands that dont exist in 10+
-    for REMPG in 9.5 9.6; do
-      /usr/sbin/update-alternatives --remove pgsql-createlang /usr/pgsql-${REMPG}/bin/createlang
-      /usr/sbin/update-alternatives --remove pgsql-createlangman /usr/pgsql-${REMPG}/share/man/man1/createlang.1
-      /usr/sbin/update-alternatives --remove pgsql-droplang /usr/pgsql-${REMPG}/bin/droplang
-      /usr/sbin/update-alternatives --remove pgsql-droplangman /usr/pgsql-${REMPG}/share/man/man1/droplang.1
-    done
+  # PG 9.5 and 9.6 have createlang and droplang commands that dont exist in 10+
+  for REMPG in 9.5 9.6; do
+    /usr/sbin/update-alternatives --remove pgsql-createlang /usr/pgsql-${REMPG}/bin/createlang
+    /usr/sbin/update-alternatives --remove pgsql-createlangman /usr/pgsql-${REMPG}/share/man/man1/createlang.1
+    /usr/sbin/update-alternatives --remove pgsql-droplang /usr/pgsql-${REMPG}/bin/droplang
+    /usr/sbin/update-alternatives --remove pgsql-droplangman /usr/pgsql-${REMPG}/share/man/man1/droplang.1
+  done
 
-    echo ${PGDB_VERSION} | egrep '9.5$|9.6$' && {
-      priority=$(printf %.0f $(echo "scale=2 ;${PGDB_VERSION}*100" | bc))
-      /usr/sbin/update-alternatives --install /usr/bin/createlang pgsql-createlang /usr/pgsql-${PGDB_VERSION}/bin/createlang 950
-      /usr/sbin/update-alternatives --install /usr/bin/droplang pgsql-droplang /usr/pgsql-${PGDB_VERSION}/bin/droplang 950
-      /usr/sbin/update-alternatives --install /usr/share/man/man1/createlang.1 pgsql-createlangman /usr/pgsql-${PGDB_VERSION}/share/man/man1/createlang.1 950
-      /usr/sbin/update-alternatives --install /usr/share/man/man1/droplang.1 pgsql-droplangman /usr/pgsql-${PGDB_VERSION}/share/man/man1/droplang.1 950
-    }
+  echo ${PGDB_VERSION} | egrep '9.5$|9.6$' && {
+    priority=$(printf %.0f $(echo "scale=2 ;${PGDB_VERSION}*100" | bc))
+    /usr/sbin/update-alternatives --install /usr/bin/createlang pgsql-createlang /usr/pgsql-${PGDB_VERSION}/bin/createlang 950
+    /usr/sbin/update-alternatives --install /usr/bin/droplang pgsql-droplang /usr/pgsql-${PGDB_VERSION}/bin/droplang 950
+    /usr/sbin/update-alternatives --install /usr/share/man/man1/createlang.1 pgsql-createlangman /usr/pgsql-${PGDB_VERSION}/share/man/man1/createlang.1 950
+    /usr/sbin/update-alternatives --install /usr/share/man/man1/droplang.1 pgsql-droplangman /usr/pgsql-${PGDB_VERSION}/share/man/man1/droplang.1 950
   }
 
   ls -l /etc/alternatives/pg*

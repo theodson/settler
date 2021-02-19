@@ -27,10 +27,9 @@ declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch
 #install_php_remi 7.0 && configure_php_remi 7.0
 #install_php_remi 7.1 && configure_php_remi 7.1
 #install_php_remi 7.2 && configure_php_remi 7.2
-install_php_remi 7.3 && configure_php_remi 7.3
-install_php_remi 7.4 && configure_php_remi 7.4
-install_php_remi 8.0 && configure_php_remi 8.0
-switch_php 8.0
+[[ "$*" =~ 'php73' ]] { install_php_remi 7.3 && configure_php_remi 7.3 }
+[[ "$*" =~ 'php74' ]] { install_php_remi 7.4 && configure_php_remi 7.4 }
+[[ "$*" =~ 'php80' ]] { install_php_remi 8.0 && configure_php_remi 8.0 }
 
 #install_composer
 #install_git2
@@ -51,25 +50,29 @@ switch_php 8.0
 
 declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >> /root/.bash_profile
 
-install_postgresql 11
-configure_postgresql 11
-switch_postgres 11
-install_pghashlib 11
-install_timescaledb_for_postgresql 11
+[[ "$*" =~ 'postgresql11' ]] && {
+  install_postgresql 11
+  configure_postgresql 11
+  switch_postgres 11
+  install_pghashlib 11
+  install_timescaledb_for_postgresql 11
+}
 
-install_postgresql 12
-configure_postgresql 12
-switch_postgres 12
-install_pghashlib 12
-install_timescaledb_for_postgresql 12
+[[ "$*" =~ 'postgresql12' ]] && {
+  install_postgresql 12
+  configure_postgresql 12
+  switch_postgres 12
+  install_pghashlib 12
+  install_timescaledb_for_postgresql 12
+}
 
-install_postgresql 13
-configure_postgresql 13
-switch_postgres 13
-install_pghashlib 13
-# install_timescaledb_for_postgresql 13 - not available for 13 as of 2021-02-14
-
-switch_postgres 12
+[[ "$*" =~ 'postgresql13' ]] && {
+  install_postgresql 13
+  configure_postgresql 13
+  switch_postgres 13
+  install_pghashlib 13
+  # install_timescaledb_for_postgresql 13 - not available for 13 as of 2021-02-14
+}
 
 #install_mysql
 #configure_mysql
@@ -91,7 +94,9 @@ switch_postgres 12
 #install_crystal
 #install_heroku_tooling
 #install_lucky
-install_rabbitmq
+[[ "$*" =~ 'rabbitmq' ]] && {
+  install_rabbitmq
+}
 
 finish_build_meta ${UPGRADE_BOX_VERSION}
 set -u
