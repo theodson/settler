@@ -1281,6 +1281,15 @@ BUILD_META
 
 }
 
+disable_blackfire() {
+  # don't load blackfire
+  find /etc/opt/remi -path '/etc/opt/remi/*/php.d/*-blackfire.ini' -exec sed -i 's/^/;/g' {} \;
+  sudo systemctl disable blackfire-agent || true
+
+  # disable repo as it has issues
+  yum-config-manager --disable blackfire &>/dev/null || true
+}
+
 set_profile() {
   echo -e "\n${FUNCNAME[0]}()\n"
 

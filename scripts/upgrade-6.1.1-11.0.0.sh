@@ -9,8 +9,10 @@ UPGRADE_BOX_VERSION='11.0.0<6.1.1'
 set +u
 echo -e "Starting upgrade to version: ${UPGRADE_BOX_VERSION}\n"
 
+disable_blackfire
+
 yum-config-manager --disable blackfire &>/dev/null || true
-yum clean all && rm -rf /var/cache/yum/* || true
+#yum clean all && rm -rf /var/cache/yum/* || true
 yum install -y yum-presto || true
 yum makecache fast || true
 #set_profile
@@ -27,9 +29,15 @@ declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch
 #install_php_remi 7.0 && configure_php_remi 7.0
 #install_php_remi 7.1 && configure_php_remi 7.1
 #install_php_remi 7.2 && configure_php_remi 7.2
-[[ "$*" =~ 'php73' ]] { install_php_remi 7.3 && configure_php_remi 7.3 }
-[[ "$*" =~ 'php74' ]] { install_php_remi 7.4 && configure_php_remi 7.4 }
-[[ "$*" =~ 'php80' ]] { install_php_remi 8.0 && configure_php_remi 8.0 }
+[[ "$*" =~ 'php73' ]] && {
+  install_php_remi 7.3 && configure_php_remi 7.3
+}
+[[ "$*" =~ 'php74' ]] && {
+  install_php_remi 7.4 && configure_php_remi 7.4
+}
+[[ "$*" =~ 'php80' ]] && {
+  install_php_remi 8.0 && configure_php_remi 8.0
+}
 
 #install_composer
 #install_git2

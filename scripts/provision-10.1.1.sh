@@ -93,6 +93,7 @@ install_heroku_tooling
 install_lucky
 install_rabbitmq
 
+disable_blackfire
 
 finish_build_meta ${PACKER_BOX_VERSION}
 set -u
