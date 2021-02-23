@@ -8,6 +8,7 @@ fi
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 
 set +u
+rpm_versions pre_provision_10.1.1
 echo -e "Starting build for version: ${PACKER_BOX_VERSION}\n"
 yum-config-manager --disable blackfire &>/dev/null || true
 yum clean all && rm -rf /var/cache/yum/* || true
@@ -96,4 +97,5 @@ install_rabbitmq
 disable_blackfire
 
 finish_build_meta ${PACKER_BOX_VERSION}
+rpm_versions post_provision_10.1.1
 set -u

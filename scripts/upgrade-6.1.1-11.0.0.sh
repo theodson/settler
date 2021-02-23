@@ -8,8 +8,14 @@ UPGRADE_BOX_VERSION='11.0.0<6.1.1'
 
 set +u
 echo -e "Starting upgrade to version: ${UPGRADE_BOX_VERSION}\n"
-
+rpm_versions pre_upgrade_6.1.1-10.1.1
 disable_blackfire
+
+[ $# -eq 0 ] && {
+  args=("$@")
+  args+=( "php73" "php74" "php80" "postgresql12" ) # default upgrades
+}
+echo "Upgrade tasks: ${args[*]}"
 
 yum-config-manager --disable blackfire &>/dev/null || true
 #yum clean all && rm -rf /var/cache/yum/* || true
@@ -29,13 +35,13 @@ declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch
 #install_php_remi 7.0 && configure_php_remi 7.0
 #install_php_remi 7.1 && configure_php_remi 7.1
 #install_php_remi 7.2 && configure_php_remi 7.2
-[[ "$*" =~ 'php73' ]] && {
+[[ "${args[*]}" =~ 'php73' ]] && {
   install_php_remi 7.3 && configure_php_remi 7.3
 }
-[[ "$*" =~ 'php74' ]] && {
+[[ "${args[*]}" =~ 'php74' ]] && {
   install_php_remi 7.4 && configure_php_remi 7.4
 }
-[[ "$*" =~ 'php80' ]] && {
+[[ "${args[*]}" =~ 'php80' ]] && {
   install_php_remi 8.0 && configure_php_remi 8.0
 }
 
@@ -58,7 +64,7 @@ declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch
 
 declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >> /root/.bash_profile
 
-[[ "$*" =~ 'postgresql11' ]] && {
+[[ "${args[*]}" =~ 'postgresql11' ]] && {
   install_postgresql 11
   configure_postgresql 11
   switch_postgres 11
@@ -66,7 +72,7 @@ declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/s
   install_timescaledb_for_postgresql 11
 }
 
-[[ "$*" =~ 'postgresql12' ]] && {
+[[ "${args[*]}" =~ 'postgresql12' ]] && {
   install_postgresql 12
   configure_postgresql 12
   switch_postgres 12
@@ -74,7 +80,7 @@ declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/s
   install_timescaledb_for_postgresql 12
 }
 
-[[ "$*" =~ 'postgresql13' ]] && {
+[[ "${args[*]}" =~ 'postgresql13' ]] && {
   install_postgresql 13
   configure_postgresql 13
   switch_postgres 13
@@ -102,10 +108,12 @@ declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/s
 #install_crystal
 #install_heroku_tooling
 #install_lucky
-[[ "$*" =~ 'rabbitmq' ]] && {
+[[ "${args[*]}" =~ 'rabbitmq' ]] && {
   install_rabbitmq
 }
 
 finish_build_meta ${UPGRADE_BOX_VERSION}
+rpm_versions post_upgrade_6.1.1-10.1.1
+
 set -u
 

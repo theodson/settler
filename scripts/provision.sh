@@ -381,11 +381,12 @@ PGINSTALL
 
 switch_postgres() {
 
+  versions_installed="$(rpm -qa postgresql*-server --qf '%{VERSION}\n' | egrep -oE '^[1-2][0-9]|[9]\.[5-7]' | sort -n | tr '\n' ' ' | tr ' ' '|' | sed 's/.$//')"
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 1
   }
-  echo $1 | egrep '9.5$|9.6$|10$|11$|12$|13$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 2
+  echo "$1" | egrep "$versions_installed" || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - switch postgresql\n"
   PGDB_VERSION=$1
@@ -1282,6 +1283,7 @@ BUILD_META
 }
 
 disable_blackfire() {
+  echo -e "\n${FUNCNAME[0]}()\n"
   # don't load blackfire
   find /etc/opt/remi -path '/etc/opt/remi/*/php.d/*-blackfire.ini' -exec sed -i 's/^/;/g' {} \;
   sudo systemctl disable blackfire-agent || true
@@ -1302,4 +1304,13 @@ PATH=\$PATH:\$HOME/bin
 # Homestead fix - incorporate ~/.profile
 source ~/.profile
 HOMESTEAD_BASH_FIX
+}
+
+rpm_versions() {
+  echo -e "\n${FUNCNAME[0]}()\n"
+  [ ! -z $1 ] && tagged=".$1" || tagged=''
+  # list all packages installed and versions
+  outputfile=/tmp/rpm-versions.$(date +"%Y%m%d_%H%M%S_%s")${tagged}.txt
+  rpm -qa --qf '%{NAME}_%{VERSION}\n' | sort > $outputfile
+  echo $outputfile
 }
