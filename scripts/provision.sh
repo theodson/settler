@@ -182,7 +182,7 @@ install_postgresql() {
   echo $1 | egrep '9.5$|9.6$|10$|11$|12$|13$' || {
     echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 2
   }
-  echo -e "\n${FUNCNAME[0]}($@) - install already postgresql\n"
+  echo -e "\n${FUNCNAME[0]}($@) - install postgresql\n"
 
   PGDB_VERSION=$1
   PGDB_VER=$(echo $PGDB_VERSION | tr -d '.') # remove the dots
@@ -1229,8 +1229,10 @@ LUCKY
 }
 
 install_rabbitmq() {
-  rpm --import https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey
-  rpm --import https://packagecloud.io/gpg.key
+  echo -e "\n${FUNCNAME[0]}()\n"
+
+  rpm --import https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey ||true
+  rpm --import https://packagecloud.io/gpg.key||true
   curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
   curl -s https://packagecloud.io/install/repositories/rabbitmq/erlang/script.rpm.sh | sudo bash
   yum install -y erlang rabbitmq-server
