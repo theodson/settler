@@ -706,13 +706,13 @@ NGINXDIFF
 }
 
 switch_php() {
+  versions_installed="$(rpm -qa php*-runtime --qf '%{NAME}\n' | egrep -oE '[789][0-9]' | sort -n | sed 's/./&\./1' | tr '\n' '|' | sed 's/.$//')"
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 1
   }
-  echo $1 | egrep '[7,8]\.[0,1,2,3,4]' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0" && return 2
+  echo "$1" | egrep "$versions_installed" || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 2
   }
-  echo -e "\n${FUNCNAME[0]}($@) - changing system php version\n"
 
   # https://access.redhat.com/solutions/528643 - /etc/alternatives and the dynamic software collections framework
 
