@@ -1054,6 +1054,7 @@ install_pghashlib() {
   sudo yum install llvm-toolset-7.0 gcc -y || true
   scl enable llvm-toolset-7.0 bash
 
+  # https://command-not-found.com/rst2html.py `yum install python-docutils`
   #echo "\$PGVER_DEVEL_LIB: $PGVER_DEVEL_LIB"
   #echo "\$PGLIB:           $PGLIB"
   #echo "\$PG_PATH:         $PG_PATH"
@@ -1068,7 +1069,7 @@ install_pghashlib() {
         && echo -e "PG_PATH=${PG_PATH}\nPATH=\\\$PATH:\\\$PG_PATH\n" > /tmp/postgres_hashlib.sh \
         && source /tmp/postgres_hashlib.sh \
         && make \
-        && [[ -f hashlib.html ]] || cp README.rst hashlib.html \
+        && [[ -f hashlib.html ]] || cp README.rst hashlib.html \rst2html
         && chown $(whoami) ${PGLIB}/lib/ \
         && chown $(whoami) ${PGLIB}/share/extension \
         && chown $(whoami) ${PGLIB}/doc/extension \
