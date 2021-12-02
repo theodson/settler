@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#
+# building on macosx - https://learn.hashicorp.com/tutorials/packer/getting-started-install
+#   brew tap hashicorp/tap && brew install hashicorp/tap/packer
+#
 [ $# -ne 1 ] && {
         echo -e "missing argument\nusage: $0 version ( n.n.n )" && exit 1
     };
@@ -16,6 +20,7 @@ packer_vars=" -var name=homestead-co7 -var memory=2048 -var disk_size=105000 -va
 
 rm -f scripts/homestead.sh &> /dev/null
 cp -rf scripts/provision.sh bento/centos/scripts/homestead.sh
+cat scripts/provision-${PACKER_BOX_VERSION}.sh >> bento/centos/scripts/homestead.sh
 
 pushd bento/centos
 # Add `scripts/homestead.sh` to `provisioners.scripts` after `"scripts/hyperv.sh",` in file `centos/centos-7.5-x86_64.json`
