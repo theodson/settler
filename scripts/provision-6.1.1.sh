@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # provision homestead 6.1.1
 #
@@ -18,7 +19,8 @@ set_profile
 yum_prepare
 yum_install
 
-#install_supervisor
+install_supervisor
+reconfigure_supervisord
 install_node
 install_nginx
 

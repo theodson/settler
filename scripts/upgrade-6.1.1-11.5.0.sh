@@ -1,5 +1,6 @@
+#!/usr/bin/env bash
 #
-# upgrade homestead 6.1.1 to 11.0.0 (php-8.0 introduced at 10.1.1).
+# upgrade homestead 6.1.1 to 11.5.0 (php-8.0 introduced at 10.1.1).
 #
 UPGRADE_BOX_VERSION='11.0.0<6.1.1'
 
@@ -8,28 +9,34 @@ UPGRADE_BOX_VERSION='11.0.0<6.1.1'
 
 set +u
 echo -e "Starting upgrade to version: ${UPGRADE_BOX_VERSION}\n"
-rpm_versions pre_upgrade_6.1.1-10.1.1
+rpm_versions pre_upgrade_6.1.1-11.5.0
 disable_blackfire
+fix_letsencrypt_certificate_issue
 
 args=("$@")
 [ $# -eq 0 ] && {
-  # args+=("php73" "php74" "php80" "postgresql12") # default upgrades
-  args+=("php80" "postgresql12" "rabbitmq") # default upgrades
+  # args+=("php73" "php74" "php80" "php81" "composer" "postgresql14" "rabbitmq" "phptesting" "docker") # default upgrades
+  args+=("php81" "php80" "composer" "postgresql14" "rabbitmq" "phptesting" "docker") # default upgrades
 }
 echo -e "\nUpgrade tasks: ${args[*]}\n"
 
-yum-config-manager --disable blackfire &>/dev/null || true
+yum-config-manager -y --disable blackfire &>/dev/null || true
 #yum clean all && rm -rf /var/cache/yum/* || true
-yum install -y yum-presto || true
-yum makecache fast || true
+yum -y -q install yum-presto || true
+yum -y -q makecache fast || true
+
+update_services # update already installed services to latest (redis, beanstalkd)
+
 #set_profile
 
 #yum_prepare
 #yum_install
 
 #install_supervisor
+reconfigure_supervisord
 #install_node
 #install_nginx
+
 
 declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >>/root/.bash_profile
 
@@ -45,8 +52,23 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 [[ "${args[*]}" =~ 'php80' ]] && {
   install_php_remi 8.0 && configure_php_remi 8.0
 }
+[[ "${args[*]}" =~ 'php81' ]] && {
+  install_php_remi 8.1 && configure_php_remi 8.1
+}
 
-#install_composer
+[[ "${args[*]}" =~ 'composer' ]] && {
+    upgrade_composer
+}
+
+[[ "${args[*]}" =~ 'phptesting' ]] && {
+    install_phpunit
+    install_chromebrowser # Dusk tests require it
+}
+
+[[ "${args[*]}" =~ 'docker' ]] && {
+    install_docker
+}
+
 #install_git2
 
 #install_sqlite
@@ -86,7 +108,15 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
   configure_postgresql 13
   switch_postgres 13
   install_pghashlib 13
-  # install_timescaledb_for_postgresql 13 - not available for 13 as of 2021-02-14
+  install_timescaledb_for_postgresql 13
+}
+
+[[ "${args[*]}" =~ 'postgresql14' ]] && {
+  install_postgresql 14
+  configure_postgresql 14
+  switch_postgres 14
+  install_pghashlib 14
+  install_timescaledb_for_postgresql 14
 }
 
 #install_mysql
@@ -114,6 +144,6 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 }
 
 finish_build_meta ${UPGRADE_BOX_VERSION}
-rpm_versions post_upgrade_6.1.1-10.1.1
+rpm_versions post_upgrade_6.1.1-11.5.0
 
 set -u

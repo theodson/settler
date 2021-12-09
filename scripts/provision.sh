@@ -132,12 +132,12 @@ YUM
 }
 
 install_supervisor() {
-  echo -e "\n${FUNCNAME[0]}()\n"
+    echo -e "\n${FUNCNAME[0]}()\n"
 
-  # install supervisor
-  # http://vicendominguez.blogspot.com.au/2015/02/supervisord-in-centos-7-systemd-version.html
-  # http://www.alphadevx.com/a/455-Installing-Supervisor-and-Superlance-on-CentOS
-  sudo su - <<'SUPERVISOR'
+    # install supervisor
+    # http://vicendominguez.blogspot.com.au/2015/02/supervisord-in-centos-7-systemd-version.html
+    # http://www.alphadevx.com/a/455-Installing-Supervisor-and-Superlance-on-CentOS
+    sudo su - <<'SUPERVISOR'
     sudo yum install -y python-setuptools python-pip
     sudo easy_install supervisor
 
@@ -159,13 +159,24 @@ User=root
 
 [Install]
 WantedBy=multi-user.target
-SUPERVISOR
+SUPERVISOR_EOF
 
   chmod 755 /usr/lib/systemd/system/supervisord.service
   systemctl enable supervisord
 
-  SUPERVISOR
+SUPERVISOR
+}
 
+reconfigure_supervisord() {
+    # have supervisord auto restart
+    sudo su - <<'SUPERVISOR'
+# comment out existing and replace with new ExecStart
+sed -i '/ExecStart/ d' /usr/lib/systemd/system/supervisord.service
+sed -i '/Restart=/ d' /usr/lib/systemd/system/supervisord.service
+sed -i '/RestartSec=/ d' /usr/lib/systemd/system/supervisord.service
+
+sed -i "/Type=forking/ a ExecStart=/usr/bin/supervisord -c /etc/supervisord.conf\nRestart=always\nRestartSec=10" /usr/lib/systemd/system/supervisord.service
+SUPERVISOR
 }
 
 install_sqlite() {
@@ -177,10 +188,10 @@ install_sqlite() {
 install_postgresql() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
   }
-  echo $1 | egrep '9.5$|9.6$|10$|11$|12$|13$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install postgresql\n"
 
@@ -203,6 +214,8 @@ install_postgresql() {
   sudo systemctl disable postgresql-12 2>/dev/null || echo ""
   sudo systemctl stop postgresql-13 2>/dev/null || echo ""
   sudo systemctl disable postgresql-13 2>/dev/null || echo ""
+  sudo systemctl stop postgresql-14 2>/dev/null || echo ""
+  sudo systemctl disable postgresql-14 2>/dev/null || echo ""
 
   case "$PGDB_VERSION" in
   9.5)
@@ -226,8 +239,12 @@ install_postgresql() {
     sudo yum -y install postgresql12-server postgresql12 postgresql12-contrib
     ;;
   13)
-    sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql12 repo already exists'
+    sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql13 repo already exists'
     sudo yum -y install postgresql13-server postgresql13 postgresql13-contrib
+    ;;
+  14)
+    sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql14 repo already exists'
+    sudo yum -y install postgresql14-server postgresql14 postgresql14-contrib
     ;;
   esac
 
@@ -236,10 +253,10 @@ install_postgresql() {
 configure_postgresql() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
   }
-  echo $1 | egrep '9.5$|9.6$|10$|11$|12$|13$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
+    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - configure postgresql\n"
 
@@ -262,6 +279,9 @@ configure_postgresql() {
     ;;
   13)
     setup_script=postgresql-13-setup
+    ;;
+  14)
+    setup_script=postgresql-14-setup
     ;;
   esac
 
@@ -385,8 +405,8 @@ switch_postgres() {
   [ $# -lt 1 ] && {
     echo -e "missing argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 1
   }
-  echo "$1" | egrep "$versions_installed" || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 2
+  echo "$1" | grep -E "$versions_installed" || {
+    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} $versions_installed" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - switch postgresql\n"
   PGDB_VERSION=$1
@@ -426,6 +446,9 @@ PGDATA_CHANGE
 
   sudo systemctl stop postgresql-13 2>/dev/null || true && echo "stopped postgresql-13"
   sudo systemctl disable postgresql-13 2>/dev/null || true && echo "disabled postgresql-13"
+
+  sudo systemctl stop postgresql-14 2>/dev/null || true && echo "stopped postgresql-14"
+  sudo systemctl disable postgresql-14 2>/dev/null || true && echo "disabled postgresql-14"
 
   sudo systemctl enable postgresql-${PGDB_VERSION} 2>/dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
   sudo systemctl start postgresql-${PGDB_VERSION} 2>/dev/null || echo "failed to start postgresql-${PGDB_VERSION}"
@@ -521,7 +544,15 @@ install_php_remi() {
   done
   sudo yum-config-manager --enable remi-php${PHP_VERSION}
 
-  sudo yum --enablerepo=remi-php${PHP_VERSION} install -y php${PHP_VERSION}-php-xml php${PHP_VERSION}-php-soap php${PHP_VERSION}-php-xmlrpc php${PHP_VERSION}-php-mbstring php${PHP_VERSION}-php-json php${PHP_VERSION}-php-gd php${PHP_VERSION}-php-mcrypt \
+  sudo yum --enablerepo=remi-php${PHP_VERSION} install -y \
+    php${PHP_VERSION}-php-xml \
+    php${PHP_VERSION}-php-soap \
+    php${PHP_VERSION}-php-xmlrpc \
+    php${PHP_VERSION}-php-mbstring \
+    php${PHP_VERSION}-php-json \
+    gd-last \
+    php${PHP_VERSION}-php-gd \
+    php${PHP_VERSION}-php-mcrypt \
     php${PHP_VERSION}-php-cli \
     php${PHP_VERSION}-php-common \
     php${PHP_VERSION}-php-intl \
@@ -559,16 +590,17 @@ install_php_remi() {
   [ $PHP_VERSION -eq '74' ] && yum install -y php74-php-pecl-interbase.x86_64
 
   switch_php $PHP_DOT_VERSION
+  php -v
 
 }
 
 configure_php_remi() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 1
   }
   echo $1 | egrep '[7,8]\.[0,1,2,3,4]' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0" && return 2
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - configure nginx php-fpm\n"
 
@@ -710,7 +742,7 @@ switch_php() {
   [ $# -lt 1 ] && {
     echo -e "missing argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 1
   }
-  echo "$1" | egrep "$versions_installed" || {
+  echo "$1" | grep -E "$versions_installed" || {
     echo -e "invalid argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 2
   }
 
@@ -802,39 +834,54 @@ install_composer() {
   # Install Composer
 
   sudo su - <<COMPOSER
-    curl -sS https://getcomposer.org/installer | php
-    mv composer.phar /usr/local/bin/composer
-
+    type composer &>/dev/null || {
+        curl -sS https://getcomposer.org/installer | php
+        mv composer.phar /usr/local/bin/composer
+    }
     cat << 'COMPOSER_HOME' >> /etc/bashrc
 # Add Composer Global Bin To Path
-export PATH=~/.composer/vendor/bin:/usr/local/bin:\$PATH
-COMPOSER
+export PATH=~/.config/composer/vendor/bin:\$PATH
+export PATH=/usr/local/bin:\$PATH
+COMPOSER_HOME
+
 
   # Install Laravel Envoy & Installer
-  export COMPOSER_HOME=~/.composer/
-  /usr/local/bin/composer config --list --global
+  # export COMPOSER_HOME=~/.composer/ # use composer 2 default of $HOME/.config/composer
+  #/usr/local/bin/composer config --list --global
 
-  /usr/local/bin/composer global require "laravel/envoy=~1.0"
-  /usr/local/bin/composer global require "laravel/installer=~1.1"
-  /usr/local/bin/composer global require "laravel/lumen-installer=~1.0"
-  /usr/local/bin/composer global require "laravel/spark-installer=~2.0"
-  /usr/local/bin/composer global require "drush/drush=~8"
-  /usr/local/bin/composer global require "phing/phing"
-  COMPOSER
+  #/usr/local/bin/composer global require --no-interaction "laravel/envoy=^2.0"
+  #/usr/local/bin/composer global require --no-interaction "laravel/installer=^4.0.2"
+  #/usr/local/bin/composer global require --no-interaction "laravel/spark-installer=dev-master"
+  #/usr/local/bin/composer global require --no-interaction "slince/composer-registry-manager=^2.0"
 
-  /usr/local/bin/composer config --list --global
+  /usr/local/bin/composer global require --with-all-dependencies --no-interaction \
+    "laravel/envoy" \
+    "laravel/installer" \
+    "laravel/spark-installer" \
+    "slince/composer-registry-manager" \
+    tightenco/takeout
+
+  /usr/local/bin/composer global show --no-interaction --self
+COMPOSER
+
+  /usr/local/bin/composer config --no-interaction --list --global
 
   # Install Laravel Envoy & Installer
   sudo su - vagrant <<EOF
-    export COMPOSER_HOME=~/.composer
-    /usr/local/bin/composer config --list --global
+    # export COMPOSER_HOME=~/.composer  # use composer 2 default of $HOME/.config/composer
+    #/usr/local/bin/composer config --list --global
 
-    /usr/local/bin/composer global require "laravel/envoy=~1.0"
-    /usr/local/bin/composer global require "laravel/installer=~1.1"
-    /usr/local/bin/composer global require "laravel/lumen-installer=~1.0"
-    /usr/local/bin/composer global require "laravel/spark-installer=~2.0"
-    /usr/local/bin/composer global require "drush/drush=~8"
-    /usr/local/bin/composer global require "phing/phing"
+    #/usr/local/bin/composer global require --no-interaction "laravel/envoy=^2.0"
+    #/usr/local/bin/composer global require --no-interaction "laravel/installer=^4.0.2"
+    #/usr/local/bin/composer global require --no-interaction "laravel/spark-installer=dev-master"
+    #/usr/local/bin/composer global require --no-interaction "slince/composer-registry-manager=^2.0"
+
+    /usr/local/bin/composer global require --with-all-dependencies --no-interaction \
+      "laravel/envoy" \
+      "laravel/installer" \
+      "laravel/spark-installer" \
+      "slince/composer-registry-manager" \
+      tightenco/takeout
 
 EOF
 
@@ -1011,10 +1058,10 @@ install_zend_zray() {
 
 install_pghashlib() {
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
   }
-  echo $1 | egrep '9.5$|9.6$|10$|11$|12$|13$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install pghashlib\n"
 
@@ -1026,9 +1073,9 @@ install_pghashlib() {
   PGLIB="/usr/pgsql-${PGVER}"
   PG_PATH="${PGLIB}/bin/"
 
-  echo $PGVER | egrep '11$|12$|13$' && {
+  echo $PGVER | egrep '11$|12$|13$|14$' && {
     # look for prebuild libs for hashlib - at https://github.com/bgdevlab/pghashlib
-    pghashlib=postgresql${PGVER}-hashlib.rhel7.minimum-base.tar.gz
+    pghashlib="postgresql${PGVER}-hashlib.rhel7.minimum-base.tar.gz"
     [ ! -e "/tmp/${pghashlib}" ] && {
       # download required and extract into postgresql path.
       echo -e "Local pghashlib not found - download pre-built ${pghashlib} to /tmp/$pghashlib"
@@ -1050,34 +1097,36 @@ install_pghashlib() {
 
   # centos 7 for pg11+ requires additional libraries - https://www.softwarecollections.org/en/scls/rhscl/llvm-toolset-7.0/
   # https://stackoverflow.com/questions/61904796/cloudlinux-7-8-error-installing-postgresql-11-requires-llvm-toolset-7-clang
-  sudo yum install centos-release-scl -y || true
-  sudo yum install llvm-toolset-7.0 gcc -y || true
-  scl enable llvm-toolset-7.0 bash
-
+  sudo yum -y install centos-release-scl || true
+  sudo yum -y install llvm-toolset-7.0 gcc python-docutils || true
   # https://command-not-found.com/rst2html.py `yum install python-docutils`
+
   #echo "\$PGVER_DEVEL_LIB: $PGVER_DEVEL_LIB"
   #echo "\$PGLIB:           $PGLIB"
   #echo "\$PG_PATH:         $PG_PATH"
   #echo "\$PGVER:           $PGVER"
-  sudo su - <<PGHASHLIB
-        pushd /tmp/ &&
-        wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip \
-        && rm -rf pghashlib-master \
-        && unzip pghashlib.zip \
-        && cd pghashlib-master \
-        && yum install -y $PGVER_DEVEL_LIB \
-        && echo -e "PG_PATH=${PG_PATH}\nPATH=\\\$PATH:\\\$PG_PATH\n" > /tmp/postgres_hashlib.sh \
-        && source /tmp/postgres_hashlib.sh \
-        && make \
-        && [[ -f hashlib.html ]] || cp README.rst hashlib.html \rst2html
-        && chown $(whoami) ${PGLIB}/lib/ \
-        && chown $(whoami) ${PGLIB}/share/extension \
-        && chown $(whoami) ${PGLIB}/doc/extension \
-        && make install \
-        && cd .. \
-        && rm -rf pghashlib-master \
-        && rm -f pghashlib.zip
+
+  cat <<PGHASHLIB > /tmp/install_pghashlib
+        pushd /tmp/ && \
+        wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip && \
+        rm -rf pghashlib-master && \
+        unzip pghashlib.zip && \
+        cd pghashlib-master && \
+        yum install -y $PGVER_DEVEL_LIB && \
+        echo -e "PG_PATH=${PG_PATH}\nPATH=\\\$PATH:\\\$PG_PATH\n" > /tmp/postgres_hashlib.sh && \
+        source /tmp/postgres_hashlib.sh && \
+        make && \
+        [[ -f hashlib.html ]] || make html && \
+        chown $(whoami) ${PGLIB}/lib/ && \
+        chown $(whoami) ${PGLIB}/share/extension && \
+        chown $(whoami) ${PGLIB}/doc/extension && \
+        make install && \
+        cd .. && \
+        rm -rf pghashlib-master && \
+        rm -f pghashlib.zip
 PGHASHLIB
+  sudo chmod +x /tmp/install_pghashlib
+  sudo scl enable llvm-toolset-7.0 /tmp/install_pghashlib
 
   su - postgres -c "psql -U postgres -c 'CREATE EXTENSION hashlib;'"
   su - postgres -c "psql -U postgres -c \"select encode(hash128_string('abcdefg', 'murmur3'), 'hex');\""
@@ -1245,10 +1294,10 @@ install_timescaledb_for_postgresql() {
   # https://www.digitalocean.com/community/tutorials/how-to-install-and-use-timescaledb-on-centos-7
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 11|12" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 11|12|13|14" && return 1
   }
-  echo $1 | egrep '11$|12$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 11|12" && return 2
+  echo "$1" | grep -E '11$|12$|13$|14$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 11|12|13|14" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install postgresql\n"
 
@@ -1257,7 +1306,7 @@ install_timescaledb_for_postgresql() {
   cat <<TIMESCALE_DB_REPO >>"/etc/yum.repos.d/timescaledb.repo"
 [timescale_timescaledb]
 name=timescale_timescaledb
-baseurl=https://packagecloud.io/timescale/timescaledb/el/7/\$basearch
+baseurl=https://packagecloud.io/timescale/timescaledb/el/$(rpm -E %{rhel})/\$basearch
 repo_gpgcheck=1
 gpgcheck=0
 enabled=1
@@ -1267,7 +1316,7 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 TIMESCALE_DB_REPO
 
-  sudo yum install -y timescaledb-postgresql-${PGDB_VERSION}
+  sudo yum install -y timescaledb-2-postgresql-${PGDB_VERSION}
   echo "shared_preload_libraries = 'timescaledb'" >>/var/lib/pgsql/${PGDB_VERSION}/data/postgresql.conf
   sudo systemctl restart postgresql-${PGDB_VERSION}.service
   su postgres -c "psql -c 'CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;'"
@@ -1316,4 +1365,76 @@ rpm_versions() {
   outputfile=/tmp/rpm-versions.$(date +"%Y%m%d_%H%M%S_%s")${tagged}.txt
   rpm -qa --qf '%{NAME}_%{VERSION}\n' | sort > $outputfile
   echo $outputfile
+}
+
+upgrade_composer() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+    [ -e /etc/bashrc ] && sed -i '/export PATH=~\/\.composer.*$/d' /etc/bashrc || true
+
+    rm -rf $HOME/.composer &>/dev/null || true
+    sudo su - vagrant <<EOF
+        rm -rf $HOME/.composer &>/dev/null || true
+EOF
+    type composer && composer selfupdate --no-interaction
+    install_composer
+
+}
+
+fix_letsencrypt_certificate_issue() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+
+    # - https://blog.devgenius.io/rhel-centos-7-fix-for-lets-encrypt-change-8af2de587fe4
+    # TL;DR — For TLS certificates issued by Let’s Encrypt, the root certificate (DST Root CA X3)
+    # in the default chain expires on September 30, 2021. Due to their unique approach,
+    # the expired certificate will continue to be part of the certificate chain till 2024.
+    # This affects OpenSSL 1.0.2k on RHEL/CentOS 7 servers, and will result in applications/tools
+    # failing to establish TLS/HTTPS connections with a certificate has expired message.
+    #
+    sudo trust dump --filter "pkcs11:id=%c4%a7%b1%a4%7b%2c%71%fa%db%e1%4b%90%75%ff%c4%15%60%85%89%10" | openssl x509 | sudo tee /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem
+    sudo update-ca-trust extract
+
+}
+
+install_docker() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+
+    # docker
+    sudo yum -y -q install yum-utils
+    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    sudo yum -y -q install docker-ce docker-ce-cli containerd.io
+    sudo systemctl start docker
+    sudo systemctl disable docker # not started by default
+
+    # docker composer
+    sudo curl -s -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose && echo "$(/usr/local/bin/docker-compose -v)"
+    sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+    # Enable vagrant user to run docker commands
+    usermod -aG docker vagrant
+
+}
+
+install_chromebrowser() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+    # used for Dusk tests.
+    sudo yum -y -q install https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+}
+
+install_phpunit() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+    # used for Dusk tests.
+    mkdir -p /opt/phpunit/phpunit-{5,6,7,8,9};
+    for v in 5 6 7 8 9 ; do
+        wget -nv -O /opt/phpunit/phpunit-$v/phpunit https://phar.phpunit.de/phpunit-$v.phar;
+        chmod +x /opt/phpunit/phpunit-$v/phpunit;
+    done
+}
+
+update_services() {
+  # fyi - lots of homestead optional features are installed outside of the standard build.
+  # https://github.com/laravel/homestead/tree/main/scripts/features
+  sudo yum -y -q --enablerepo=remi install redis
+  sudo yum -y -q update beanstalkd
+  sudo yum -y -q install sqlite
 }

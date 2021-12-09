@@ -8,18 +8,21 @@ Most dependencies are addressed where possible, some however are not, see Includ
 ## Included Software
 
 * CentOS 7.5
+* Docker 
+* tighten/takeout
 * Git
-* PHP 7.0, 7.1, 7.2
+* PHP 7.0, 7.1, 7.2, 8.0, 8.1
 * ~~HHVM~~
 * Nginx
 * MySQL
 * ~~MariaDB~~
 * Sqlite3
-* Postgres 9.5, 9.6, 10
+* Postgres 9.5, 9.6, 10, 14
 * Postgres PGHashLib
-* Composer
+* Postgres TimescaleDb
+* Composer 2
 * Node 9 (Bower, Gulp, Yarn, Grunt)
-* Redis
+* Redis 6
 * Memcached
 * Beanstalkd
 * Blackfire
@@ -29,6 +32,7 @@ Most dependencies are addressed where possible, some however are not, see Includ
 * wp_cli
 * oh_my_zsh
 * Browsershot dependencies (via puppeteer)
+* Chrome ( Dusk tests )
 * Drush
 * Laravel Lumen
 * Laravel Spark
@@ -44,6 +48,42 @@ Most dependencies are addressed where possible, some however are not, see Includ
 Run `build.sh`.
 
 # Releases
+
+## 11.5.0
+PHP-8.1 is released and included in this build 11.5.0
+
+Support postgresql
+- postgresql 14  ( _with hashlib and timescaledb_ )
+- postgresql 9.5, 9.6, 10  ( _with hashlib_ )
+``` 
+sudo su - -c "switch_postgres 14"
+# or as root
+switch_postgres 14
+```
+Support php, default 8.0
+- php 7.0, 7.1, 7.2, __8.0__, 8.1
+``` 
+sudo su - -c "switch_php 7.0"
+# or as root
+switch_php 8.0
+```
+
+- docker-ce and docker-compose
+- tighten/takeout 
+- chrome for Dusk tests
+- redis 6
+- fix letsencrypt certificate issue
+- phpunit 5 through 9
+
+## 10.1.1
+
+Support postgresql 
+- postgresql 11, 12 ( _with hashlib and timescaledb_ )
+- postgresql 9.5, 9.6, 10, 13 ( _with hashlib )
+
+Support php, default 7.0
+- php __7.0__, 7.1, 7.2, 7.3, 7.4, 8.0
+
 
 ## 6.1.1
 pecl stomp
