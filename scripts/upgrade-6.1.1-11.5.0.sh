@@ -2,7 +2,7 @@
 #
 # upgrade homestead 6.1.1 to 11.5.0 (php-8.0 introduced at 10.1.1).
 #
-UPGRADE_BOX_VERSION='11.0.0<6.1.1'
+UPGRADE_BOX_VERSION='11.5.0<6.1.1'
 
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 [ -e ./provision.sh ] && source ./provision.sh
@@ -15,8 +15,8 @@ fix_letsencrypt_certificate_issue
 
 args=("$@")
 [ $# -eq 0 ] && {
-  # args+=("php73" "php74" "php80" "php81" "composer" "postgresql14" "rabbitmq" "phptesting" "docker") # default upgrades
-  args+=("php81" "php80" "composer" "postgresql14" "rabbitmq" "phptesting" "docker") # default upgrades
+  # args+=("php73" "php74" "php80" "php81" "composer" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80") # default upgrades
+  args+=("php81" "php80" "composer" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "git2" "nginx") # default upgrades
 }
 echo -e "\nUpgrade tasks: ${args[*]}\n"
 
@@ -35,8 +35,9 @@ update_services # update already installed services to latest (redis, beanstalkd
 #install_supervisor
 reconfigure_supervisord
 #install_node
-#install_nginx
-
+[[ "${args[*]}" =~ 'nginx' ]] && {
+  upgrade_nginx
+}
 
 declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >>/root/.bash_profile
 
@@ -69,7 +70,13 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
     install_docker
 }
 
-#install_git2
+[[ "${args[*]}" =~ 'mysql80' ]] && {
+    install_mysql80
+}
+
+[[ "${args[*]}" =~ 'git2' ]] && {
+    install_git2
+}
 
 #install_sqlite
 

@@ -52,6 +52,8 @@ Run `build.sh`.
 ## 11.5.0
 PHP-8.1 is released and included in this build 11.5.0
 
+Disk increased to 240gb.
+
 Support postgresql
 - postgresql 14  ( _with hashlib and timescaledb_ )
 - postgresql 9.5, 9.6, 10  ( _with hashlib_ )
@@ -74,7 +76,8 @@ switch_php 8.0
 - redis 6
 - fix letsencrypt certificate issue
 - phpunit 5 through 9
-
+- mysql-community-ed 8.0
+- git 2.34.
 ## 10.1.1
 
 Support postgresql 

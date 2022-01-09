@@ -16,7 +16,7 @@ git clone https://github.com/chef/bento.git 2>/dev/null || echo 'bento/bento dir
 packer_options=' --on-error=abort '
 
 #packer_vars=" -var name=homestead-co7 -var memory=2048 -var disk_size=105000 -var cpus=2 -var box_basename=homestead-co7 -var version=$PACKER_BOX_VERSION "
-packer_vars=" -var name=homestead-co7 -var memory=2048 -var disk_size=105000 -var cpus=2 -var version=$PACKER_BOX_VERSION "
+packer_vars=" -var name=homestead-co7 -var memory=2048 -var disk_size=240000 -var cpus=2 -var version=$PACKER_BOX_VERSION "
 
 rm -f scripts/homestead.sh &> /dev/null
 cp -rf scripts/provision.sh bento/centos/scripts/homestead.sh

@@ -87,8 +87,10 @@ install_timescaledb_for_postgresql 14
 
 switch_postgres 14
 
-install_mysql
-configure_mysql
+install_mysql80
+configure_mysql # untested with 80!
+systemctl disable mysqld && systemctl stop mysqld
+
 
 install_cache_queue
 configure_cache_queue

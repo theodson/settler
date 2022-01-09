@@ -84,9 +84,9 @@ install_git2() {
   echo -e "\n${FUNCNAME[0]}()\n"
   # http://tecadmin.net/install-git-2-0-on-centos-rhel-fedora/
   sudo su - <<'EOF'
-        git --version 2> /dev/null | grep '2.9' || \
+        git --version 2> /dev/null | grep '2.34' || \
         (
-	v=2.9.5
+	v=2.34.1
         yum remove -y git && \
         yum install -y perl-Tk-devel curl-devel expat-devel openssl-devel zlib-devel && \
         pushd /usr/src && \
@@ -100,6 +100,20 @@ install_git2() {
         echo "Installation of git-$v complete" )
 EOF
   source /etc/bashrc
+}
+
+upgrade_nginx() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+    # https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-centos-7
+    sudo su - <<'YUM'
+
+    systemctl stop nginx
+
+    yum upgrade -y nginx
+
+    systemctl enable nginx
+    systemctl start nginx
+YUM
 }
 
 install_nginx() {
@@ -886,6 +900,22 @@ COMPOSER
 EOF
 
 }
+
+install_mysql80() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+    # stop existing 5.7
+    systemctl disable mysqld
+    systemctl stop mysqld
+    yum erase mysql57-community-release.noarch
+
+    # upadate repo and install latest 8.x
+    rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+    yum -y install mysql-community-server
+    systemctl disable mysqld
+    systemctl stop mysqld
+}
+
+
 
 install_mysql() {
   echo -e "\n${FUNCNAME[0]}()\n"
