@@ -3,29 +3,52 @@
 # upgrade homestead 6.1.1 to 11.5.0 (php-8.0 introduced at 10.1.1).
 #
 UPGRADE_BOX_VERSION='11.5.0<6.1.1'
+MAINTAIN_PHP_AT_VERSION="${MAINTAIN_PHP_AT_VERSION:-7.0}"
+
+[ $# -eq 0 ] && UPGRADE_PACK="${UPGRADE_PACK:-basic}"
 
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 [ -e ./provision.sh ] && source ./provision.sh
 
 set +u
-echo -e "Starting upgrade to version: ${UPGRADE_BOX_VERSION}\n"
-rpm_versions pre_upgrade_6.1.1-11.5.0
+echo -e "⚡️ Starting upgrade to version: ${UPGRADE_BOX_VERSION} - ${UPGRADE_PACK}\n"
+rpm_versions "${UPGRADE_PACK}_pre_upgrade_6.1.1-11.5.0"
 disable_blackfire
 fix_letsencrypt_certificate_issue
 
 args=("$@")
 [ $# -eq 0 ] && {
-  # args+=("php73" "php74" "php80" "php81" "composer" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80") # default upgrades
-  args+=("php81" "php80" "composer" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "git2" "nginx") # default upgrades
+    case "$UPGRADE_PACK" in
+        full)
+            echo -e "⚡️ full upgrade for laravel 9 and dev platform.\n"
+            args+=("os_support_updates" "composer" "git2" "node" "php81" "php80" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "php74" "php73")
+            ;;
+        standard)
+            echo -e "⚡️ minimum upgrades laravel 9.\n"
+            args+=("os_support_updates" "composer" "git2" "node" "php81" "php80" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80")
+            ;;
+        minimum)
+            echo -e "⚡️ minimum upgrades laravel 8.\n"
+            args+=("os_support_updates" "composer" "git2" "node" "nginx" "php80" )
+            ;;
+        basic)
+            echo -e "⚡️ basic os upgrades\n"
+            args+=("os_support_updates" "composer" "git2" "node")
+            ;;
+        yum_update)
+            echo -e "⚡️ yum updates only\n"
+            yum -y update
+            ;;
+        *)
+            ;;
+    esac
 }
+
 echo -e "\nUpgrade tasks: ${args[*]}\n"
 
-yum-config-manager -y --disable blackfire &>/dev/null || true
-#yum clean all && rm -rf /var/cache/yum/* || true
+# yum_cleanup
 yum -y -q install yum-presto || true
 yum -y -q makecache fast || true
-
-update_services # update already installed services to latest (redis, beanstalkd)
 
 #set_profile
 
@@ -33,8 +56,17 @@ update_services # update already installed services to latest (redis, beanstalkd
 #yum_install
 
 #install_supervisor
-reconfigure_supervisord
 #install_node
+[[ "${args[*]}" =~ 'nginx' ]] && {
+  upgrade_node
+}
+
+[[ "${args[*]}" =~ 'os_support_updates' ]] && {
+    update_services # update already installed services to latest (redis, beanstalkd)
+    os_support_updates
+    reconfigure_supervisord
+}
+
 [[ "${args[*]}" =~ 'nginx' ]] && {
   upgrade_nginx
 }
@@ -66,6 +98,11 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
     install_chromebrowser # Dusk tests require it
 }
 
+[[ "${args[*]}" =~ 'php' ]] && {
+    # ensure script returns to expcted PHP version
+    switch_php "$MAINTAIN_PHP_AT_VERSION"
+}
+
 [[ "${args[*]}" =~ 'docker' ]] && {
     install_docker
 }
@@ -77,6 +114,7 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 [[ "${args[*]}" =~ 'git2' ]] && {
     install_git2
 }
+
 
 #install_sqlite
 
@@ -151,6 +189,5 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 }
 
 finish_build_meta ${UPGRADE_BOX_VERSION}
-rpm_versions post_upgrade_6.1.1-11.5.0
-
+rpm_versions "${UPGRADE_PACK}_post_upgrade_6.1.1-11.5.0"
 set -u

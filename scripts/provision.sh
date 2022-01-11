@@ -2,6 +2,10 @@
 #
 # collection of functions used to build server for homestead
 #
+yum_cleanup() {
+    yum clean all && rm -rf /var/cache/yum/* || true
+}
+
 yum_prepare() {
   echo -e "\n${FUNCNAME[0]}()\n"
   # To add the CentOS 7 EPEL repository, open terminal and use the following command:
@@ -57,6 +61,22 @@ SERVICES
 
 }
 
+upgrade_node() {
+    echo -e "\n${FUNCNAME[0]}()\n"
+    # easier to use NVM
+    sudo su - <<'NODE'
+    curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+    . /root/.bashrc
+    nvm install 9 --lts
+    nvm install 10 --lts
+    nvm install 14 --lts
+    nvm install stable
+    nvm install 16 --lts --default
+    nvm install-latest-npm
+NODE
+
+}
+
 install_node() {
   echo -e "\n${FUNCNAME[0]}()\n"
   # https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora
@@ -88,18 +108,25 @@ install_git2() {
         (
 	v=2.34.1
         yum remove -y git && \
-        yum install -y perl-Tk-devel curl-devel expat-devel openssl-devel zlib-devel && \
+        yum install -y gcc perl-Tk-devel curl-devel expat-devel openssl-devel zlib-devel && \
         pushd /usr/src && \
-        wget "https://www.kernel.org/pub/software/scm/git/git-$v.tar.gz" && \
-        tar -xvf "git-$v.tar.gz" && \
+        [ ! -e "git-$v.tar.gz" ] && wget "https://www.kernel.org/pub/software/scm/git/git-$v.tar.gz" || true && \
+        tar -xf "git-$v.tar.gz" && \
         pushd "git-$v" && \
-        make prefix=/usr/local/git all && \
-        make prefix=/usr/local/git install && \
+        make prefix=/usr/local/git all &>/tmp/git-build.log && \
+        make prefix=/usr/local/git install &>/tmp/git-build.log && \
         echo 'export PATH=/usr/local/git/bin:$PATH' >> /etc/bashrc && \
         source /etc/bashrc && \
-        echo "Installation of git-$v complete" )
+        echo "Installation of git-$v complete" &&
+        popd && /bin/rm -rf "/usr/src/git-$v" ||
+        echo "Installation FAILED for git-$v"
+        )
 EOF
   source /etc/bashrc
+}
+
+os_support_updates() {
+    sudo yum -y install iftop
 }
 
 upgrade_nginx() {
@@ -556,7 +583,7 @@ install_php_remi() {
     echo $repo
     sudo yum-config-manager --disable $repo &>/dev/null || echo "disabled already $repo"
   done
-  sudo yum-config-manager --enable remi-php${PHP_VERSION}
+  sudo yum-config-manager --enable remi-php${PHP_VERSION} && echo "Enabled Repo remi-php${PHP_VERSION}" || echo "FAILED to enable Repo remi-php${PHP_VERSION}"
 
   sudo yum --enablerepo=remi-php${PHP_VERSION} install -y \
     php${PHP_VERSION}-php-xml \
@@ -760,6 +787,8 @@ switch_php() {
     echo -e "invalid argument\nusage: ${FUNCNAME[0]} $versions_installed" && return 2
   }
 
+  echo -e "\n${FUNCNAME[0]}($@)\n"
+
   # https://access.redhat.com/solutions/528643 - /etc/alternatives and the dynamic software collections framework
 
   PHP_DOT_VERSION=$1
@@ -854,7 +883,7 @@ install_composer() {
     }
     cat << 'COMPOSER_HOME' >> /etc/bashrc
 # Add Composer Global Bin To Path
-export PATH=~/.config/composer/vendor/bin:\$PATH
+export PATH=$(composer global config -q --absolute home)/vendor/bin:\$PATH
 export PATH=/usr/local/bin:\$PATH
 COMPOSER_HOME
 
@@ -873,12 +902,15 @@ COMPOSER_HOME
     "laravel/installer" \
     "laravel/spark-installer" \
     "slince/composer-registry-manager" \
-    tightenco/takeout
+    tightenco/takeout &>/dev/null
 
-  /usr/local/bin/composer global show --no-interaction --self
+  #/usr/local/bin/composer global show --no-interaction --self
+  /usr/local/bin/composer global show --no-interaction -D
+
+  /usr/local/bin/composer -V --no-interaction
 COMPOSER
 
-  /usr/local/bin/composer config --no-interaction --list --global
+  # /usr/local/bin/composer config --no-interaction --list --global
 
   # Install Laravel Envoy & Installer
   sudo su - vagrant <<EOF
@@ -895,7 +927,7 @@ COMPOSER
       "laravel/installer" \
       "laravel/spark-installer" \
       "slince/composer-registry-manager" \
-      tightenco/takeout
+      tightenco/takeout &>/dev/null
 
 EOF
 
@@ -1365,13 +1397,13 @@ BUILD_META
 }
 
 disable_blackfire() {
-  echo -e "\n${FUNCNAME[0]}()\n"
+  echo -e "\n${FUNCNAME[0]}()"
   # don't load blackfire
-  find /etc/opt/remi -path '/etc/opt/remi/*/php.d/*-blackfire.ini' -exec sed -i 's/^/;/g' {} \;
-  sudo systemctl disable blackfire-agent || true
+  find /etc/opt/remi -path '/etc/opt/remi/*/php.d/*-blackfire.ini' -exec sed -i 's/^/;/g' {} \; || true
+  sudo systemctl disable blackfire-agent 2>/dev/null || true
 
   # disable repo as it has issues
-  yum-config-manager --disable blackfire &>/dev/null || true
+  yum-config-manager -y --disable blackfire &>/dev/null || true
 }
 
 set_profile() {
@@ -1394,7 +1426,7 @@ rpm_versions() {
   # list all packages installed and versions
   outputfile=/tmp/rpm-versions.$(date +"%Y%m%d_%H%M%S_%s")${tagged}.txt
   rpm -qa --qf '%{NAME}_%{VERSION}\n' | sort > $outputfile
-  echo $outputfile
+  echo "rpm versions tracked in $outputfile"
 }
 
 upgrade_composer() {
@@ -1405,13 +1437,16 @@ upgrade_composer() {
     sudo su - vagrant <<EOF
         rm -rf $HOME/.composer &>/dev/null || true
 EOF
-    type composer && composer selfupdate --no-interaction
+    type composer && {
+        composer selfupdate --no-interaction -q
+        COMPOSER_HOME="$(composer global config -q --absolute home)"
+    }
     install_composer
 
 }
 
 fix_letsencrypt_certificate_issue() {
-    echo -e "\n${FUNCNAME[0]}()\n"
+    echo -e "\n${FUNCNAME[0]}()"
 
     # - https://blog.devgenius.io/rhel-centos-7-fix-for-lets-encrypt-change-8af2de587fe4
     # TL;DR — For TLS certificates issued by Let’s Encrypt, the root certificate (DST Root CA X3)
@@ -1420,8 +1455,8 @@ fix_letsencrypt_certificate_issue() {
     # This affects OpenSSL 1.0.2k on RHEL/CentOS 7 servers, and will result in applications/tools
     # failing to establish TLS/HTTPS connections with a certificate has expired message.
     #
-    sudo trust dump --filter "pkcs11:id=%c4%a7%b1%a4%7b%2c%71%fa%db%e1%4b%90%75%ff%c4%15%60%85%89%10" | openssl x509 | sudo tee /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem
-    sudo update-ca-trust extract
+    sudo trust dump --filter "pkcs11:id=%c4%a7%b1%a4%7b%2c%71%fa%db%e1%4b%90%75%ff%c4%15%60%85%89%10" | openssl x509 | sudo tee /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem &>/dev/null
+    sudo update-ca-trust extract || echo 'FAILED to install centos-7-fix-for-lets-encrypt-change'
 
 }
 
@@ -1464,7 +1499,5 @@ install_phpunit() {
 update_services() {
   # fyi - lots of homestead optional features are installed outside of the standard build.
   # https://github.com/laravel/homestead/tree/main/scripts/features
-  sudo yum -y -q --enablerepo=remi install redis
-  sudo yum -y -q update beanstalkd
-  sudo yum -y -q install sqlite
+  sudo yum -y -q --enablerepo=remi install redis beanstalkd sqlite
 }
