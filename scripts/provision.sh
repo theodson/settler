@@ -1447,6 +1447,7 @@ EOF
 
 fix_letsencrypt_certificate_issue() {
     echo -e "\n${FUNCNAME[0]}()"
+    [ -e /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem ] && exit 0; # exit if run already
 
     # - https://blog.devgenius.io/rhel-centos-7-fix-for-lets-encrypt-change-8af2de587fe4
     # TL;DR — For TLS certificates issued by Let’s Encrypt, the root certificate (DST Root CA X3)
