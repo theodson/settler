@@ -19,28 +19,29 @@ fix_letsencrypt_certificate_issue
 
 args=("$@")
 [ $# -eq 0 ] && {
+    args+=("os_support_updates" "composer" "git2" "node" "nginx")
     case "$UPGRADE_PACK" in
         full)
             echo -e "⚡️ full upgrade for laravel 9 and dev platform.\n"
-            args+=("os_support_updates" "composer" "git2" "node" "php81" "php80" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "php74" "php73")
+            args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "php74" "php73")
             ;;
         standard)
             echo -e "⚡️ minimum upgrades laravel 9.\n"
-            args+=("os_support_updates" "composer" "git2" "node" "php81" "php80" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80")
+            args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80")
             ;;
         minimum)
             echo -e "⚡️ minimum upgrades laravel 8.\n"
-            args+=("os_support_updates" "composer" "git2" "node" "nginx" "php80" )
+            args+=("php80")
             ;;
         basic)
             echo -e "⚡️ basic os upgrades\n"
-            args+=("os_support_updates" "composer" "git2" "node")
             ;;
         yum_update)
             echo -e "⚡️ yum updates only\n"
             yum -y update
             ;;
         *)
+            args=()
             ;;
     esac
 }
