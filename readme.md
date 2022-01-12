@@ -15,7 +15,7 @@ We rely on the `bento` packer project for delivering stable and upto date Virtua
 * specify version and run `build.sh`
 
 ```
-VERSION=6.1.1
+VERSION=11.5.0
 ./build.sh $VERSION
 ```
 
