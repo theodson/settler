@@ -6,17 +6,21 @@ if [ $# -gt 0 ] && [ $1 = "config" ]; then
     CONFIG_ONLY=1
 fi
 
+MAINTAIN_PHP_AT_VERSION="${MAINTAIN_PHP_AT_VERSION:-8.0}"
+MAINTAIN_NODE_AT_VERSION="${MAINTAIN_NODE_AT_VERSION:-17}"
+
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 [ -e ./provision.sh ] && source ./provision.sh
 
 set +u
-rpm_versions pre_provision_11.5.0
 echo -e "Starting build for version: ${PACKER_BOX_VERSION}\n"
-yum-config-manager --disable blackfire &>/dev/null || true
+rpm_versions pre_provision_11.5.0
+disable_blackfire
+fix_letsencrypt_certificate_issue
+
 yum clean all && rm -rf /var/cache/yum/* || true
 yum -y -q install yum-presto || true
 yum -y -q makecache fast || true
-fix_letsencrypt_certificate_issue
 set_profile
 
 yum_prepare
@@ -24,8 +28,15 @@ yum_install
 
 install_supervisor
 reconfigure_supervisord
-install_node
+#install_node
+upgrade_node
+
+update_services # update already installed services to latest (redis, beanstalkd)
+os_support_updates
+reconfigure_supervisord
+
 install_nginx
+upgrade_nginx
 
 # install switch_php for root - take current function from this script and export to file
 declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >> /root/.bash_profile
@@ -37,6 +48,7 @@ install_php_remi 7.4 && configure_php_remi 7.4
 install_php_remi 8.0 && configure_php_remi 8.0
 install_php_remi 8.1 && configure_php_remi 8.1
 switch_php 8.0
+nvm alias default "$MAINTAIN_NODE_AT_VERSION" && nvm use default || true
 
 upgrade_composer
 install_phpunit

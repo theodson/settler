@@ -58,7 +58,7 @@ yum -y -q makecache fast || true
 
 #install_supervisor
 #install_node
-[[ "${args[*]}" =~ 'nginx' ]] && {
+[[ "${args[*]}" =~ 'node' ]] && {
   upgrade_node
 }
 
