@@ -896,7 +896,7 @@ COMPOSER_HOME
   #/usr/local/bin/composer global require --no-interaction "laravel/installer=^4.0.2"
   #/usr/local/bin/composer global require --no-interaction "laravel/spark-installer=dev-master"
   #/usr/local/bin/composer global require --no-interaction "slince/composer-registry-manager=^2.0"
-
+  echo "composer global require - dev tools"
   /usr/local/bin/composer global require --with-all-dependencies --no-interaction \
     "laravel/envoy" \
     "laravel/installer" \
@@ -921,6 +921,8 @@ COMPOSER
     #/usr/local/bin/composer global require --no-interaction "laravel/installer=^4.0.2"
     #/usr/local/bin/composer global require --no-interaction "laravel/spark-installer=dev-master"
     #/usr/local/bin/composer global require --no-interaction "slince/composer-registry-manager=^2.0"
+
+    echo "composer global require - dev tools (vagrant)"
 
     /usr/local/bin/composer global require --with-all-dependencies --no-interaction \
       "laravel/envoy" \
@@ -1447,7 +1449,6 @@ EOF
 
 fix_letsencrypt_certificate_issue() {
     echo -e "\n${FUNCNAME[0]}()"
-    [ -e /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem ] && exit 0; # exit if run already
 
     # - https://blog.devgenius.io/rhel-centos-7-fix-for-lets-encrypt-change-8af2de587fe4
     # TL;DR — For TLS certificates issued by Let’s Encrypt, the root certificate (DST Root CA X3)
@@ -1456,8 +1457,11 @@ fix_letsencrypt_certificate_issue() {
     # This affects OpenSSL 1.0.2k on RHEL/CentOS 7 servers, and will result in applications/tools
     # failing to establish TLS/HTTPS connections with a certificate has expired message.
     #
-    sudo trust dump --filter "pkcs11:id=%c4%a7%b1%a4%7b%2c%71%fa%db%e1%4b%90%75%ff%c4%15%60%85%89%10" | openssl x509 | sudo tee /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem &>/dev/null
-    sudo update-ca-trust extract || echo 'FAILED to install centos-7-fix-for-lets-encrypt-change'
+
+    if test ! -e /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem; then
+        sudo trust dump --filter "pkcs11:id=%c4%a7%b1%a4%7b%2c%71%fa%db%e1%4b%90%75%ff%c4%15%60%85%89%10" | openssl x509 | sudo tee /etc/pki/ca-trust/source/blacklist/DST-Root-CA-X3.pem &>/dev/null
+        sudo update-ca-trust extract || echo 'FAILED to install centos-7-fix-for-lets-encrypt-change'
+    fi
 
 }
 

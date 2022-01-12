@@ -4,8 +4,9 @@
 #
 UPGRADE_BOX_VERSION='11.5.0<6.1.1'
 MAINTAIN_PHP_AT_VERSION="${MAINTAIN_PHP_AT_VERSION:-7.0}"
+MAINTAIN_NODE_AT_VERSION="${MAINTAIN_NODE_AT_VERSION:-9}"
 
-[ $# -eq 0 ] && UPGRADE_PACK="${UPGRADE_PACK:-basic}"
+[ $# -eq 0 ] && UPGRADE_PACK="${UPGRADE_PACK:-basic}" || UPGRADE_PACK="adhoc"
 
 # packer set nounset on -u, turn it off for our script as CONFIG_ONLY may not be defined
 [ -e ./provision.sh ] && source ./provision.sh
@@ -101,6 +102,11 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 [[ "${args[*]}" =~ 'php' ]] && {
     # ensure script returns to expcted PHP version
     switch_php "$MAINTAIN_PHP_AT_VERSION"
+}
+
+[[ "${args[*]}" =~ 'node' ]] && {
+    # ensure script returns to expcted PHP version
+    nvm alias default "$MAINTAIN_NODE_AT_VERSION" && nvm use default || true
 }
 
 [[ "${args[*]}" =~ 'docker' ]] && {
