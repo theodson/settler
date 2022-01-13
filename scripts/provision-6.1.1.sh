@@ -96,5 +96,5 @@ install_lucky
 #install_rabbitmq
 
 
-finish_build_meta ${PACKER_BOX_VERSION}
+log_build_meta ${PACKER_BOX_VERSION}
 set -u

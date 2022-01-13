@@ -13,40 +13,46 @@ MAINTAIN_NODE_AT_VERSION="${MAINTAIN_NODE_AT_VERSION:-9}"
 
 set +u
 echo -e "⚡️ Starting upgrade to version: ${UPGRADE_BOX_VERSION} - ${UPGRADE_PACK}\n"
+
+log_build_meta ${UPGRADE_BOX_VERSION}
+
 rpm_versions "${UPGRADE_PACK}_pre_upgrade_6.1.1-11.5.0"
 disable_blackfire
 fix_letsencrypt_certificate_issue
 
 args=("$@")
 [ $# -eq 0 ] && {
-    args+=("os_support_updates" "composer" "git2" "node" "nginx")
+
     case "$UPGRADE_PACK" in
         full)
-            echo -e "⚡️ full upgrade for laravel 9 and dev platform.\n"
+            args+=("os_support_updates" "composer" "git2" "node" "nginx")
             args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "php74" "php73")
+            echo -e "⚡️ full upgrade for laravel 9 and dev platform\n\t${args[*]}"
             ;;
         standard)
-            echo -e "⚡️ minimum upgrades laravel 9.\n"
+            args+=("os_support_updates" "composer" "git2" "node" "nginx")
             args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80")
+            echo -e "⚡️ minimum upgrades laravel 9\n\t${args[*]}"
             ;;
         minimum)
-            echo -e "⚡️ minimum upgrades laravel 8.\n"
+            args+=("os_support_updates" "composer" "git2" "node" "nginx")
             args+=("php80")
+            echo -e "⚡️ minimum upgrades laravel 8\n\t${args[*]}"
             ;;
         basic)
-            echo -e "⚡️ basic os upgrades\n"
+            args+=("os_support_updates" "composer" "git2" "node" "nginx")
+            echo -e "⚡️ basic os upgrades\n\t${args[*]}"
             ;;
         yum_update)
-            echo -e "⚡️ yum updates only\n"
+            echo -e "⚡️ yum updates only\n\t${args[*]}\n"
             yum -y update
             ;;
         *)
-            args=()
             ;;
     esac
 }
 
-echo -e "\nUpgrade tasks: ${args[*]}\n"
+echo -e "$(date +"%Y%m%d_%H%M%S_%s"):Upgrade Tasks:START: ${args[*]}" | tee -a /root/build.info
 
 # yum_cleanup
 yum -y -q install yum-presto || true
@@ -195,6 +201,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
   install_rabbitmq
 }
 
-finish_build_meta ${UPGRADE_BOX_VERSION}
 rpm_versions "${UPGRADE_PACK}_post_upgrade_6.1.1-11.5.0"
 set -u
+
+echo -e "$(date +"%Y%m%d_%H%M%S_%s"):Upgrade Tasks:FINISH: ${args[*]}" | tee -a /root/build.info

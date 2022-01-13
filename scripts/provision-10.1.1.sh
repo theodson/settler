@@ -100,6 +100,6 @@ install_rabbitmq
 
 disable_blackfire
 
-finish_build_meta ${PACKER_BOX_VERSION}
+log_build_meta ${PACKER_BOX_VERSION}
 rpm_versions post_provision_10.1.1
 set -u

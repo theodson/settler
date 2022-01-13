@@ -938,15 +938,15 @@ EOF
 install_mysql80() {
     echo -e "\n${FUNCNAME[0]}()\n"
     # stop existing 5.7
-    systemctl disable mysqld
-    systemctl stop mysqld
-    yum erase mysql57-community-release.noarch
+    sudo systemctl disable mysqld
+    sudo systemctl stop mysqld
+    sudo yum -y erase mysql57-community-release.noarch
 
     # upadate repo and install latest 8.x
     rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
     yum -y install mysql-community-server
-    systemctl disable mysqld
-    systemctl stop mysqld
+    sudo systemctl disable mysqld
+    sudo systemctl stop mysqld
 }
 
 
@@ -1387,12 +1387,13 @@ TIMESCALE_DB_REPO
 
 }
 
-finish_build_meta() {
+log_build_meta() {
   echo -e "\n${FUNCNAME[0]}()\n"
   [ $# -lt 1 ] && HSVER=$(date +%s) || HSVER=$1
   sudo su - <<BUILD_META
-echo 'HOMESTEAD_CENTOS_VERSION=${HSVER}' > ~/build.info
+echo 'HOMESTEAD_CENTOS_VERSION=${HSVER}' >> ~/build.info
 echo 'HOMESTEAD_CENTOS_DATE=$(date)' >> ~/build.info
+echo "HOMESTEAD_GIT_HASH=$(git describe &>/dev/null && git describe || git rev-parse --short HEAD)" >> ~/build.info
 [ -f ~/build.info ] && ln -nf ~/build.info /etc/homestead_co7
 BUILD_META
 

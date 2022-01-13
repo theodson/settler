@@ -24,12 +24,13 @@ EOF
         reboot
     fi
 
+    partprobe
     pvcreate /dev/sda3
     vlg="centos"
     vgextend $vlg /dev/sda3
     pvscan
-    lvextend /dev/centos/root /dev/sda3
-    xfs_growfs /dev/mapper/centos-root
+    lvextend /dev/$vlg/lv_root /dev/sda3
+    xfs_growfs /dev/mapper/${$vlg}-lv_root
 
 fi
 
