@@ -939,11 +939,13 @@ install_mysql80() {
     echo -e "\n${FUNCNAME[0]}()\n"
     # stop existing 5.7
     sudo systemctl disable mysqld
+    sudo killall -9 mysqld
     sudo systemctl stop mysqld
+    sudo /bin/rm -rf /var/lib/mysql
     sudo yum -y erase mysql57-community-release.noarch
 
     # upadate repo and install latest 8.x
-    rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+    rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-4.noarch.rpm
     yum -y install mysql-community-server
     sudo systemctl disable mysqld
     sudo systemctl stop mysqld
@@ -967,7 +969,12 @@ install_mysql() {
 }
 
 configure_mysql() {
-  echo -e "\n${FUNCNAME[0]}()\n"
+  echo -e "\n${FUNCNAME[0]}($@)\n"
+
+  echo "$1" | grep -E "$versions_installed" || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 5|5.7|8|8.0" && return 1
+  }
+  MYSQL_VERSION="$1"
 
   systemctl enable mysqld.service
   systemctl start mysqld.service
@@ -977,8 +984,20 @@ configure_mysql() {
   # http://blog.astaz3l.com/2015/03/03/mysql-install-on-centos/
   echo "default_password_lifetime = 0" >>/etc/my.cnf
   echo "bind-address = 0.0.0.0" >>/etc/my.cnf
-  echo "validate_password_policy=LOW" >>/etc/my.cnf
-  echo "validate_password_length=6" >>/etc/my.cnf
+  echo "default_authentication_plugin = mysql_native_password" >>/etc/my.cnf
+
+  case "$MYSQL_VERSION" in
+      8)
+        echo "validate_password.policy=LOW" >>/etc/my.cnf
+        echo "validate_password.length=6" >>/etc/my.cnf
+        ;;
+      *)
+        echo "validate_password_policy=LOW" >>/etc/my.cnf
+        echo "validate_password_length=6" >>/etc/my.cnf
+        ;;
+  esac
+
+
   systemctl restart mysqld.service
 
   # find temporary password
@@ -986,14 +1005,33 @@ configure_mysql() {
   mysqladmin -u root -p"$mysql_password" password secret
   mysqladmin -u root -psecret variables | grep validate_password
 
-  mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
-  systemctl restart mysqld.service
+  case "$MYSQL_VERSION" in
+      8)
+        mysql --user="root" --password="secret" -e "CREATE USER root@0.0.0.0 IDENTIFIED BY 'secret';"
+        systemctl restart mysqld.service
+        mysql --user="root" --password="secret" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
 
-  mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"
-  mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
-  mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'%' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
-  mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
-  mysql --user="root" --password="secret" -e "CREATE DATABASE homestead;"
+        mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"
+        mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'%' IDENTIFIED BY 'secret';"
+        mysql --user="root" --password="secret" -e "GRANT ALL PRIVILEGES ON *.* TO 'homestead'@'0.0.0.0' WITH GRANT OPTION;"
+        mysql --user="root" --password="secret" -e "GRANT ALL PRIVILEGES ON *.* TO 'homestead'@'%' WITH GRANT OPTION;"
+        mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
+        mysql --user="root" --password="secret" -e "CREATE DATABASE homestead character set UTF8mb4 collate utf8mb4_bin;"
+        ;;
+      *)
+        mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
+        systemctl restart mysqld.service
+        mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"
+        mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
+        mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO 'homestead'@'%' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
+        mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
+        mysql --user="root" --password="secret" -e "CREATE DATABASE homestead;"
+        ;;
+  esac
+
+    echo "character-set-server=utf8mb4" >>/etc/my.cnf
+    echo "collation-server=utf8mb4_bin" >>/etc/my.cnf
+
   systemctl restart mysqld.service
 
   # Add Timezone Support To MySQL

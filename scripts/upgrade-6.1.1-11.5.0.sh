@@ -112,7 +112,8 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 }
 
 [[ "${args[*]}" =~ 'node' ]] && {
-    # ensure script returns to expcted PHP version
+    # ensure script returns to expected PHP version
+    # source /root/.bashrc
     nvm alias default "$MAINTAIN_NODE_AT_VERSION" && nvm use default || true
 }
 
@@ -178,7 +179,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 }
 
 #install_mysql
-#configure_mysql
+configure_mysql 8
 
 #install_cache_queue
 #configure_cache_queue
