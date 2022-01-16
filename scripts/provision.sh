@@ -971,7 +971,7 @@ install_mysql() {
 configure_mysql() {
   echo -e "\n${FUNCNAME[0]}($@)\n"
 
-  echo "$1" | grep -E "$versions_installed" || {
+  echo "$1" | grep -E "5|5.7|8|8.0" || {
     echo -e "invalid argument\nusage: ${FUNCNAME[0]} 5|5.7|8|8.0" && return 1
   }
   MYSQL_VERSION="$1"
@@ -1002,13 +1002,18 @@ configure_mysql() {
 
   # find temporary password
   mysql_password=$(sudo grep 'temporary password' /var/log/mysqld.log | sed 's/.*localhost: //')
+  echo "mysql_password=$mysql_password"
   mysqladmin -u root -p"$mysql_password" password secret
   mysqladmin -u root -psecret variables | grep validate_password
 
+  echo "passwords set"
   case "$MYSQL_VERSION" in
       8)
+          echo "mysql8 setup"
         mysql --user="root" --password="secret" -e "CREATE USER root@0.0.0.0 IDENTIFIED BY 'secret';"
+        echo "about to restart mysql8"
         systemctl restart mysqld.service
+        echo "restarted mysql8"
         mysql --user="root" --password="secret" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
 
         mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"
@@ -1017,8 +1022,10 @@ configure_mysql() {
         mysql --user="root" --password="secret" -e "GRANT ALL PRIVILEGES ON *.* TO 'homestead'@'%' WITH GRANT OPTION;"
         mysql --user="root" --password="secret" -e "FLUSH PRIVILEGES;"
         mysql --user="root" --password="secret" -e "CREATE DATABASE homestead character set UTF8mb4 collate utf8mb4_bin;"
+        echo "config complete mysql8"
         ;;
       *)
+          echo "mysql57 setup"
         mysql --user="root" --password="secret" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY 'secret' WITH GRANT OPTION;"
         systemctl restart mysqld.service
         mysql --user="root" --password="secret" -e "CREATE USER 'homestead'@'0.0.0.0' IDENTIFIED BY 'secret';"

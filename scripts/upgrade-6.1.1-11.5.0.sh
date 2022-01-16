@@ -123,6 +123,7 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 
 [[ "${args[*]}" =~ 'mysql80' ]] && {
     install_mysql80
+    configure_mysql 8
 }
 
 [[ "${args[*]}" =~ 'git2' ]] && {
@@ -179,7 +180,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 }
 
 #install_mysql
-configure_mysql 8
+#configure_mysql 8
 
 #install_cache_queue
 #configure_cache_queue
