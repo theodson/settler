@@ -30,7 +30,7 @@ EOF
     vgextend $vlg /dev/sda3
     pvscan
     lvextend /dev/$vlg/lv_root /dev/sda3
-    xfs_growfs /dev/mapper/${$vlg}-lv_root
+    xfs_growfs /dev/mapper/${vlg}-lv_root
 
 fi
 
