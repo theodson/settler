@@ -941,13 +941,15 @@ install_mysql80() {
     sudo systemctl disable mysqld
     sudo killall -9 mysqld
     sudo systemctl stop mysqld
-    sudo /bin/rm -rf /var/lib/mysql
-    sudo yum -y erase mysql57-community-release.noarch
+    sudo /bin/rm -rf /var/lib/mysql || true
+    sudo yum -y erase mysql57-community-release.noarch || true
+    sudo yum -y erase mysql-community-server || true
 
     # upadate repo and install latest 8.x
     rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-4.noarch.rpm
     sudo /bin/mv -f /etc/my.cnf /etc/my.cnf_previous || true
-    yum -y reinstall mysql-community-server
+    yum -y reinstall mysql-community-server || yum -y install mysql-community-server
+    sudo systemctl start mysqld
     sudo systemctl disable mysqld
     sudo systemctl stop mysqld
 }
@@ -978,7 +980,8 @@ configure_mysql() {
   MYSQL_VERSION="$1"
 
   systemctl enable mysqld.service
-  systemctl start mysqld.service
+  systemctl start mysqld.service || true
+  sleep 10
   echo "# configure mysql8 start : $(date)" >> /etc/my.cnf
 
   # Configure Centos Mysql 5.7+
