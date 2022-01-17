@@ -124,6 +124,7 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 [[ "${args[*]}" =~ 'mysql80' ]] && {
     install_mysql80
     configure_mysql 8
+    systemctl disable mysqld.service
 }
 
 [[ "${args[*]}" =~ 'git2' ]] && {
