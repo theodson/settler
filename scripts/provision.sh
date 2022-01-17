@@ -638,11 +638,16 @@ install_php_remi() {
 configure_php_remi() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1 [upgrade]" && return 1
   }
   echo $1 | egrep '[7,8]\.[0,1,2,3,4]' || {
     echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 2
   }
+  is_upgrade=false
+  if test $# -eq 2 -a $2=='upgrade'; then
+        is_upgrade=true;
+  fi
+
   echo -e "\n${FUNCNAME[0]}($@) - configure nginx php-fpm\n"
 
   PHP_DOT_VERSION=$1
@@ -650,6 +655,8 @@ configure_php_remi() {
   # phpfpm="$(php -i | grep 'Loaded Configuration File' | cut -d '>' -f 2- | xargs)"
   phpfpm="/etc/opt/remi/php${PHP_VERSION}/php.ini"
   echo "configure $phpfpm"
+
+  $is_upgrade && echo "UPGRADE" || echo "INSTALL"
 
   sudo su - <<PHP
 
@@ -694,7 +701,15 @@ PHP
   # Set The Nginx & PHP-FPM User
   #    sed -i "s/user nginx;/user vagrant;/" /etc/nginx/nginx.conf
   #    sed -i "s/http {/http {\n    server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
-  sudo su - <<EOF
+
+    if ! $is_upgrade; then
+        #
+        # When Upgrading we should AUTOMATICALLY overwrite the existing nginx.conf
+        # as it may have been customised in the past..... better to handle that separately.
+        #
+        nginx_backup=/etc/nginx/nginx_original_$(date +"%Y%m%d_%H%M%S").conf
+        sudo su - <<EOF
+    cp /etc/nginx/nginx.conf $nginx_backup
     cat << NGINX > /etc/nginx/nginx.conf
 user vagrant;
 worker_processes auto;
@@ -744,12 +759,22 @@ http {
 }
 NGINX
 EOF
+    fi
 
+  nginx_backup=/etc/nginx/nginx_original_$(date +"%Y%m%d_%H%M%S").conf
   # As Homestead is based on Ubuntu we need to fix differences between CentOS and Ubuntu.
   fpm_pool_www="/etc/opt/remi/php${PHP_VERSION}/php-fpm.d/www.conf"
+
+    if ! $is_upgrade; then
+        # NEW installs - clean any existing
+        # UPGRADES installs - honour existing nginx conf
+        sudo su - <<NGINXDIFF
+            rm -rf /etc/nginx/{default.d,sites-enabled}
+NGINXDIFF
+    fi
+
   sudo su - <<NGINXDIFF
 
-    rm -rf /etc/nginx/{default.d,sites-enabled}
     mkdir -p /etc/nginx/{sites-available,sites-enabled,default.d}
 
     sed -i "s/user = apache/user = vagrant/" $fpm_pool_www

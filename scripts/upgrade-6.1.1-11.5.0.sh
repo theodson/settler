@@ -24,31 +24,31 @@ args=("$@")
 [ $# -eq 0 ] && {
 
     case "$UPGRADE_PACK" in
-        full)
-            args+=("os_support_updates" "composer" "git2" "node" "nginx")
-            args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "php74" "php73")
-            echo -e "⚡️ full upgrade for laravel 9 and dev platform\n\t${args[*]}"
-            ;;
-        standard)
-            args+=("os_support_updates" "composer" "git2" "node" "nginx")
-            args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80")
-            echo -e "⚡️ minimum upgrades laravel 9\n\t${args[*]}"
-            ;;
-        minimum)
-            args+=("os_support_updates" "composer" "git2" "node" "nginx")
-            args+=("php80")
-            echo -e "⚡️ minimum upgrades laravel 8\n\t${args[*]}"
-            ;;
-        basic)
-            args+=("os_support_updates" "composer" "git2" "node" "nginx")
-            echo -e "⚡️ basic os upgrades\n\t${args[*]}"
-            ;;
-        yum_update)
-            echo -e "⚡️ yum updates only\n\t${args[*]}\n"
-            yum -y update
-            ;;
-        *)
-            ;;
+    full)
+        args+=("os_support_updates" "composer" "git2" "node" "nginx")
+        args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80" "php74" "php73")
+        echo -e "⚡️ full upgrade for laravel 9 and dev platform\n\t${args[*]}"
+        ;;
+    standard)
+        args+=("os_support_updates" "composer" "git2" "node" "nginx")
+        args+=("php80" "php81" "postgresql14" "rabbitmq" "phptesting" "docker" "mysql80")
+        echo -e "⚡️ minimum upgrades laravel 9\n\t${args[*]}"
+        ;;
+    minimum)
+        args+=("os_support_updates" "composer" "git2" "node" "nginx")
+        args+=("php80")
+        echo -e "⚡️ minimum upgrades laravel 8\n\t${args[*]}"
+        ;;
+    basic)
+        args+=("os_support_updates" "composer" "git2" "node" "nginx")
+        echo -e "⚡️ basic os upgrades\n\t${args[*]}"
+        ;;
+    yum_update)
+        echo -e "⚡️ yum updates only\n\t${args[*]}\n"
+        yum -y update
+        ;;
+    *) ;;
+
     esac
 }
 
@@ -66,7 +66,7 @@ yum -y -q makecache fast || true
 #install_supervisor
 #install_node
 [[ "${args[*]}" =~ 'node' ]] && {
-  upgrade_node
+    upgrade_node
 }
 
 [[ "${args[*]}" =~ 'os_support_updates' ]] && {
@@ -76,7 +76,7 @@ yum -y -q makecache fast || true
 }
 
 [[ "${args[*]}" =~ 'nginx' ]] && {
-  upgrade_nginx
+    upgrade_nginx
 }
 
 declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >>/root/.bash_profile
@@ -85,16 +85,16 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 #install_php_remi 7.1 && configure_php_remi 7.1
 #install_php_remi 7.2 && configure_php_remi 7.2
 [[ "${args[*]}" =~ 'php73' ]] && {
-  install_php_remi 7.3 && configure_php_remi 7.3
+    install_php_remi 7.3 && configure_php_remi 7.3 upgrade
 }
 [[ "${args[*]}" =~ 'php74' ]] && {
-  install_php_remi 7.4 && configure_php_remi 7.4
+    install_php_remi 7.4 && configure_php_remi 7.4 upgrade
 }
 [[ "${args[*]}" =~ 'php80' ]] && {
-  install_php_remi 8.0 && configure_php_remi 8.0
+    install_php_remi 8.0 && configure_php_remi 8.0 upgrade
 }
 [[ "${args[*]}" =~ 'php81' ]] && {
-  install_php_remi 8.1 && configure_php_remi 8.1
+    install_php_remi 8.1 && configure_php_remi 8.1 upgrade
 }
 
 [[ "${args[*]}" =~ 'composer' ]] && {
@@ -131,7 +131,6 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
     install_git2
 }
 
-
 #install_sqlite
 
 #install_postgresql 9.5
@@ -149,35 +148,35 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >>/root/.bash_profile
 
 [[ "${args[*]}" =~ 'postgresql11' ]] && {
-  install_postgresql 11
-  configure_postgresql 11
-  switch_postgres 11
-  install_pghashlib 11
-  install_timescaledb_for_postgresql 11
+    install_postgresql 11
+    configure_postgresql 11
+    switch_postgres 11
+    install_pghashlib 11
+    install_timescaledb_for_postgresql 11
 }
 
 [[ "${args[*]}" =~ 'postgresql12' ]] && {
-  install_postgresql 12
-  configure_postgresql 12
-  switch_postgres 12
-  install_pghashlib 12
-  install_timescaledb_for_postgresql 12
+    install_postgresql 12
+    configure_postgresql 12
+    switch_postgres 12
+    install_pghashlib 12
+    install_timescaledb_for_postgresql 12
 }
 
 [[ "${args[*]}" =~ 'postgresql13' ]] && {
-  install_postgresql 13
-  configure_postgresql 13
-  switch_postgres 13
-  install_pghashlib 13
-  install_timescaledb_for_postgresql 13
+    install_postgresql 13
+    configure_postgresql 13
+    switch_postgres 13
+    install_pghashlib 13
+    install_timescaledb_for_postgresql 13
 }
 
 [[ "${args[*]}" =~ 'postgresql14' ]] && {
-  install_postgresql 14
-  configure_postgresql 14
-  switch_postgres 14
-  install_pghashlib 14
-  install_timescaledb_for_postgresql 14
+    install_postgresql 14
+    configure_postgresql 14
+    switch_postgres 14
+    install_pghashlib 14
+    install_timescaledb_for_postgresql 14
 }
 
 #install_mysql
@@ -201,7 +200,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 #install_heroku_tooling
 #install_lucky
 [[ "${args[*]}" =~ 'rabbitmq' ]] && {
-  install_rabbitmq
+    install_rabbitmq
 }
 
 rpm_versions "${UPGRADE_PACK}_post_upgrade_6.1.1-11.5.0"
