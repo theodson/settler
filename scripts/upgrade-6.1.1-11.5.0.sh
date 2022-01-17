@@ -113,7 +113,7 @@ declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_
 
 [[ "${args[*]}" =~ 'node' ]] && {
     # ensure script returns to expected PHP version
-    # source /root/.bashrc
+    source /root/.bashrc
     nvm alias default "$MAINTAIN_NODE_AT_VERSION" && nvm use default || true
 }
 

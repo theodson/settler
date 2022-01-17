@@ -946,7 +946,8 @@ install_mysql80() {
 
     # upadate repo and install latest 8.x
     rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-4.noarch.rpm
-    yum -y install mysql-community-server
+    sudo /bin/mv -f /etc/my.cnf /etc/my.cnf_previous || true
+    yum -y reinstall mysql-community-server
     sudo systemctl disable mysqld
     sudo systemctl stop mysqld
 }
@@ -978,8 +979,11 @@ configure_mysql() {
 
   systemctl enable mysqld.service
   systemctl start mysqld.service
+  echo "# configure mysql8 start : $(date)" >> /etc/my.cnf
 
   # Configure Centos Mysql 5.7+
+
+  sed -i -E '/default_password_lifetime|default_authentication_plugin|validate_password_policy|default_password_lifetime|validate_password_length|bind-address/d' /etc/my.cnf
 
   # http://blog.astaz3l.com/2015/03/03/mysql-install-on-centos/
   echo "default_password_lifetime = 0" >>/etc/my.cnf
@@ -1001,7 +1005,7 @@ configure_mysql() {
   systemctl restart mysqld.service
 
   # find temporary password
-  mysql_password=$(sudo grep 'temporary password' /var/log/mysqld.log | sed 's/.*localhost: //')
+  mysql_password=$(sudo grep 'temporary password' /var/log/mysqld.log | tail -1 | sed 's/.*localhost: //')
   echo "mysql_password=$mysql_password"
   mysqladmin -u root -p"$mysql_password" password secret
   mysqladmin -u root -psecret variables | grep validate_password
@@ -1009,7 +1013,7 @@ configure_mysql() {
   echo "passwords set"
   case "$MYSQL_VERSION" in
       8)
-          echo "mysql8 setup"
+        echo "mysql8 setup"
         mysql --user="root" --password="secret" -e "CREATE USER root@0.0.0.0 IDENTIFIED BY 'secret';"
         echo "about to restart mysql8"
         systemctl restart mysqld.service
@@ -1036,13 +1040,15 @@ configure_mysql() {
         ;;
   esac
 
-    echo "character-set-server=utf8mb4" >>/etc/my.cnf
-    echo "collation-server=utf8mb4_bin" >>/etc/my.cnf
+  echo "character-set-server=utf8mb4" >>/etc/my.cnf
+  echo "collation-server=utf8mb4_bin" >>/etc/my.cnf
 
   systemctl restart mysqld.service
 
   # Add Timezone Support To MySQL
   mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=secret mysql
+
+  echo "# configure mysql8 end : $(date)" >> /etc/my.cnf
 
 }
 
