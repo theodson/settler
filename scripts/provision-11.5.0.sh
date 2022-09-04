@@ -40,14 +40,14 @@ upgrade_nginx
 
 # install switch_php for root - take current function from this script and export to file
 declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >> /root/.bash_profile
-install_php_remi 7.0 && configure_php_remi 7.0
-install_php_remi 7.1 && configure_php_remi 7.1
-install_php_remi 7.2 && configure_php_remi 7.2
-install_php_remi 7.3 && configure_php_remi 7.3
-install_php_remi 7.4 && configure_php_remi 7.4
-install_php_remi 8.0 && configure_php_remi 8.0
-install_php_remi 8.1 && configure_php_remi 8.1
-switch_php 8.0
+install_php_remi 7.0 switch && configure_php_remi 7.0
+install_php_remi 7.1 switch && configure_php_remi 7.1
+install_php_remi 7.2 switch && configure_php_remi 7.2
+install_php_remi 7.3 switch && configure_php_remi 7.3
+install_php_remi 7.4 switch && configure_php_remi 7.4
+install_php_remi 8.0 switch && configure_php_remi 8.0
+install_php_remi 8.1 switch && configure_php_remi 8.1
+switch_php 8.1
 nvm alias default "$MAINTAIN_NODE_AT_VERSION" && nvm use default || true
 
 upgrade_composer
@@ -60,44 +60,37 @@ install_git2
 install_sqlite
 
 install_postgresql 9.5
-install_pghashlib 9.5
+initdb_postgresql 9.5
 configure_postgresql 9.5
-
-install_postgresql 9.6
-install_pghashlib 9.6
-configure_postgresql 9.6
-
-install_postgresql 10
-install_pghashlib 10
-configure_postgresql 10
+add_postgresql_user 9.5 homestead secret
+install_pghashlib 9.5
+install_postgres_plpython 9.5    
+install_postgres_fdw_redis 9.5
 
 declare -f switch_postgres > /usr/sbin/switch_postgres.sh && echo "source /usr/sbin/switch_postgres.sh" >> /root/.bash_profile
 
-install_postgresql 11
-configure_postgresql 11
-switch_postgres 11
-install_pghashlib 11
-install_timescaledb_for_postgresql 11
-
-install_postgresql 12
-configure_postgresql 12
-switch_postgres 12
-install_pghashlib 12
-install_timescaledb_for_postgresql 12
-
+PGPORT=5436
 install_postgresql 13
+initdb_postgresql 13
 configure_postgresql 13
-switch_postgres 13
+add_postgresql_user 13 homestead secret
 install_pghashlib 13
+install_postgres_plpython 13    
+install_postgres_fdw_redis 13
 install_timescaledb_for_postgresql 13
+unset PGPORT
 
+PGPORT=5438
 install_postgresql 14
+initdb_postgresql 14
 configure_postgresql 14
-switch_postgres 14
+add_postgresql_user 14 homestead secret
 install_pghashlib 14
+install_postgres_plpython 14    
+# https://github.com/nahanni/rw_redis_fdw/issues/18
+# install_postgres_fdw_redis 14 # as of 2022-09-03 fwd-redis-14 is not available.
 install_timescaledb_for_postgresql 14
-
-switch_postgres 14
+unset PGPORT
 
 install_mysql80
 configure_mysql # untested with 80!
