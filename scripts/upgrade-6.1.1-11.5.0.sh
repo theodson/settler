@@ -239,7 +239,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 }
 
 [[ "${args[*]}" =~ 'postgresql13' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5436}"
     install_postgresql 13
     initdb_postgresql 13
     configure_postgresql 13
@@ -250,12 +250,12 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     install_timescaledb_for_postgresql 13
 }
 [[ "${args[*]}" =~ 'pg13_switch' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5436}"
     switch_postgres 13
 }
 
 [[ "${args[*]}" =~ 'postgresql14' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5438}"
     install_postgresql 14
     initdb_postgresql 14
     configure_postgresql 14
@@ -267,7 +267,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     install_timescaledb_for_postgresql 14
 }
 [[ "${args[*]}" =~ 'pg14_switch' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5438}"
     switch_postgres 14
 }
 
