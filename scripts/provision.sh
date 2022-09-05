@@ -1179,6 +1179,7 @@ install_mysql80() {
 
   # upadate repo and install latest 8.x
   rpm -Uvh https://repo.mysql.com/mysql80-community-release-el7-4.noarch.rpm
+  rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
   sudo /bin/mv -f /etc/my.cnf /etc/my.cnf_previous || true
   yum -y reinstall mysql-community-server || yum -y install mysql-community-server
   sudo systemctl start mysqld
