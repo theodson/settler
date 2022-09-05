@@ -128,7 +128,8 @@ echo -e "$(date +"%Y%m%d_%H%M%S_%s"):Upgrade Tasks:START: ${args[*]}" | tee -a /
     upgrade_nginx
 }
 
-declare -f switch_php >/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >>/root/.bash_profile
+declare -f get_php_version >/usr/sbin/switch_php.sh || true
+declare -f switch_php >>/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >>/root/.bash_profile
 
 #install_php_remi 7.0 && configure_php_remi 7.0
 #install_php_remi 7.1 && configure_php_remi 7.1

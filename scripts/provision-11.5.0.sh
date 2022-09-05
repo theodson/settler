@@ -39,7 +39,8 @@ install_nginx
 upgrade_nginx
 
 # install switch_php for root - take current function from this script and export to file
-declare -f switch_php > /usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >> /root/.bash_profile
+declare -f get_php_version >/usr/sbin/switch_php.sh || true
+declare -f switch_php >>/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch_php.sh" >>/root/.bash_profile
 install_php_remi 7.0 switch && configure_php_remi 7.0
 install_php_remi 7.1 switch && configure_php_remi 7.1
 install_php_remi 7.2 switch && configure_php_remi 7.2

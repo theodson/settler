@@ -1019,8 +1019,8 @@ switch_php() {
   PHP_VERSION=$(echo $PHP_DOT_VERSION | tr -d '.')
   CURRENT_PHP_VERSION=$(echo "$(get_php_version)" | tr -d '.')
   
-  if [ "$CURRENT_PHP_VERSION" = "$PHP_VERSION" ] && [ ! $force ]; then
-    echo -e "\n✨ Request and Current PHP Version are the same - not FORCE switch requested - skipping\n"
+  if [ "$CURRENT_PHP_VERSION" = "$PHP_VERSION" ] && ! $force; then
+    echo -e "\n✨ Request and Current PHP Version are the same - FORCE switch NOT requested - skipping\n"
     return
   fi
 
