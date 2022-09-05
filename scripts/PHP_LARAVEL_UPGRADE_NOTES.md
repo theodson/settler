@@ -16,7 +16,7 @@ PHP-8.1 is released and included in this build 11.5.0
 ## ReImage Existing OVA 6.1.1 to 11.5.0
 These instructions are to rebuild an existing "clean/unused" VM from the `6.1.1` image.
 ```
-UPGRADE_PACK=full bash ./upgrade-6.1.1-11.5.0.sh
+    UPGRADE_PACK=full bash ./upgrade-6.1.1-11.5.0.sh
 ```
 This will be used to generate distributable OVA file.
 
@@ -24,7 +24,7 @@ This will be used to generate distributable OVA file.
 These instructions are to rebuild an existing "clean/unused" VM from the `6.1.1` image.  
 It installs additional developer tools, e.g. `docker, php73, php74, mysql80`
 ```
-UPGRADE_PACK=full bash ./upgrade-6.1.1-11.5.0.sh
+UPGRADE_PACK=developer bash ./upgrade-6.1.1-11.5.0.sh
 ```
 
 ## Upgrade Existing `in use` VM - 6.1.1 to 11.5.0
