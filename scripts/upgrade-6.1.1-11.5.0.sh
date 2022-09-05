@@ -239,7 +239,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 }
 
 [[ "${args[*]}" =~ 'postgresql13' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5436}"
     install_postgresql 13
     initdb_postgresql 13
     configure_postgresql 13
@@ -248,14 +248,16 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     install_postgres_plpython 13    
     install_postgres_fdw_redis 13
     install_timescaledb_for_postgresql 13
+    unset PGPORT    
 }
 [[ "${args[*]}" =~ 'pg13_switch' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5436}"
     switch_postgres 13
+    unset PGPORT    
 }
 
 [[ "${args[*]}" =~ 'postgresql14' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5438}"
     install_postgresql 14
     initdb_postgresql 14
     configure_postgresql 14
@@ -265,10 +267,12 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     # https://github.com/nahanni/rw_redis_fdw/issues/18
     # install_postgres_fdw_redis 14 # as of 2022-09-03 fwd-redis-14 is not available.
     install_timescaledb_for_postgresql 14
+    unset PGPORT
 }
 [[ "${args[*]}" =~ 'pg14_switch' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5438}"
     switch_postgres 14
+    unset PGPORT    
 }
 
 #install_mysql
