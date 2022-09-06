@@ -964,6 +964,8 @@ NGINXDIFF
 
     chmod -R g+x /var/lib/nginx
 
+    # this fixes upload failures due to inability to write to tmp folder.
+    chown nginx:nginx /var/lib/nginx /var/lib/nginx/tmp
 NGINXDIFF
 
   if ! $is_upgrade; then
