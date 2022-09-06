@@ -783,6 +783,8 @@ install_php_remi() {
 
   [ $PHP_VERSION -eq '74' ] && yum install -y php74-php-pecl-interbase.x86_64
 
+  yum install -y -q libsodium libsodium-devel php${PHP_VERSION}-php-sodium || echo "libsodium failed to install for php ${PHP_VERSION}" 
+  
   if $and_switch_php; then
     switch_php $PHP_DOT_VERSION
     php -v
