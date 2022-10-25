@@ -134,6 +134,8 @@ EOF
 os_support_updates() {
   echo -e "\n✨ ${FUNCNAME[0]}()\n"
   sudo yum -y install iftop
+  # this fixes upload failures due to inability towrite to tmp folder.
+  sudo chown nginx:nginx /var/lib/nginx /var/lib/nginx/tmp
   echo -e "\n✨ ${FUNCNAME[0]}() done\n"
 }
 
