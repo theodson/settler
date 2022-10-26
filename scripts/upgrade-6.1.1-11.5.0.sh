@@ -52,28 +52,28 @@ args=("$@")
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
-        args+=( "php73" "php74" "php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "phptesting" "docker" "mysql80")
+        args+=( "php73" "php74" "php80" "php81" "php82" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "phptesting" "docker" "mysql80")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] full upgrade for laravel 9 and dev platform\n\t${args[*]}"
         ;;
     full)
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "mysql80")
+        args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "mysql80")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] full upgrade for laravel 9 and dev platform\n\t${args[*]}"
         ;;
     standard)
         args+=("prepare") # always call prepare
         args+=("os_support_updates")      
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15")
+        args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades laravel 9\n\t${args[*]}"
         ;;
     upgrade)
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "maintain_php" "rabbitmq" )
+        args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" )
         # args+=("postgresql95" "postgresql13" "postgresql14") # do this separately
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades supporting Laravel 9 ( NSS-1351 )\n\t${args[*]}"
         ;;
@@ -81,7 +81,7 @@ args=("$@")
         args+=("prepare") # always call prepare
         args+=("os_support_updates")      
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "maintain_php")
+        args+=("php80" "php81" "php82" "maintain_php")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades laravel 8\n\t${args[*]}"
         ;;
     basic)
@@ -145,6 +145,9 @@ declare -f switch_php >>/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch
 }
 [[ "${args[*]}" =~ 'php81' ]] && {
     install_php_remi 8.1 && configure_php_remi 8.1 upgrade
+}
+[[ "${args[*]}" =~ 'php82' ]] && {
+    install_php_remi 8.2 && configure_php_remi 8.2 upgrade
 }
 
 [[ "${args[*]}" =~ 'composer' ]] && {
@@ -286,7 +289,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     install_postgres_plpython 15
     # https://github.com/nahanni/rw_redis_fdw/issues/18
     # install_postgres_fdw_redis 15 # as of 2022-09-03 fwd-redis-14 is not available.
-    install_timescaledb_for_postgresql 15
+    # install_timescaledb_for_postgresql 15 not available yet
     unset PGPORT
 }
 [[ "${args[*]}" =~ 'pg15_switch' ]] && {

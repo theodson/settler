@@ -43,11 +43,6 @@ This is done by calling the task directly by passing directly as an argument
 bash ./upgrade-6.1.1-11.5.0.sh prepare
 ```
 
-##### Call a "collection" of upgrade tasks using env var `UPGRADE_PACK`
-```
-UPGRADE_PACK=upgrade bash ./upgrade-6.1.1-11.5.0.sh
-```
-
 ##### Upgrade and install Postgres databases
 This is done by calling the tasks directly by passing directly as an argument
 ```
@@ -55,8 +50,16 @@ bash ./upgrade-6.1.1-11.5.0.sh postgresql95
 
 PGPORT=5436 bash ./upgrade-6.1.1-11.5.0.sh postgresql13
 PGPORT=5438 bash ./upgrade-6.1.1-11.5.0.sh postgresql14
+PGPORT=5440 bash ./upgrade-6.1.1-11.5.0.sh postgresql15
 ```
 
+##### OR call a "collection" of upgrade tasks using env var `UPGRADE_PACK`
+
+> The UPGRADE_PACK should specify PORTs for postgres in order to NOT interrupt existing services.
+> As see above using PGPORT=
+```
+UPGRADE_PACK=upgrade bash ./upgrade-6.1.1-11.5.0.sh
+```
 
 
 ## Notes
