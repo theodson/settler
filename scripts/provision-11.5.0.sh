@@ -48,6 +48,7 @@ install_php_remi 7.3 switch && configure_php_remi 7.3
 install_php_remi 7.4 switch && configure_php_remi 7.4
 install_php_remi 8.0 switch && configure_php_remi 8.0
 install_php_remi 8.1 switch && configure_php_remi 8.1
+install_php_remi 8.2 switch && configure_php_remi 8.2
 switch_php 8.1
 nvm alias default "$MAINTAIN_NODE_AT_VERSION" && nvm use default || true
 

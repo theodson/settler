@@ -405,7 +405,7 @@ configure_postgresql() {
     setup_script=postgresql-14-check-db-dir
     ;;  
   15)
-    setup_script=postgresql-14-check-db-dir
+    setup_script=postgresql-15-check-db-dir
     ;;
   esac
 
@@ -723,10 +723,10 @@ configure_cache_queue() {
 install_php_remi() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1|8.2" && return 1
   }
   echo $1 | egrep '[7,8]\.[0,1,2,3,4]' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 2
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1|8.2" && return 2
   }
 
   and_switch_php=false
@@ -754,6 +754,9 @@ install_php_remi() {
     sudo yum-config-manager --disable $repo &>/dev/null || echo "disabled already $repo"
   done
   sudo yum-config-manager --enable remi-php${PHP_VERSION} && echo "Enabled Repo remi-php${PHP_VERSION}" || echo "FAILED to enable Repo remi-php${PHP_VERSION}"
+
+  for ext in uuid varnish xlswriter xmldiff yaml zmq zip msgpack protobuf redis5; do yum -y install php81-php-pecl-$ext; done
+    
 
   sudo yum --enablerepo=remi-php${PHP_VERSION} install -y \
     php${PHP_VERSION}-php-xml \
@@ -796,7 +799,16 @@ install_php_remi() {
     php${PHP_VERSION}-php-pgsql \
     php${PHP_VERSION}-php-imap \
     php${PHP_VERSION}-php-ldap \
-    php${PHP_VERSION}-php-pear
+    php${PHP_VERSION}-php-pear \
+    php${PHP_VERSION}-php-pecl-uuid \
+    php${PHP_VERSION}-php-pecl-varnish \
+    php${PHP_VERSION}-php-pecl-xlswriter \
+    php${PHP_VERSION}-php-pecl-xmldiff \
+    php${PHP_VERSION}-php-pecl-yaml \
+    php${PHP_VERSION}-php-pecl-zmq \
+    php${PHP_VERSION}-php-pecl-msgpack \
+    php${PHP_VERSION}-php-pecl-protobuf \
+    php${PHP_VERSION}-php-pecl-redis5     
 
   [ $PHP_VERSION -eq '74' ] && yum install -y php74-php-pecl-interbase.x86_64
 
@@ -812,10 +824,10 @@ install_php_remi() {
 configure_php_remi() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1 [upgrade]" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1|8.2 [upgrade]" && return 1
   }
   echo $1 | egrep '[7,8]\.[0,1,2,3,4]' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1" && return 2
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 7.0|7.1|7.2|7.3|7.4|8.0|8.1|8.2" && return 2
   }
   is_upgrade=false
   if test $# -eq 2 -a $2=='upgrade'; then
@@ -1134,6 +1146,7 @@ install_composer() {
         curl -sS https://getcomposer.org/installer | php
         mv composer.phar /usr/local/bin/composer
     }
+    composer self-update --2.2
     cat << 'COMPOSER_HOME' >> /etc/bashrc
 # Add Composer Global Bin To Path
 export PATH=$(composer global config -q --absolute home)/vendor/bin:\$PATH
@@ -1444,7 +1457,8 @@ install_postgres_fdw_redis() {
     echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   # https://github.com/nahanni/rw_redis_fdw/issues/18
-  # As of 2022-09-03 fwd-redis-14 is not available.
+  # As of 2022-10-26 fwd-redis-14 is not available.
+  # As of 2022-10-26 fwd-redis-15 is not available.
   echo -e "\n${FUNCNAME[0]}($@) - install Postgres Foreign Data Wrapper for Redis\n"
 
   PGVER=$1
@@ -1853,7 +1867,7 @@ upgrade_composer() {
         rm -rf $HOME/.composer &>/dev/null || true
 EOF
   type composer && {
-    composer selfupdate --no-interaction -q
+    composer self-update --2.2 --no-interaction -q
     COMPOSER_HOME="$(composer global config -q --absolute home)"
   }
   install_composer
