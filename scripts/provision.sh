@@ -242,10 +242,10 @@ install_sqlite() {
 install_postgresql() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install postgresql\n"  
   
@@ -279,6 +279,8 @@ install_postgresql() {
     sudo systemctl disable postgresql-13 2>/dev/null || echo ""
     sudo systemctl stop postgresql-14 2>/dev/null || echo ""
     sudo systemctl disable postgresql-14 2>/dev/null || echo ""
+    sudo systemctl stop postgresql-15 2>/dev/null || echo ""
+    sudo systemctl disable postgresql-15 2>/dev/null || echo ""
   else
     echo "Upgrading - existing postgresql services will not be stopped."
   fi
@@ -311,6 +313,10 @@ install_postgresql() {
   14)
     sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql14 repo already exists'
     sudo yum -y install postgresql14-server postgresql14 postgresql14-contrib
+    ;;  
+  15)
+    sudo rpm -Uvh https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || echo 'postgresql15 repo already exists'
+    sudo yum -y install postgresql15-server postgresql15 postgresql15-contrib
     ;;
   esac
   echo -e "\n✨ ${FUNCNAME[0]}() done\n"
@@ -319,10 +325,10 @@ install_postgresql() {
 initdb_postgresql() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   PGDB_VERSION=$1
 
@@ -349,6 +355,9 @@ initdb_postgresql() {
     ;;
   14)
     setup_script=postgresql-14-setup
+    ;;  
+  15)
+    setup_script=postgresql-15-setup
     ;;
   esac
 
@@ -363,10 +372,10 @@ PGINSTALL
 configure_postgresql() {
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   PGPORT="${PGPORT:-5432}"
   PGDB_VERSION=$1
@@ -393,6 +402,9 @@ configure_postgresql() {
     setup_script=postgresql-13-check-db-dir
     ;;
   14)
+    setup_script=postgresql-14-check-db-dir
+    ;;  
+  15)
     setup_script=postgresql-14-check-db-dir
     ;;
   esac
@@ -562,10 +574,10 @@ PGINSTALL
 add_postgresql_user() {
 
   [ $# -lt 2 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14 NEW_USER_NAME PASSWORD" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15 NEW_USER_NAME PASSWORD" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument '$1'\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   PGPORT="${PGPORT:-5432}"
   PGDB_VERSION=$1
@@ -637,6 +649,9 @@ PGDATA_CHANGE
 
   sudo systemctl stop postgresql-14 2>/dev/null || true && echo "stopped postgresql-14"
   sudo systemctl disable postgresql-14 2>/dev/null || true && echo "disabled postgresql-14"
+  
+  sudo systemctl stop postgresql-15 2>/dev/null || true && echo "stopped postgresql-15"
+  sudo systemctl disable postgresql-15 2>/dev/null || true && echo "disabled postgresql-15"
 
   sudo systemctl enable postgresql-${PGDB_VERSION} 2>/dev/null || echo "failed to enable postgresql-${PGDB_VERSION}"
   sudo systemctl start postgresql-${PGDB_VERSION} 2>/dev/null || echo "failed to start postgresql-${PGDB_VERSION}"
@@ -1423,10 +1438,10 @@ install_zend_zray() {
 
 install_postgres_fdw_redis() {
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   # https://github.com/nahanni/rw_redis_fdw/issues/18
   # As of 2022-09-03 fwd-redis-14 is not available.
@@ -1461,10 +1476,10 @@ function install_postgres_plpython() {
   PGPORT="${PGPORT:-5432}"
   
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install PL/Python - Python Procedural Language\n"
 
@@ -1488,6 +1503,9 @@ function install_postgres_plpython() {
     14)
         sudo yum install -y python3 postgresql14-contrib postgresql14-plpython3
         ;;
+    15)
+        sudo yum install -y python3 postgresql15-contrib postgresql15-plpython3
+        ;;      
     esac
     
   } && {
@@ -1500,10 +1518,10 @@ function install_postgres_plpython() {
 
 install_pghashlib() {
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14" && return 2
+  echo "$1" | grep -E '9.5$|9.6$|10$|11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 9.5|9.6|10|11|12|13|14|15" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install pghashlib\n"
 
@@ -1515,7 +1533,7 @@ install_pghashlib() {
   PGLIB="/usr/pgsql-${PGVER}"
   PG_PATH="${PGLIB}/bin/"
 
-  echo $PGVER | egrep '11$|12$|13$|14$' && {
+  echo $PGVER | egrep '11$|12$|13$|14$|15$' && {
     # look for prebuild libs for hashlib - at https://github.com/bgdevlab/pghashlib
     pghashlib="postgresql${PGVER}-hashlib.rhel7.minimum-base.tar.gz"
     [ ! -e "/tmp/${pghashlib}" ] && {
@@ -1748,10 +1766,10 @@ install_timescaledb_for_postgresql() {
   # https://www.digitalocean.com/community/tutorials/how-to-install-and-use-timescaledb-on-centos-7
 
   [ $# -lt 1 ] && {
-    echo -e "missing argument\nusage: ${FUNCNAME[0]} 11|12|13|14" && return 1
+    echo -e "missing argument\nusage: ${FUNCNAME[0]} 11|12|13|14|15" && return 1
   }
-  echo "$1" | grep -E '11$|12$|13$|14$' || {
-    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 11|12|13|14" && return 2
+  echo "$1" | grep -E '11$|12$|13$|14$|15$' || {
+    echo -e "invalid argument\nusage: ${FUNCNAME[0]} 11|12|13|14|15" && return 2
   }
   echo -e "\n${FUNCNAME[0]}($@) - install postgresql\n"
 

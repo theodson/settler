@@ -52,21 +52,21 @@ args=("$@")
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
-        args+=( "php73" "php74" "php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "phptesting" "docker" "mysql80")
+        args+=( "php73" "php74" "php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "phptesting" "docker" "mysql80")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] full upgrade for laravel 9 and dev platform\n\t${args[*]}"
         ;;
     full)
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "mysql80")
+        args+=("php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "mysql80")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] full upgrade for laravel 9 and dev platform\n\t${args[*]}"
         ;;
     standard)
         args+=("prepare") # always call prepare
         args+=("os_support_updates")      
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14")
+        args+=("php80" "php81" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades laravel 9\n\t${args[*]}"
         ;;
     upgrade)
@@ -273,6 +273,25 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 [[ "${args[*]}" =~ 'pg14_switch' ]] && {
     PGPORT="${PGPORT:-5438}"
     switch_postgres 14
+    unset PGPORT    
+}
+
+[[ "${args[*]}" =~ 'postgresql15' ]] && {
+    PGPORT="${PGPORT:-5440}"
+    install_postgresql 15
+    initdb_postgresql 15
+    configure_postgresql 15
+    add_postgresql_user 15 homestead secret
+    install_pghashlib 15
+    install_postgres_plpython 15
+    # https://github.com/nahanni/rw_redis_fdw/issues/18
+    # install_postgres_fdw_redis 15 # as of 2022-09-03 fwd-redis-14 is not available.
+    install_timescaledb_for_postgresql 15
+    unset PGPORT
+}
+[[ "${args[*]}" =~ 'pg15_switch' ]] && {
+    PGPORT="${PGPORT:-5440}"
+    switch_postgres 15
     unset PGPORT    
 }
 

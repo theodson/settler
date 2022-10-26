@@ -93,6 +93,18 @@ install_postgres_plpython 14
 install_timescaledb_for_postgresql 14
 unset PGPORT
 
+PGPORT=5440
+install_postgresql 15
+initdb_postgresql 15
+configure_postgresql 15
+add_postgresql_user 15 homestead secret
+install_pghashlib 15
+install_postgres_plpython 15    
+# https://github.com/nahanni/rw_redis_fdw/issues/18
+# install_postgres_fdw_redis 14 # as of 2022-09-03 fwd-redis-14 is not available.
+install_timescaledb_for_postgresql 15
+unset PGPORT
+
 install_mysql80
 configure_mysql # untested with 80!
 systemctl disable mysqld && systemctl stop mysqld

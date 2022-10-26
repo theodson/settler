@@ -1,9 +1,10 @@
 # Platform
 
-## Review of `2022-09-01`
+## Review of `2022-10-26`
 PHP-8.1 is released and included in this build 11.5.0
 
 - tighten/takeout composer global
+- postgresql 15 with (possubly hashlib and timescaledb)
 - postgresql 14 with hashlib and timescaledb
 - php-8.0 and php-8.1
 - docker-ce and docker-compose
@@ -34,7 +35,7 @@ Upgrade tested using `theodson-settler` project and the `upgrade-6.1.1-11.5.0.sh
 
 - Upgrade exists 6.1.1
 - Install postgres95 extensions
-- Install postgres13 and postgres14 on different port - won't interrupt existing pg95 as default.
+- Install postgres13, postgres14 and postgres15 on different port - won't interrupt existing pg95 as default.
 
 ##### Prepare for upgrade 
 This is done by calling the task directly by passing directly as an argument
