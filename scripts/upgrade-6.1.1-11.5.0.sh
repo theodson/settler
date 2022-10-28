@@ -4,6 +4,7 @@
 #
 UPGRADE_BOX_VERSION='11.5.0<6.1.1'
 MAINTAIN_PHP_AT_VERSION="${MAINTAIN_PHP_AT_VERSION:-7.0}"
+MAINTAIN_POSTGRES_AT_VERSION="${MAINTAIN_POSTGRES_AT_VERSION:-9.5}"
 MAINTAIN_NODE_AT_VERSION="${MAINTAIN_NODE_AT_VERSION:-9}"
 
 # if any arguments are passed use them
@@ -59,7 +60,7 @@ args=("$@")
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "mysql80")
+        args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" "postgresql13" "postgresql14" "postgresql15" "maintain_postgres" "mysql80")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] full upgrade for laravel 9 and dev platform\n\t${args[*]}"
         ;;
     standard)
@@ -70,12 +71,19 @@ args=("$@")
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades laravel 9\n\t${args[*]}"
         ;;
     upgrade)
+        # 1st step in upgrading 6.1.1 VM
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
         args+=("composer" "git2" "node" "nginx")
         args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" )
-        # args+=("postgresql95" "postgresql13" "postgresql14") # do this separately
         echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades supporting Laravel 9 ( NSS-1351 )\n\t${args[*]}"
+        ;;
+    upgrade_postgres)
+        # 2nd step in upgrading 6.1.1 VM -  do this after 'upgrade' has been run.        
+        args+=("prepare") # always call prepare
+        args+=("postgresql95") # postgresql95 is run to install extensions.
+        args+=("postgresql13" "postgresql14" "postgresql15") # prepare for new rdbms
+        echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] postgres upgrades for new platform for Laravel 9 ( NSS-1351 )\n\t${args[*]}"
         ;;
     minimum)
         args+=("prepare") # always call prepare
@@ -161,6 +169,7 @@ declare -f switch_php >>/usr/sbin/switch_php.sh && echo "source /usr/sbin/switch
 
 [[ "${args[*]}" =~ 'maintain_php' ]] && {
     # ensure script returns to expected PHP version
+    switch_and_cycle_all_php_version 
     switch_php "$MAINTAIN_PHP_AT_VERSION"
 }
 
@@ -202,32 +211,20 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 
 [[ "${args[*]}" =~ 'postgresql95' ]] && {
     PGPORT="${PGPORT:-5432}"
+    echo -e "Assuming postgres 95 is already installed...\nInstalling extensions.\n"
     install_postgres_plpython 9.5    
     install_postgres_fdw_redis 9.5
+    echo -e "\n✨ extensions for postgresql 9.5"
+    su - postgres -c "psql -U postgres -p $PGPORT -c '\dx'"
+    unset PGPORT    
 }
 [[ "${args[*]}" =~ 'pg95_switch' ]] && {
     PGPORT="${PGPORT:-5432}"
     switch_postgres 9.5
 }
 
-[[ "${args[*]}" =~ 'postgresql11' ]] && {
-    PGPORT="${PGPORT:-5432}"
-    install_postgresql 11
-    initdb_postgresql 11
-    configure_postgresql 11
-    add_postgresql_user 11 homestead secret    
-    install_pghashlib 11
-    install_postgres_plpython 11    
-    install_postgres_fdw_redis 11
-    install_timescaledb_for_postgresql 11
-}
-[[ "${args[*]}" =~ 'pg11_switch' ]] && {
-    PGPORT="${PGPORT:-5432}"
-    switch_postgres 11
-}
-
 [[ "${args[*]}" =~ 'postgresql12' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5434}"
     install_postgresql 12
     initdb_postgresql 12
     configure_postgresql 12
@@ -236,10 +233,15 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     install_postgres_plpython 12    
     install_postgres_fdw_redis 12
     install_timescaledb_for_postgresql 12
+    echo -e "\n✨ extensions for postgresql 12"
+    systemctl stop postgresql-12.service
+    systemctl disable postgresql-12.service
+    unset PGPORT    
 }
 [[ "${args[*]}" =~ 'pg12_switch' ]] && {
-    PGPORT="${PGPORT:-5432}"
+    PGPORT="${PGPORT:-5434}"
     switch_postgres 12
+    unset PGPORT    
 }
 
 [[ "${args[*]}" =~ 'postgresql13' ]] && {
@@ -252,6 +254,10 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     install_postgres_plpython 13    
     install_postgres_fdw_redis 13
     install_timescaledb_for_postgresql 13
+    echo -e "\n✨ extensions for postgresql 13"
+    su - postgres -c "psql -U postgres -p $PGPORT -c '\dx'"
+    systemctl stop postgresql-13.service
+    systemctl disable postgresql-13.service
     unset PGPORT    
 }
 [[ "${args[*]}" =~ 'pg13_switch' ]] && {
@@ -271,6 +277,10 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     # https://github.com/nahanni/rw_redis_fdw/issues/18
     # install_postgres_fdw_redis 14 # as of 2022-09-03 fwd-redis-14 is not available.
     install_timescaledb_for_postgresql 14
+    echo -e "\n✨ extensions for postgresql 14"
+    su - postgres -c "psql -U postgres -p $PGPORT -c '\dx'"
+    systemctl stop postgresql-14.service
+    systemctl disable postgresql-14.service
     unset PGPORT
 }
 [[ "${args[*]}" =~ 'pg14_switch' ]] && {
@@ -290,6 +300,10 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     # https://github.com/nahanni/rw_redis_fdw/issues/18
     # install_postgres_fdw_redis 15 # as of 2022-09-03 fwd-redis-14 is not available.
     # install_timescaledb_for_postgresql 15 not available yet
+    echo -e "\n✨ extensions for postgresql 15"
+    su - postgres -c "psql -U postgres -p $PGPORT -c '\dx'"
+    systemctl stop postgresql-15.service
+    systemctl disable postgresql-15.service
     unset PGPORT
 }
 [[ "${args[*]}" =~ 'pg15_switch' ]] && {
@@ -298,6 +312,11 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
     unset PGPORT    
 }
 
+[[ "${args[*]}" =~ 'maintain_postgres' ]] && {
+    # ensure script returns to expected POSTGRES version
+    switch_postgres "$MAINTAIN_POSTGRES_AT_VERSION"
+    unset PGPORT
+}
 #install_mysql
 #configure_mysql 8
 
@@ -319,7 +338,7 @@ declare -f switch_postgres >/usr/sbin/switch_postgres.sh && echo "source /usr/sb
 #install_heroku_tooling
 #install_lucky
 [[ "${args[*]}" =~ 'rabbitmq' ]] && {
-    install_rabbitmq || echo "rabbitmq install returned $?"
+    install_rabbitmq || echo "rabbitmq install returned '$?'"
 }
 
 rpm_versions "${UPGRADE_PACK}_post_upgrade_6.1.1-11.5.0"

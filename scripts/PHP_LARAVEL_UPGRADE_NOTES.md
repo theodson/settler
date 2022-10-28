@@ -29,13 +29,14 @@ UPGRADE_PACK=developer bash ./upgrade-6.1.1-11.5.0.sh
 ```
 
 ## Upgrade Existing `in use` VM - 6.1.1 to 11.5.0
-These instructions are to upgrade an existing "in-use/production" VM using the `6.1.1` image.
+These instructions are to upgrade an existing "in-use/production" VM that is based on the  `6.1.1` image.
 
 Upgrade tested using `theodson-settler` project and the `upgrade-6.1.1-11.5.0.sh` script.
 
-- Upgrade exists 6.1.1
+- Upgrade existing 6.1.1
 - Install postgres95 extensions
 - Install postgres13, postgres14 and postgres15 on different port - won't interrupt existing pg95 as default.
+- Install php-80, php-81, php-82 - all php-fpm configured to port 9000 (they can't run at the same time)
 
 ##### Prepare for upgrade 
 This is done by calling the task directly by passing directly as an argument
@@ -46,8 +47,10 @@ bash ./upgrade-6.1.1-11.5.0.sh prepare
 ##### Upgrade and install Postgres databases
 This is done by calling the tasks directly by passing directly as an argument
 ```
+# this install extensions only
 bash ./upgrade-6.1.1-11.5.0.sh postgresql95
 
+# these install complete rdms and extensions
 PGPORT=5436 bash ./upgrade-6.1.1-11.5.0.sh postgresql13
 PGPORT=5438 bash ./upgrade-6.1.1-11.5.0.sh postgresql14
 PGPORT=5440 bash ./upgrade-6.1.1-11.5.0.sh postgresql15
@@ -59,6 +62,9 @@ PGPORT=5440 bash ./upgrade-6.1.1-11.5.0.sh postgresql15
 > As see above using PGPORT=
 ```
 UPGRADE_PACK=upgrade bash ./upgrade-6.1.1-11.5.0.sh
+UPGRADE_PACK=upgrade_postgres bash ./upgrade-6.1.1-11.5.0.sh
+supervisorctl restart
+
 ```
 
 

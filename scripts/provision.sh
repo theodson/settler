@@ -881,6 +881,9 @@ EOF
 
 PHP
 
+  # TODO - consider configuring uniuq port per PHP_VERSION 
+  # e.g. See /etc/opt/remi/php81/php-fpm.d/www.conf:listen = 127.0.0.1:9000
+  
   # Set The Nginx & PHP-FPM User
   #    sed -i "s/user nginx;/user vagrant;/" /etc/nginx/nginx.conf
   #    sed -i "s/http {/http {\n    server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
@@ -1012,7 +1015,7 @@ NGINXDIFF
   echo "nginx_backup  = $nginx_backup"
   echo "fpm_pool_www  = $fpm_pool_www"
 
-  echo "Possible improvement to support running multiple PHP-FPM each on a different port in $fpm_pool_www"
+  echo "TODO - Possible improvement to support running multiple PHP-FPM each on a different port in $fpm_pool_www"
   # See /etc/nginx/sites-enabled/nss.conf
   # fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
   # fastcgi_pass 127.0.0.1:9000; # here specify a different port - how do we set that in php-fpm.
@@ -1131,6 +1134,28 @@ PHP_FPM
   echo -e "\n✨ ${FUNCNAME[0]}() done\n"
 
   return 0
+}
+
+
+switch_and_cycle_all_php_version() {
+  #
+  # When upgrade and configuring php via (install_php_remi "without the force argument" and configure_php_remi) 
+  # we should "cycle" each service once all versions are installed to ensure they can run based on the configuration.
+  # By default, and for all/any versions of php-fpm, the service runs of tcp port `listen = 127.0.0.1:9000`
+  #  e.g see /etc/opt/remi/php81/php-fpm.d/www.conf 
+  # This common 9000 port is obviously an issue (only one service can use that port) but is intentional for switching between php
+  # versions and not needing to modify the nginx fastcgi configuration for phg-fpm.
+  # Hence, this function switches through each version ensuring they run correctly
+  # This is only required ONCE after UPGRADE of a VM (via the upgrade_6.1.1-11.5.0.sh script) as provision-11.5.0.sh switches 
+  # automatically via passing a command line arg - e.g. `install_php_remi 8.0 switch`
+  #
+  # Phew...  
+  #
+  for php_ver in $(rpm -qa php*-runtime --qf '%{NAME}\n' | egrep -oE '[789][0-9]' | sort -n | sed 's/./&\./1' | tr '\n' '|' | sed 's/.$//' | tr '|' ' '); do
+    echo "switch_and_cycle_all_php_version for PHP version ( $php_ver )"
+    switch_php $php_ver force
+  done
+  
 }
 
 install_composer() {
@@ -1473,7 +1498,7 @@ install_postgres_fdw_redis() {
   PG_PATH="${PGLIB}/bin/"
 
   [ -e ${PGLIB}/lib/redis_fdw.so ] && {
-    installed_ext=$(su - postgres -c "psql -U postgres -c \"SELECT true FROM pg_extension WHERE extname='$EXTNAME';\" -t | xargs ")
+    installed_ext=$(su - postgres -c "psql -U postgres -p $PGPORT -c \"SELECT true FROM pg_extension WHERE extname='$EXTNAME';\" -t | xargs ")
     echo "installed_ext=$installed_ext"
     if [ "${installed_ext}" = 't' ]; then
       echo "$EXTNAME already installed"
@@ -1500,10 +1525,13 @@ function install_postgres_plpython() {
   PGDB_VER=$(echo $PGVER | tr -d '.') # remove the dots
   rpm -qa --qf '%{NAME},%{VERSION}\n' | grep "postgresql${PGDB_VER}-plpython3" || {
     
-    case "$PGDB_VERSION" in
+    plpythcommand="CREATE EXTENSION IF NOT EXISTS plpython3u CASCADE;"
+    case "$PGVER" in
     9.5)
-        sudo yum install -y python3 postgresql95-contrib postgresql95-plpython3
-      ;;
+        plpythcommand="CREATE EXTENSION IF NOT EXISTS plpython3u;"
+        # sudo yum install -y python3 postgresql95-contrib postgresql95-plpython3
+        sudo yum install -y python3 postgresql95-plpython3
+        ;;
     11)
         sudo yum install -y python3 postgresql11-contrib postgresql11-plpython3
         ;;
@@ -1525,7 +1553,7 @@ function install_postgres_plpython() {
     echo "PL/Python - Python Procedural Language $PGDB_VER is installed - skipping."
   }
 
-  su postgres -c "psql -U postgres -p $PGPORT -c 'CREATE EXTENSION IF NOT EXISTS plpython3u CASCADE;'"
+  su postgres -c "pushd /tmp && psql -U postgres -p $PGPORT -c '$plpythcommand';"
   echo -e "\n✨ ${FUNCNAME[0]}() done\n"
 }
 
