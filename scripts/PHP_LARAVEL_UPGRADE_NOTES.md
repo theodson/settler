@@ -62,6 +62,7 @@ PGPORT=5440 bash ./upgrade-6.1.1-11.5.0.sh postgresql15
 > As see above using PGPORT=
 ```
 UPGRADE_PACK=upgrade bash ./upgrade-6.1.1-11.5.0.sh
+UPGRADE_PACK=upgrade_php bash ./upgrade-6.1.1-11.5.0.sh
 UPGRADE_PACK=upgrade_postgres bash ./upgrade-6.1.1-11.5.0.sh
 supervisorctl restart
 

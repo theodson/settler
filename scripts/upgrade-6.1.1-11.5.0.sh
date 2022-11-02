@@ -74,12 +74,17 @@ args=("$@")
         # 1st step in upgrading 6.1.1 VM
         args+=("prepare") # always call prepare
         args+=("os_support_updates")
-        args+=("composer" "git2" "node" "nginx")
-        args+=("php80" "php81" "php82" "maintain_php" "rabbitmq" )
-        echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] minimum upgrades supporting Laravel 9 ( NSS-1351 )\n\t${args[*]}"
+        args+=("composer" "git2" "node" "nginx" "rabbitmq" )
+        echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] prep upgrades supporting Laravel 9 ( NSS-1351 )\n\t${args[*]}"
         ;;
+    upgrade_php)
+        # 2nd step in upgrading 6.1.1 VM
+        args+=("prepare") # always call prepare
+        args+=("php80" "php81" "php82" "maintain_php")
+        echo -e "⚡️ [ UPGRADE_PACK : $UPGRADE_PACK ] php upgrades supporting Laravel 9 ( NSS-1351 )\n\t${args[*]}"
+        ;;      
     upgrade_postgres)
-        # 2nd step in upgrading 6.1.1 VM -  do this after 'upgrade' has been run.        
+        # 3rd step in upgrading 6.1.1 VM -  do this after 'upgrade' has been run.        
         args+=("prepare") # always call prepare
         args+=("postgresql95") # postgresql95 is run to install extensions.
         args+=("postgresql13" "postgresql14" "postgresql15") # prepare for new rdbms
