@@ -29,12 +29,12 @@ chmod 777 . || true
   exit 1
 }
 
+echo -e "⚡️ Starting upgrade to version: ${UPGRADE_BOX_VERSION} - ${UPGRADE_PACK}\n"
+log_build_meta ${UPGRADE_BOX_VERSION}
+
 pushd "$(mktemp -d '/tmp/tmp.XXXXX')" && chmod 777 . || true
 
 set +u
-echo -e "⚡️ Starting upgrade to version: ${UPGRADE_BOX_VERSION} - ${UPGRADE_PACK}\n"
-
-log_build_meta ${UPGRADE_BOX_VERSION}
 
 rpm_versions "${UPGRADE_PACK}_pre_upgrade_6.1.1-11.5.0"
 
