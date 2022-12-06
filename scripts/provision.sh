@@ -1225,6 +1225,14 @@ EOF
   echo -e "\n✨ ${FUNCNAME[0]}() done\n"
 }
 
+disable_mysqld() {
+    # mysqld can be a pain to stop
+    echo -e "Disabling service mysqld"
+    sudo systemctl status mysqld && \
+    sudo systemctl disable mysqld && \
+    { echo "about to kill mysqld";sudo kill -9 $(systemctl show --property MainPID mysqld | cut -d= -f2);systemctl stop mysqld; }
+}
+
 install_mysql80() {
   echo -e "\n✨ ${FUNCNAME[0]}()\n"
   # stop existing 5.7
