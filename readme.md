@@ -14,8 +14,12 @@ We rely on the `bento` packer project for delivering stable and upto date Virtua
 
 * specify version and run `build.sh`
 
+
 ```
 VERSION=11.5.0
+BENTO_PATH=../bento
+git clone https://github.com/chef/bento $BENTO_PATH
+
 ./build.sh $VERSION
 ```
 

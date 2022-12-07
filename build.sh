@@ -10,8 +10,8 @@ echo $1 | egrep '[1-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}' || {
         echo -e "invalid argument, numeric release format required\nusage: $0 version ( n.n.n )" && exit 2
 };
 PACKER_BOX_VERSION=$1
-
-git clone https://github.com/chef/bento.git 2>/dev/null || echo 'bento/bento dir exists - moving on ...'
+BENTO_PATH="${BENTO_PATH:-bento}"
+git clone https://github.com/chef/bento.git "$BENTO_PATH" 2>/dev/null || echo 'bento/bento dir exists - moving on ...'
 
 packer_options=' --on-error=abort '
 
@@ -19,10 +19,17 @@ packer_options=' --on-error=abort '
 packer_vars=" -var name=homestead-co7 -var memory=2048 -var disk_size=240000 -var cpus=2 -var version=$PACKER_BOX_VERSION "
 
 rm -f scripts/homestead.sh &> /dev/null
-cp -rf scripts/provision.sh bento/centos/scripts/homestead.sh
-cat scripts/provision-${PACKER_BOX_VERSION}.sh >> bento/centos/scripts/homestead.sh
+# add build functions
+cp -rf scripts/provision.sh $BENTO_PATH/centos/scripts/homestead.sh
 
-pushd bento/centos
+# add calls to build functions - version specific
+cat scripts/provision-${PACKER_BOX_VERSION}.sh >> $BENTO_PATH/centos/scripts/homestead.sh
+
+pushd $BENTO_PATH/centos || {
+  echo "Cannot continue... PATH $BENTO_PATH/centos missing."
+  exit 1
+}
+
 # Add `scripts/homestead.sh` to `provisioners.scripts` after `"scripts/hyperv.sh",` in file `centos/centos-7.5-x86_64.json`
 grep 'homestead.sh' centos-7.5-x86_64.json &> /dev/null || (
     lineno=$(grep -n '"scripts/cleanup.sh"' centos-7.5-x86_64.json | cut -d: -f1) && \
@@ -55,7 +62,7 @@ echo packer build ${packer_options} ${packer_vars} centos-7.5-x86_64.json
 
 packer validate ${packer_vars} centos-7.5-x86_64.json && 
 packer build ${packer_options} ${packer_vars} centos-7.5-x86_64.json
-[ -e packer_cache/*.iso ] && (ln packer_cache/*.iso ../../;echo "ISO linked to save re-download")
+ls packer_cache/*.iso &>/dev/null && { ln packer_cache/*.iso ../../;echo "ISO linked to save re-download"; }
 popd
 
-# echo "adding your built box to local vagrant boxes" && vagrant box add bento/builds/homestead-co7.vmware.box --name bgdevlab/homestead-co7
+# echo "adding your built box to local vagrant boxes" && vagrant box add $BENTO_PATH/builds/homestead-co7.vmware.box --name bgdevlab/homestead-co7
