@@ -1,7 +1,6 @@
 # Laravel/Homestead on VMWare 
-How the generate Larvel/Homestead for VMWare.
+How the build a Larvel/Homestead VM for for VMWare + Extend features.
 
-- This is for Homestead 14 and Settler 13 - Ubuntu 20.
 - The target virtualisation platform is VMWare.
 - Discover how best to extend build whilst maintaining vagrant/homestead compatibility.
 
@@ -24,8 +23,9 @@ Version 13 does **not support VMware**, only virtualbox, parallels, and libvert.
 - https://app.vagrantup.com/laravel/boxes/homestead/versions/13.0.0
 
 #### v12.1.0
-Version 12.1.0 is the last version that does support VMWare. 
-We could use this but we want the latest version **so we will build our own**.  
+Version **12.1.0** is the **last official version** that supports VMWare. 
+To use the latest version on VMWare you must **build your own**.  
+
 - https://github.com/laravel/settler/releases/tag/v12.1.0
 - https://app.vagrantup.com/laravel/boxes/homestead/versions/12.1.0
 
@@ -34,21 +34,24 @@ See issues
 
 # Build the VM
 
-To build the homestead VM checkout **settler** and **bento** projects. 
+To build the homestead VM checkout **laravel/settler** and **chef/bento** projects. 
+
+This is for Homestead 14 and Settler 13 - Ubuntu 20.
 
 - Clone [laravel/settler](https://github.com/laravel/settler) project.
 - Checkout branch for v13 (if no branch, find `v13` tag with the most recent commit before the `v14` tag), see any notes in `readme.md`.
 - Clone [chef/bento](https://github.com/chef/bento) at same dir level (_directory siblings_) as the settler project.
 - Checkout branch `bento_old_json_templates` - this branch in compatible with the v13 build.
 
-> Note: v14 homestead build as  of 2023-12 is still in development. 
+> Note: Settler v14 homestead build as  of 2023-12 is still in development. 
 > It uses main line bento which has switched from `bento/ubuntu-20.04` to `bento/ubuntu-22.04`
 
 ``` 
 mkdir vmbuild && \
 cd vmbuild && \
-git clone https://github.com/laravel/settler && \ 
-git clone https://github.com/chef/bento -b bento_old_json_templates
+git clone https://github.com/theodson/settler && \ 
+git clone https://github.com/chef/bento -b bento_old_json_templates && \
+git clone https://github.com/laravel/homestead
 ```
 
 Link Laravel settler files to the bento project. 
@@ -61,18 +64,27 @@ if uname | grep -qi darwin;  then
 fi
 
 ./bin/link-to-bento.sh
-pushd ../bento
 ```
 These linked files are pivotal and control how the VM is built
 - packer_templates/ubuntu/scripts/homestead.sh
 - packer_templates/ubuntu/ubuntu-20.04-amd64.json
 - packer_templates/ubuntu/http/preseed.cfg
 
+## Optional Features inclusion
+
+### _using Homestead Features_
+This non standard "features" build process uses the feature scripts of the Laravel/Homestead project.
+To use the features in the base VM build run use the following command.
+> Warning! Experimental WIP 
+``` 
+bin/use_homestead_features.sh
+```
+
 Work from bento project for the remainder of tasks.  
 Follow normal [Packer](https://www.packer.io/) practice of building `ubuntu/ubuntu-20.04-amd64.json`
 
 ``` 
-pushd packer_templates/ubuntu && \
+pushd ../bento/packer_templates/ubuntu && \
 packer build -only=vmware-iso ubuntu-20.04-amd64.json
 ```
 The generated VM will be placed in the builds directory, `builds/ubuntu-20.04.vmware.box`
@@ -82,13 +94,13 @@ This is to allow Homestead build testing using the generated VM.
 ```
 cd ../../ # change to base of the bento project
 
-hs_version=13.0.0
-hs_arch=amd64
-vagrant box add --force --name laravel/homestead --architecture $hs_arch builds/ubuntu-20.04.vmware.box
+homestead_version=13.0.0
+homestead_arch=amd64
+vagrant box add --force --name laravel/homestead --architecture $homestead_arch builds/ubuntu-20.04.vmware.box
 
 # manually move to versioned box  
 src_box=$HOME/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/0/vmware_desktop
-ver_box=$HOME/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/$hs_version/$hs_arch/ 
+ver_box=$HOME/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/$homestead_version/$homestead_arch/ 
 if [ -e "$src_box" ]; then
     mkdir -p $ver_box &>/dev/null
     mv "$src_box" "$ver_box"
@@ -106,35 +118,37 @@ A requirement for building a VM is to maintain vagrant/homestead compatibility.
 ## 1 - `bento build` process
 This is the earliest point at which to customize the generated VM.
 
-Possible approaches 
 
-1. Add scripts to the existing, and already overridden, `packer_templates/ubuntu/scripts/homestead.sh` file. 
-Adding any new scripting should be done during and before the tidy section. These lines (see below) 
+1 - Add scripts to the existing, and already overridden, `packer_templates/ubuntu/scripts/homestead.sh` file. 
+> Adding any new scripting should be done during and before the tidy section. These lines (see below) 
 mark the start of the _tidy up_ section of the script, we should capitalize on that cleanup also.
 
+The ⚡️ [use_homestead_features.sh](bin/use_homestead_features.sh) script performs the feature updates.
 ```
+# SCRIPTS INSERTED HERE
+
 # One last upgrade check
 apt-get upgrade -y
 
 # Clean Up
 ```
 
-2. Add a new script that is separate to the laravel homestead.sh file. 
- - It would follow a similar convention of insertion as the `bin\link-to-bento.sh`.
- - Should follow the same _tidy up_ behaviour as the homestead.sh script. 
-
-
 ## 2 - Vagrant Homestead `feature scripts`
-This approach utilises the convention of loading shell scripts from the `vendor/laravel/homestead/scripts/features/` folder when the Homestead VM starts via Vagrant.
+This approach utilises the convention of loading shell scripts from the 
+`vendor/laravel/homestead/scripts/features/` folder when the Homestead VM starts via Vagrant.
 
 - The Laravel `Homestead.yml` file within an App's root folder controls which features should be loaded. 
 - The feature scripts are loaded from the Host's shared/mapped folders with the VM.
 - This approach relies on features being "opted in" and ran when time the VM starts (if not already ran). 
 
+> ⚡️ The [use_homestead_features.sh](bin/use_homestead_features.sh) script pulls in the contents
+> of some feature scripts during the build process. This approach allows the Vagrant Homestead
+> features to be used as expected by Laravel (see `homestead.rb` / `Homestead.yaml` ). 
+
 ## 3 - Vagrant Homestead `after.sh` or `user-customizations.sh` scripts
 This is an existing Homestead convention of running the `after.sh` or `user-customizations.sh` script when the VM starts.
 
-> This is a good way to test scripts during development of the required VM.
+> 💡 This is a good way to test scripts during development of the required VM.
 > These scripts could be refined and used in the `bento build` process as described above.
 
 

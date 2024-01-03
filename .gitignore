@@ -1,17 +1,3 @@
 .vagrant
 *.box
 *.log
-/.idea/
-
-
-/scratch/
-/hs/
-/homestead-centos.iml
-### Packer template
-# Cache objects
-packer_cache/
-
-# For built boxes
-*.box
-*.iso
-/bento*/
