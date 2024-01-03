@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 
 #
+# Temporary fix for failing ISO ubuntu-20.04.5 until ubuntu-20.04.6-live-server-amd64 is available in bento. 
+# 20.04.6 is released but bento has not yet updated - must refer to old-releases site for 20.04.5 
+#
+if true; then
+  # use 20.04.6
+  sed -i '' 's/ubuntu-20.04.5-live-server-amd64.iso/ubuntu-20.04.6-live-server-amd64.iso/' ../bento/packer_templates/ubuntu/ubuntu-20.04-amd64.json
+  sed -i '' 's/sha256:5035be37a7e9abbdc09f0d257f3e33416c1a0fb322ba860d42d74aa75c3468d4/sha256:b8f31413336b9393ad5d8ef0282717b2ab19f007df2e9ed5196c13d8f9153c8b/' ../bento/packer_templates/ubuntu/ubuntu-20.04-amd64.json
+else
+  # use 20.04.5
+  sed -i '' 's/releases.ubuntu.com/old-releases.ubuntu.com/' ../bento/packer_templates/ubuntu/ubuntu-20.04-amd64.json
+  sed -i '' 's/focal/releases\/20.04.5/' ../bento/packer_templates/ubuntu/ubuntu-20.04-amd64.json
+fi
+
+#
 # amd64
 #
 insertline=$(echo "$(grep -n '"provisioners":' ../bento/packer_templates/ubuntu/ubuntu-20.04-amd64.json | cut -d : -f 1)" | bc)
