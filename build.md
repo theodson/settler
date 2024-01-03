@@ -77,6 +77,7 @@ pushd settler
 # when running on macOs fix sed if required (check for -i '' first)
 if uname | grep -qi darwin;  then 
     grep -q "sed -i '' " bin/link-to-bento.sh || sed -i '' "s#sed -i '#sed -i '' '#"  bin/link-to-bento.sh; 
+    grep -q "sed -i '' " bin/use_homestead_features.sh || sed -i '' "s#sed -i '#sed -i '' '#"  bin/use_homestead_features.sh; 
 fi
 
 ./bin/link-to-bento.sh
