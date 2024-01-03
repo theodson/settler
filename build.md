@@ -38,13 +38,20 @@ To build the homestead VM checkout **laravel/settler** and **chef/bento** projec
 
 This is for Homestead 14 and Settler 13 - Ubuntu 20.
 
-- Clone [laravel/settler](https://github.com/laravel/settler) project.
-- Checkout branch for v13 (if no branch, find `v13` tag with the most recent commit before the `v14` tag), see any notes in `readme.md`.
-- Clone [chef/bento](https://github.com/chef/bento) at same dir level (_directory siblings_) as the settler project.
-- Checkout branch `bento_old_json_templates` - this branch in compatible with the v13 build.
-
-> Note: Settler v14 homestead build as  of 2023-12 is still in development. 
+> Note: Settler v14 homestead build as  of 2023-12 is still in development.
 > It uses main line bento which has switched from `bento/ubuntu-20.04` to `bento/ubuntu-22.04`
+
+
+- `laravel/settler`
+  - Clone the forked [laravel/settler](https://github.com/theodson/settler) project.
+  - Checkout branch for v13 (if no branch, find `v13` tag with the most recent commit before the `v14` tag), see any notes in `readme.md`.
+- `chef/bento`
+  - Clone [chef/bento](https://github.com/chef/bento) at same dir level (_directory siblings_) as the settler project.
+  - Checkout branch `bento_old_json_templates` - this branch in compatible with the v13 build.
+- `laravel/homestead` 
+  - _this deviates from standard settler build_
+  - Clone [laravel/homestead](https://github.com/laravel/homestead) at same dir level (_directory siblings_) as the settler project.
+
 
 ``` 
 mkdir vmbuild && \
@@ -53,6 +60,15 @@ git clone https://github.com/theodson/settler && \
 git clone https://github.com/chef/bento -b bento_old_json_templates && \
 git clone https://github.com/laravel/homestead
 ```
+
+Expected directory structure
+
+```
+├── bento
+├── homestead
+└── settler 
+```
+
 
 Link Laravel settler files to the bento project. 
 ```

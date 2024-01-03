@@ -1,2 +1,4 @@
-amd64.features
-arm.features
+/amd64.features
+/arm.features
+/amd64.features-upload
+/arm.features-upload
