@@ -41,19 +41,19 @@ sed -i -e "${insertline}r scripts/amd64.features-upload" ../bento/packer_templat
 
 insertline=$(echo "$(grep -n '# One last upgrade check' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/amd64.features
-echo "# =========================== FEATURES START ============================" >> scripts/amd64.features 
+echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/amd64.features 
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do
-  echo "# Homestead Feature ($feature) " >> scripts/amd64.features
+  echo -e "\n# Homestead Feature ($feature) \n" >> scripts/amd64.features
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/amd64.features
 done
 
 cat  ../settler-provision-scripts/osupdate.sh >> scripts/amd64.features
   
 for feature in openjdk-17 openjdk-8 postgres-pghashlib; do
-  echo "# Extra Homestead Feature ($feature) " >> scripts/amd64.features
+  echo -e "\n# Extra Homestead Feature ($feature) \n" >> scripts/amd64.features
   cat  ../settler-provision-scripts/features/${feature}.sh >> scripts/amd64.features
 done
-echo "# ===========================  FEATURES END  ============================" >> scripts/amd64.features
+echo -e "\n# ===========================  FEATURES END  ============================\n" >> scripts/amd64.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/amd64.features
 sed -i -e "s/exit 0/echo 'skipping exit 0'/g" scripts/amd64.features
 sed -i -e "${insertline}r scripts/amd64.features" scripts/amd64.sh
@@ -86,19 +86,19 @@ sed -i -e "${insertline}r scripts/arm.features-upload" ../bento/packer_templates
 
 insertlinearm=$(echo "$(grep -n '# One last upgrade check' scripts/arm.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/arm.features
-echo "# =========================== FEATURES START ============================" >> scripts/arm.features 
+echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/arm.features 
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do 
-  echo "# Homestead Feature ($feature) " >> scripts/arm.features 
+  echo -e "\n# Homestead Feature ($feature) \n" >> scripts/arm.features 
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/arm.features
 done
 
 cat  ../settler-provision-scripts/osupdate.sh >> scripts/amd64.features
   
 for feature in openjdk-17 openjdk-8 postgres-pghashlib; do
-  echo "# Extra Homestead Feature ($feature) " >> scripts/amd64.features
+  echo -e "\n# Extra Homestead Feature ($feature) \n" >> scripts/amd64.features
   cat  ../settler-provision-scripts/features/${feature}.sh >> scripts/amd64.features
 done
-echo "# ===========================  FEATURES END  ============================" >> scripts/arm.features
+echo -e "\n# ===========================  FEATURES END  ============================\n" >> scripts/arm.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/arm.features
 sed -i -e "s/exit 0/echo 'skipping exit 0'/g" scripts/arm.features
 sed -i -e "${insertlinearm}r scripts/arm.features" scripts/arm.sh
