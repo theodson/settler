@@ -46,6 +46,13 @@ for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do
   echo "# Homestead Feature ($feature) " >> scripts/amd64.features
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/amd64.features
 done
+
+cat  ../settler-provision-scripts/osupdate.sh >> scripts/amd64.features
+  
+for feature in openjdk-17 openjdk-8 postgres-pghashlib; do
+  echo "# Extra Homestead Feature ($feature) " >> scripts/amd64.features
+  cat  ../settler-provision-scripts/features/${feature}.sh >> scripts/amd64.features
+done
 echo "# ===========================  FEATURES END  ============================" >> scripts/amd64.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/amd64.features
 sed -i -e "s/exit 0/echo 'skipping exit 0'/g" scripts/amd64.features
@@ -83,6 +90,13 @@ echo "# =========================== FEATURES START ============================"
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do 
   echo "# Homestead Feature ($feature) " >> scripts/arm.features 
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/arm.features
+done
+
+cat  ../settler-provision-scripts/osupdate.sh >> scripts/amd64.features
+  
+for feature in openjdk-17 openjdk-8 postgres-pghashlib; do
+  echo "# Extra Homestead Feature ($feature) " >> scripts/amd64.features
+  cat  ../settler-provision-scripts/features/${feature}.sh >> scripts/amd64.features
 done
 echo "# ===========================  FEATURES END  ============================" >> scripts/arm.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/arm.features
