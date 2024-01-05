@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# bsd sed requires -i '' to be used in script for inplace replacement... gnu sed does not.
+set -a
+
+if uname | grep -iq darwin; then
+  if [ ! -e "$HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin" ]; then
+    brew install gnu-sed
+  fi
+  PATH="$HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin:$PATH"
+fi

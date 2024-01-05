@@ -54,14 +54,15 @@ This is for Homestead 14 and Settler 13 - Ubuntu 20.
 
 
 ``` 
-mkdir vmbuild && \
-cd vmbuild && \
+mkdir vmbuild && vmbuild && \
 git clone https://github.com/theodson/settler -b ubuntu-vmware && \ 
 git clone https://github.com/chef/bento -b bento_old_json_templates && \
 git clone https://github.com/laravel/homestead
+
+export vmbuild="$(pwd)"
 ```
 
-Expected directory structure
+Expected directory structure of `$vmbuild`
 
 ```
 ├── bento
@@ -69,19 +70,16 @@ Expected directory structure
 └── settler 
 ```
 
+```
+# on macOs fix sed
+pushd "$vmbuild/settler" && source bin/macos-sed-fix 
+```
 
 Link Laravel settler files to the bento project. 
 ```
-pushd settler 
-
-# when running on macOs fix sed if required (check for -i '' first)
-if uname | grep -qi darwin;  then 
-    grep -q "sed -i '' " bin/link-to-bento.sh || sed -i '' "s#sed -i '#sed -i '' '#"  bin/link-to-bento.sh; 
-    grep -q "sed -i '' " bin/use_homestead_features.sh || sed -i '' "s#sed -i '#sed -i '' '#"  bin/use_homestead_features.sh; 
-fi
-
-./bin/link-to-bento.sh
+pushd "$vmbuild/settler" && bin/link-to-bento.sh 
 ```
+
 These linked files are pivotal and control how the VM is built
 - packer_templates/ubuntu/scripts/homestead.sh
 - packer_templates/ubuntu/ubuntu-20.04-amd64.json
@@ -92,36 +90,26 @@ These linked files are pivotal and control how the VM is built
 ### _using Homestead Features_
 This non standard "features" build process uses the feature scripts of the Laravel/Homestead project.
 To use the features in the base VM build run use the following command.
-> Warning! Experimental WIP 
-``` 
-bin/use_homestead_features.sh
+
+```
+pushd "$vmbuild/settler" && bin/use-homestead-features.sh
 ```
 
 Work from bento project for the remainder of tasks.  
 Follow normal [Packer](https://www.packer.io/) practice of building `ubuntu/ubuntu-20.04-amd64.json`
 
-``` 
-pushd ../bento/packer_templates/ubuntu && \
+```
+pushd "$vmbuild/bento/packer_templates/ubuntu" 
 packer build -only=vmware-iso ubuntu-20.04-amd64.json
+
 ```
 The generated VM will be placed in the builds directory, `builds/ubuntu-20.04.vmware.box`
 
 ## Locally register the generated VM as a vagrant box
 This is to allow Homestead build testing using the generated VM.
+
 ```
-cd ../../ # change to base of the bento project
-
-homestead_version=13.0.0
-homestead_arch=amd64
-vagrant box add --force --name laravel/homestead --architecture $homestead_arch builds/ubuntu-20.04.vmware.box
-
-# manually move to versioned box  
-src_box=$HOME/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/0/vmware_desktop
-ver_box=$HOME/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/$homestead_version/$homestead_arch/ 
-if [ -e "$src_box" ]; then
-    mkdir -p $ver_box &>/dev/null
-    mv "$src_box" "$ver_box"
-fi    
+bash "$vmbuild/settler/bin/register-local-box.sh" "$vmbuild/bento/builds/ubuntu-20.04.vmware.box" 13.0.3
     
 vagrant box list    
 ```
@@ -140,7 +128,7 @@ This is the earliest point at which to customize the generated VM.
 > Adding any new scripting should be done during and before the tidy section. These lines (see below) 
 mark the start of the _tidy up_ section of the script, we should capitalize on that cleanup also.
 
-The ⚡️ [use_homestead_features.sh](bin/use_homestead_features.sh) script performs the feature updates.
+The ⚡️ [use-homestead-features.sh](bin/use-homestead-features.sh) script performs the feature updates.
 ```
 # SCRIPTS INSERTED HERE
 
@@ -158,7 +146,7 @@ This approach utilises the convention of loading shell scripts from the
 - The feature scripts are loaded from the Host's shared/mapped folders with the VM.
 - This approach relies on features being "opted in" and ran when time the VM starts (if not already ran). 
 
-> ⚡️ The [use_homestead_features.sh](bin/use_homestead_features.sh) script pulls in the contents
+> ⚡️ The [use-homestead-features.sh](bin/use-homestead-features.sh) script pulls in the contents
 > of some feature scripts during the build process. This approach allows the Vagrant Homestead
 > features to be used as expected by Laravel (see `homestead.rb` / `Homestead.yaml` ). 
 

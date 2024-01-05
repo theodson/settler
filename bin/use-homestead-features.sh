@@ -37,7 +37,7 @@ sed -i -e "${insertline}r scripts/amd64.features-upload" ../bento/packer_templat
 insertline=$(echo "$(grep -n '# One last upgrade check' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/amd64.features
 echo "# =========================== FEATURES START ============================" >> scripts/amd64.features 
-for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch ohmyzsh; do
+for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do
   echo "# Homestead Feature ($feature) " >> scripts/amd64.features
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/amd64.features
 done
@@ -70,7 +70,7 @@ sed -i -e "${insertline}r scripts/arm.features-upload" ../bento/packer_templates
 insertlinearm=$(echo "$(grep -n '# One last upgrade check' scripts/arm.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/arm.features
 echo "# =========================== FEATURES START ============================" >> scripts/arm.features 
-for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch ohmyzsh; do 
+for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do 
   echo "# Homestead Feature ($feature) " >> scripts/arm.features 
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/arm.features
 done
