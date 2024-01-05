@@ -49,8 +49,11 @@ This is for Homestead 14 and Settler 13 - Ubuntu 20.
   - Clone [chef/bento](https://github.com/chef/bento) at same dir level (_directory siblings_) as the settler project.
   - Checkout branch `bento_old_json_templates` - this branch in compatible with the v13 build.
 - `laravel/homestead` 
-  - _this deviates from standard settler build_
+  - 💡 _this deviates from standard settler build_
   - Clone [laravel/homestead](https://github.com/laravel/homestead) at same dir level (_directory siblings_) as the settler project.
+- `adhoc provision scripts`
+  - 💡 _this deviates from standard settler build_ - allows for any custom scripts to be packaged in the box
+  - `mkdir settler-provision-scripts` at same dir level (_directory siblings_) as the settler project.
 
 
 ``` 
@@ -62,12 +65,21 @@ git clone https://github.com/laravel/homestead
 export vmbuild="$(pwd)"
 ```
 
+Copy or clone any additional scripts that should be copied into VM's `/home/vagrant/.provision-scripts` for later use.
+```
+mkdir settler-provision-scripts
+
+# or clone your custom repo
+git clone https://github.com/yourscripts settler-provision-scripts
+```
+
 Expected directory structure of `$vmbuild`
 
 ```
 ├── bento
 ├── homestead
-└── settler 
+├── settler
+└── settler-provision-scripts  
 ```
 
 ```

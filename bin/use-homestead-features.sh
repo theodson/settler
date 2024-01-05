@@ -21,14 +21,19 @@ insertline=$(echo "$(grep -n '"provisioners":' ../bento/packer_templates/ubuntu/
 cat << COPY_FEATURE_FOLDER > "scripts/amd64.features-upload"
         {
             "inline": [
-                "/usr/bin/mkdir -p /home/vagrant/.provision",
-                "/usr/bin/chown -R vagrant:vagrant /home/vagrant/.provision"
+                "/usr/bin/mkdir -p /home/vagrant/.homestead-scripts /home/vagrant/.provision-scripts",
+                "/usr/bin/chown -R vagrant:vagrant /home/vagrant/.homestead-scripts /home/vagrant/.provision-scripts"
             ],
             "type": "shell"
         },
         {
-            "source": "../../../homestead/scripts/features/",
-            "destination": "/home/vagrant/.provision",
+            "source": "../../../homestead/scripts/",
+            "destination": "/home/vagrant/.homestead-scripts",
+            "type": "file"
+        },
+        {
+            "source": "../../../settler-provision-scripts/",
+            "destination": "/home/vagrant/.provision-scripts",
             "type": "file"
         },
 COPY_FEATURE_FOLDER
@@ -54,14 +59,19 @@ insertline=$(echo "$(grep -n '"provisioners":' ../bento/packer_templates/ubuntu/
 cat << COPY_FEATURE_FOLDER > "scripts/arm.features-upload"
         {
             "inline": [
-                "/usr/bin/mkdir -p /home/vagrant/.provision",
-                "/usr/bin/chown -R vagrant:vagrant /home/vagrant/.provision"
+                "/usr/bin/mkdir -p /home/vagrant/.homestead-scripts /home/vagrant/.provision-scripts",
+                "/usr/bin/chown -R vagrant:vagrant /home/vagrant/.homestead-scripts /home/vagrant/.provision-scripts"
             ],
             "type": "shell"
         },
         {
-            "source": "../../../homestead/scripts/features/",
-            "destination": "/home/vagrant/.provision",
+            "source": "../../../homestead/scripts/",
+            "destination": "/home/vagrant/.homestead-scripts",
+            "type": "file"
+        },
+        {
+            "source": "../../../settler-provision-scripts/",
+            "destination": "/home/vagrant/.provision-scripts",
             "type": "file"
         },
 COPY_FEATURE_FOLDER
