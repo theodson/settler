@@ -5,6 +5,9 @@ set -a
 export vmbuild="$(realpath $(dirname $0)/../..)"
 echo "base path: $vmbuild"
 
+SETTLER_VERSION="v13.0.3 (vmware-ubuntu)"
+HOMESTEAD_VERSION="Homestead v14.5.0 (support/14)"
+
 #
 # clone repositories
 #

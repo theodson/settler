@@ -2,6 +2,12 @@
 
 packer_template_amd64=../bento/packer_templates/ubuntu/ubuntu-20.04-amd64.json
 packer_template_arm64=../bento/packer_templates/ubuntu/ubuntu-20.04-arm64.json
+
+echo "
+SETTLER_VERSION='$SETTLER_VERSION'
+HOMESTEAD_VERSION='$HOMESTEAD_VERSION'
+"
+
 #
 # Temporary fix for failing ISO ubuntu-20.04.5 until ubuntu-20.04.6-live-server-amd64 is available in bento. 
 # 20.04.6 is released but bento has not yet updated - must refer to old-releases site for 20.04.5 
@@ -41,9 +47,15 @@ cat << COPY_FEATURE_FOLDER > "scripts/amd64.features-upload"
 COPY_FEATURE_FOLDER
 sed -i -e "${insertline}r scripts/amd64.features-upload" $packer_template_amd64
 
-insertline=$(echo "$(grep -n '# Update / Override motd' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
+insertline=$(echo "$(grep -n '# One last upgrade check' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/amd64.features
 echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/amd64.features 
+echo "
+
+export SETTLER_VERSION='$SETTLER_VERSION'
+export HOMESTEAD_VERSION='$HOMESTEAD_VERSION'
+
+"
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do
   echo -e "\n# Homestead Feature ($feature) \n" >> scripts/amd64.features
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/amd64.features
@@ -86,9 +98,15 @@ cat << COPY_FEATURE_FOLDER > "scripts/arm.features-upload"
 COPY_FEATURE_FOLDER
 sed -i -e "${insertline}r scripts/arm.features-upload" $packer_template_arm64
 
-insertlinearm=$(echo "$(grep -n '# Update / Override motd' scripts/arm.sh | cut -d : -f 1) -1" | bc)
+insertlinearm=$(echo "$(grep -n '# One last upgrade check' scripts/arm.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/arm.features
-echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/arm.features 
+echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/arm.features
+echo "
+
+export SETTLER_VERSION='$SETTLER_VERSION'
+export HOMESTEAD_VERSION='$HOMESTEAD_VERSION'
+
+" 
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do 
   echo -e "\n# Homestead Feature ($feature) \n" >> scripts/arm.features 
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/arm.features
