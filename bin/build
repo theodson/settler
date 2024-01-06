@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -a
+
+export vmbuild="$(realpath $(dirname $0)/../..)"
+echo "base path: $vmbuild"
+
+#
+# clone repositories
+#
+if [ ! -e "$vmbuild/settler" ]; then
+    pushd $vmbuild && git clone https://github.com/theodson/settler -b ubuntu-vmware && popd || {
+        echo "✋  problem cloning settler repo"
+        exit 1
+    }
+else
+    echo "settler dir already exists : $vmbuild/settler"
+fi
+
+if [ ! -e "$vmbuild/bento" ]; then
+    pushd $vmbuild && git clone https://github.com/chef/bento -b bento_old_json_templates && popd || {
+        echo "✋  problem cloning bento repo"
+        exit 1
+    }
+else
+    echo "bento dir already exists : $vmbuild/bento"
+fi
+
+if [ ! -e "$vmbuild/homestead" ]; then
+    pushd $vmbuild && git clone https://github.com/laravel/homestead && popd || {
+        echo "✋  problem cloning homestead repo"
+        exit 1
+    }
+else
+    echo "homestead dir already exists : $vmbuild/homestead"
+fi
+
+if [ ! -e "$vmbuild/settler-provision-scripts" ]; then
+    pushd $vmbuild && mkdir -p "$vmbuild/settler-provision-scripts/features" &>/dev/null && popd || {
+        echo "✋  problem setting up settler-provision-scripts"
+        exit 1
+    }
+else
+    echo "settler-provision-scripts dir already exists : $vmbuild/settler-provision-scripts"
+fi
+
+read -n1 -t30 -p "Reset settler and bento changes before build (Y/n)? " gitreset
+gitreset=$(echo "${gitreset:-Y}"| tr "[:lower:]" "[:upper:]") # transform to uppercase and default to Y
+echo
+
+if [ "$gitreset" = 'Y' ]; then
+    echo -e "⚡️ git reset"
+    pushd "$vmbuild/settler" && git checkout scripts/amd64.sh scripts/arm.sh && popd || true
+    pushd "$vmbuild/bento/packer_templates/ubuntu" && git checkout ubuntu-20.04-amd64.json ubuntu-20.04-arm64.json http/preseed.cfg http/preseed-hyperv.cfg && popd || true
+fi
+
+#
+# configure and make the vm
+#
+echo -e "⚡️ setup" &&
+    pushd "$vmbuild/settler" &&
+    source "$vmbuild/settler/bin/macos-sed-fix" &&
+    bin/link-to-bento.sh &&
+    bin/use-homestead-features.sh || {
+        echo "✋  problem during setup!"
+        exit 2
+    }
+
+echo -e "⚡️ build" &&
+    pushd "$vmbuild/bento/packer_templates/ubuntu" &&
+    packer build -only=vmware-iso ubuntu-20.04-amd64.json || {
+        echo "✋  problem during build!"
+        exit 3
+    }

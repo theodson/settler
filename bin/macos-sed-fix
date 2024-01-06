@@ -2,9 +2,13 @@
 # bsd sed requires -i '' to be used in script for inplace replacement... gnu sed does not.
 set -a
 
+if [ -z "$HOMEBREW_PREFIX" ]; then
+    HOMEBREW_PREFIX="$(HOMEBREW_NO_INSTALL_UPGRADE=true brew config | grep HOMEBREW_PREFIX | cut -d: -f2 | xargs)"
+fi
+
 if uname | grep -iq darwin; then
   if [ ! -e "$HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin" ]; then
-    brew install gnu-sed
+    HOMEBREW_NO_INSTALL_UPGRADE=true brew install gnu-sed || true
   fi
-  PATH="$HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin:$PATH"
+  export PATH="$HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin:$PATH"
 fi

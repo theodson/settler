@@ -7,6 +7,11 @@ How the build a Larvel/Homestead VM for for VMWare + Extend features.
 ## TLDR
 To generate a new VM see the [Build the VM](#build-the-vm) section below.
 
+Or clone this repo and run
+```
+bash bin/build 
+```
+
 # Discovery Research
 
 The VM is based on the standard build process as used for the Laravel/Homestead VM.   
@@ -67,7 +72,7 @@ export vmbuild="$(pwd)"
 
 Copy or clone any additional scripts that should be copied into VM's `/home/vagrant/.provision-scripts` for later use.
 ```
-mkdir settler-provision-scripts
+mkdir -p settler-provision-scripts/features
 
 # or clone your custom repo
 git clone https://github.com/yourscripts settler-provision-scripts
