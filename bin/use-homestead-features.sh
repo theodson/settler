@@ -41,7 +41,7 @@ cat << COPY_FEATURE_FOLDER > "scripts/amd64.features-upload"
 COPY_FEATURE_FOLDER
 sed -i -e "${insertline}r scripts/amd64.features-upload" $packer_template_amd64
 
-insertline=$(echo "$(grep -n '# One last upgrade check' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
+insertline=$(echo "$(grep -n '# Update / Override motd' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/amd64.features
 echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/amd64.features 
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do
@@ -86,7 +86,7 @@ cat << COPY_FEATURE_FOLDER > "scripts/arm.features-upload"
 COPY_FEATURE_FOLDER
 sed -i -e "${insertline}r scripts/arm.features-upload" $packer_template_arm64
 
-insertlinearm=$(echo "$(grep -n '# One last upgrade check' scripts/arm.sh | cut -d : -f 1) -1" | bc)
+insertlinearm=$(echo "$(grep -n '# Update / Override motd' scripts/arm.sh | cut -d : -f 1) -1" | bc)
 echo > scripts/arm.features
 echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/arm.features 
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do 
