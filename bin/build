@@ -5,8 +5,8 @@ set -a
 export vmbuild="$(realpath $(dirname $0)/../..)"
 echo "base path: $vmbuild"
 
-SETTLER_VERSION="v13.0.3 (vmware-ubuntu)"
-HOMESTEAD_VERSION="Homestead v14.5.0 (support/14)"
+SETTLER_VERSION="v13.0.0 (vmware-ubuntu)"
+HOMESTEAD_VERSION="Homestead v14.5.0 (support/14) 72f255"
 
 #
 # clone repositories
@@ -30,21 +30,12 @@ else
 fi
 
 if [ ! -e "$vmbuild/homestead" ]; then
-    pushd $vmbuild && git clone https://github.com/laravel/homestead && popd || {
+    pushd $vmbuild && git clone https://github.com/theodson/homestead -b support/14 && popd || {
         echo "✋  problem cloning homestead repo"
         exit 1
     }
 else
     echo "homestead dir already exists : $vmbuild/homestead"
-fi
-
-if [ ! -e "$vmbuild/settler-provision-scripts" ]; then
-    pushd $vmbuild && mkdir -p "$vmbuild/settler-provision-scripts/features" &>/dev/null && popd || {
-        echo "✋  problem setting up settler-provision-scripts"
-        exit 1
-    }
-else
-    echo "settler-provision-scripts dir already exists : $vmbuild/settler-provision-scripts"
 fi
 
 read -n1 -t30 -p "Reset settler and bento changes before build (Y/n)? " gitreset

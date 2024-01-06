@@ -39,11 +39,6 @@ cat << COPY_FEATURE_FOLDER > "scripts/amd64.features-upload"
             "destination": "/home/vagrant/.homestead-scripts",
             "type": "file"
         },
-        {
-            "source": "../../../settler-provision-scripts/",
-            "destination": "/home/vagrant/.provision-scripts",
-            "type": "file"
-        },
 COPY_FEATURE_FOLDER
 sed -i -e "${insertline}r scripts/amd64.features-upload" $packer_template_amd64
 
@@ -55,17 +50,17 @@ echo "
 export SETTLER_VERSION='$SETTLER_VERSION'
 export HOMESTEAD_VERSION='$HOMESTEAD_VERSION'
 
-"
+" >> scripts/amd64.features 
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do
   echo -e "\n# Homestead Feature ($feature) \n" >> scripts/amd64.features
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/amd64.features
 done
 
-cat  ../settler-provision-scripts/osupdate.sh >> scripts/amd64.features
+cat scripts/build-customizations.sh >> scripts/amd64.features
   
 for feature in openjdk-17 openjdk-8 postgres-pghashlib; do
-  echo -e "\n# Extra Homestead Feature ($feature) \n" >> scripts/amd64.features
-  cat  ../settler-provision-scripts/features/${feature}.sh >> scripts/amd64.features
+  echo -e "\n# Custom Homestead Feature ($feature) \n" >> scripts/amd64.features
+  cat  ../homestead/scripts/features/${feature}.sh >> scripts/amd64.features
 done
 echo -e "\n# ===========================  FEATURES END  ============================\n" >> scripts/amd64.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/amd64.features
@@ -90,11 +85,6 @@ cat << COPY_FEATURE_FOLDER > "scripts/arm.features-upload"
             "destination": "/home/vagrant/.homestead-scripts",
             "type": "file"
         },
-        {
-            "source": "../../../settler-provision-scripts/",
-            "destination": "/home/vagrant/.provision-scripts",
-            "type": "file"
-        },
 COPY_FEATURE_FOLDER
 sed -i -e "${insertline}r scripts/arm.features-upload" $packer_template_arm64
 
@@ -106,17 +96,17 @@ echo "
 export SETTLER_VERSION='$SETTLER_VERSION'
 export HOMESTEAD_VERSION='$HOMESTEAD_VERSION'
 
-" 
+" >> scripts/arm.features
 for feature in golang rustc rabbitmq minio mailpit python pm2 meilisearch; do 
   echo -e "\n# Homestead Feature ($feature) \n" >> scripts/arm.features 
   cat  ../homestead/scripts/features/${feature}.sh >> scripts/arm.features
 done
 
-cat  ../settler-provision-scripts/osupdate.sh >> scripts/amd64.features
+cat scripts/build-customizations.sh >> scripts/arm.features
   
 for feature in openjdk-17 openjdk-8 postgres-pghashlib; do
-  echo -e "\n# Extra Homestead Feature ($feature) \n" >> scripts/amd64.features
-  cat  ../settler-provision-scripts/features/${feature}.sh >> scripts/amd64.features
+  echo -e "\n# Custom Homestead Feature ($feature) \n" >> scripts/arm.features
+  cat  ../homestead/scripts/features/${feature}.sh >> scripts/arm.features
 done
 echo -e "\n# ===========================  FEATURES END  ============================\n" >> scripts/arm.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/arm.features

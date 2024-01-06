@@ -65,7 +65,7 @@ This is for Homestead 14 and Settler 13 - Ubuntu 20.
 mkdir vmbuild && vmbuild && \
 git clone https://github.com/theodson/settler -b ubuntu-vmware && \ 
 git clone https://github.com/chef/bento -b bento_old_json_templates && \
-git clone https://github.com/laravel/homestead
+git clone https://github.com/theodson/homestead -b support/14 && \
 
 export vmbuild="$(pwd)"
 ```
