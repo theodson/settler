@@ -11,10 +11,11 @@ if [ ! -e $homestead_box ]; then
 fi
 
 vagrant box add --force --name $homestead_name --architecture $homestead_arch $homestead_box
+# this will always result in a 'box version 0' being registered.
 
 box_base_dir="$HOME/.vagrant.d/boxes/$(echo $homestead_name | sed 's/\//-VAGRANTSLASH-/')"
 
-# manually move to versioned box
+# manually move box version 0 to a specified versioned box
 src_box="$box_base_dir/0/vmware_desktop"
 ver_box="$box_base_dir/$homestead_version/$homestead_arch/"
 
