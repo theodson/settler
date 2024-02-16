@@ -10,7 +10,7 @@ echo "### Settler Build Configuration ###"
 # Update Package List
 sudo apt install -y \
     httpie iftop inotify-tools jq ngrep nmap openconnect sntp poppler-utils \
-    traceroute tree virt-what python3-docutils python-setuptools network-manager \
+    traceroute tree virt-what python3-docutils python-setuptools \
     mlocate
 
 # Common postgresql extensions
@@ -36,6 +36,7 @@ cat <<SETTLER_BUILD_MOTD >/etc/motd
 * $HOMESTEAD_VERSION | Thanks for using Homestead
 * $SETTLER_VERSION (vmware-ubuntu)
 * Tweaked Version Build Date: $(date)
+
 
 SETTLER_BUILD_MOTD
 
