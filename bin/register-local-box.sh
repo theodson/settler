@@ -10,6 +10,12 @@ if [ ! -e $homestead_box ]; then
     exit 1
 fi
 
+echo -e "Vagrant boxes registered\n=======================\n$(vagrant box list | grep $homestead_name)\n"
+
+read -p "register    $homestead_name as version [ $homestead_version ] ? " ver
+homestead_version="${ver:-$homestead_version}"
+echo -e "registering $homestead_name : $homestead_version"
+
 vagrant box add --force --name $homestead_name --architecture $homestead_arch $homestead_box
 # this will always result in a 'box version 0' being registered.
 

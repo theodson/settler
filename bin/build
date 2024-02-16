@@ -5,9 +5,6 @@ set -a
 export vmbuild="$(realpath $(dirname $0)/../..)"
 echo "base path: $vmbuild"
 
-SETTLER_VERSION="v13.0.0 (vmware-ubuntu)"
-HOMESTEAD_VERSION="Homestead v14.5.0 (support/14) 72f255"
-
 #
 # clone repositories
 #
@@ -38,6 +35,12 @@ else
     echo "homestead dir already exists : $vmbuild/homestead"
 fi
 
+settler_hash=$(pushd ../settler &>/dev/null && git rev-parse --short HEAD && popd &>/dev/null || return)
+homestead_hash=$(pushd ../homestead &>/dev/null && git rev-parse --short HEAD && popd &>/dev/null || return)
+
+SETTLER_VERSION="v13.0.0 (vmware-ubuntu) $settler_hash"
+HOMESTEAD_VERSION="Homestead v14.5.0 (support/14) $homestead_hash"
+
 read -n1 -t30 -p "Reset settler and bento changes before build (Y/n)? " gitreset
 gitreset=$(echo "${gitreset:-Y}"| tr "[:lower:]" "[:upper:]") # transform to uppercase and default to Y
 echo
@@ -56,7 +59,7 @@ echo -e "⚡️ setup" &&
     source "$vmbuild/settler/bin/macos-sed-fix" &&
     bin/link-to-bento.sh &&
     bin/use-homestead-features.sh || {
-        echo "✋  problem during setup!"
+        echo "✋ problem during setup!"
         exit 2
     }
 
