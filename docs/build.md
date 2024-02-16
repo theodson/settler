@@ -131,6 +131,86 @@ bash "$vmbuild/settler/bin/register-local-box.sh" "$vmbuild/bento/builds/ubuntu-
 vagrant box list    
 ```
 
+## Use vagrant box to create OVA
+
+> ... continuing on from Locally register the vagrant box.
+
+We can create a useful OVA file for use outside of Vagrant by following these steps.
+Your mileage may vary...  💨 🍃
+
+### vagrant up
+Create a VM with your recently locally built and registered box. 
+Create a project that uses Homestead, you may need to specify version and provider in your `Homestead.yaml`, e.g. 
+
+```yaml
+box: laravel/homestead
+version: 13.0.3
+SpeakFriendAndEnter: true # allows custom vagrant box usage easily - see vendor/laravel/homestead/scripts/homestead.rb:21
+provider: vmware_fusion
+```
+
+and run 
+```bash
+vagrant up
+```
+
+### prepare the VM
+
+shutdown the os from within the VM
+
+```bash
+sudo shutdown -h now
+```
+
+then, form within the VMWare Fusion tool 
+- remove all of the network devices - this will remove any MAC address references 
+- add a new network device (note don't generate a mac address... leave it blank) 
+
+> the VM mush be shutdown for this step.
+
+### export the VM as a single file OVA 
+via the VMWare Fusion menu `File > Export to OVF`.
+
+### extract and tidy meta info ( the .ovf file ).
+This step attempts to tidy and remove any redundant VM configuration.
+
+> terminal with access to the export OVA file.
+```bash
+mkdir homestead-14.5
+tar -xvf  homestead-14.5.ova -C homestead-14.5
+cd homestead-14.5
+```
+
+edit the `homestead-14.5.ovf` file
+```bash
+vim homestead-14.5.ovf
+```
+- remove any refrences to ethernet1 or above, there should only be ethernet0
+- remove any references to local filepath/shared folder config
+
+> As the OVA contains checksums to ensure no corruptions exist when being imported 
+> the checksum list in the `homestead-14.5.mf` file should be updated with a new/correct sha256 checksum
+> for the edited .ovf file.
+
+```bash
+# note the checksum output of this command for use in the .mf file.
+sha256sum homestead-14.5.ovf
+```
+edit the `homestead-14.5.mf` file and update the checksum as generated above.
+```bash
+vim homestead-14.5.mf
+```
+
+### re-package the OVA
+The OVA is a tar archive and can be created with the tar command.
+
+> in this example we create a new named OVA - homestead-14.5.new.ova
+```bash
+tar -cvf homestead-14.5.new.ova homestead-14.5.ovf homestead-14.5.mf homestead-14.5-disk1.vmdk
+```
+
+This OVA can now be shared and used directly in VMWare products.
+
 
 # Extension points
 A requirement for building a VM is to maintain vagrant/homestead compatibility.
