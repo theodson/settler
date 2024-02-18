@@ -31,17 +31,17 @@ ca-certificates
 
 # Install Some PPAs
 apt-add-repository ppa:ondrej/php -y
-apt-add-repository ppa:chris-lea/redis-server -y
+
+# Prepare keyrings directory
+sudo mkdir -p /etc/apt/keyrings
 
 # NodeJS
-curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_21.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 # PostgreSQL
-tee /etc/apt/sources.list.d/pgdg.list <<END
-deb http://apt.postgresql.org/pub/repos/apt/ focal-pgdg main
-END
-
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+sudo sh -c 'echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 
 ## Update Package Lists
 apt-get update -y
@@ -61,7 +61,7 @@ usermod -aG docker vagrant
 
 # Install docker-compose
 curl \
-    -L "https://github.com/docker/compose/releases/download/2.10.1/docker-compose-$(uname -s)-$(uname -m)" \
+    -L "https://github.com/docker/compose/releases/download/2.23.0/docker-compose-$(uname -s)-$(uname -m)" \
     -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
@@ -444,11 +444,11 @@ else
   sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.2/cli/php.ini
 
   # Configure Xdebug
-   echo "xdebug.mode = debug" >> /etc/php/8.2/mods-available/xdebug.ini
-   echo "xdebug.discover_client_host = true" >> /etc/php/8.2/mods-available/xdebug.ini
-   echo "xdebug.client_port = 9003" >> /etc/php/8.2/mods-available/xdebug.ini
-   echo "xdebug.max_nesting_level = 512" >> /etc/php/8.2/mods-available/xdebug.ini
-   echo "opcache.revalidate_freq = 0" >> /etc/php/8.2/mods-available/opcache.ini
+  echo "xdebug.mode = debug" >> /etc/php/8.2/mods-available/xdebug.ini
+  echo "xdebug.discover_client_host = true" >> /etc/php/8.2/mods-available/xdebug.ini
+  echo "xdebug.client_port = 9003" >> /etc/php/8.2/mods-available/xdebug.ini
+  echo "xdebug.max_nesting_level = 512" >> /etc/php/8.2/mods-available/xdebug.ini
+  echo "opcache.revalidate_freq = 0" >> /etc/php/8.2/mods-available/opcache.ini
 
   # Configure php.ini for FPM
   sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.2/fpm/php.ini
@@ -473,6 +473,50 @@ else
 
   touch /home/vagrant/.homestead-features/php82
 
+  # PHP 8.3
+  apt-get install -y --allow-change-held-packages \
+  php8.3 php8.3-bcmath php8.3-bz2 php8.3-cgi php8.3-cli php8.3-common php8.3-curl php8.3-dba php8.3-dev \
+  php8.3-enchant php8.3-fpm php8.3-gd php8.3-gmp php8.3-imap php8.3-interbase php8.3-intl php8.3-ldap \
+  php8.3-mbstring php8.3-mysql php8.3-odbc php8.3-opcache php8.3-pgsql php8.3-phpdbg php8.3-pspell php8.3-readline \
+  php8.3-snmp php8.3-soap php8.3-sqlite3 php8.3-sybase php8.3-tidy php8.3-xml php8.3-xsl \
+  php8.3-zip php8.3-imagick php8.3-memcached php8.3-redis php8.3-xmlrpc php8.3-xdebug
+
+  # Configure php.ini for CLI
+  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/cli/php.ini
+  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/cli/php.ini
+  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.3/cli/php.ini
+  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.3/cli/php.ini
+
+  # Configure Xdebug
+  echo "xdebug.mode = debug" >> /etc/php/8.3/mods-available/xdebug.ini
+  echo "xdebug.discover_client_host = true" >> /etc/php/8.3/mods-available/xdebug.ini
+  echo "xdebug.client_port = 9003" >> /etc/php/8.3/mods-available/xdebug.ini
+  echo "xdebug.max_nesting_level = 512" >> /etc/php/8.3/mods-available/xdebug.ini
+  echo "opcache.revalidate_freq = 0" >> /etc/php/8.3/mods-available/opcache.ini
+
+  # Configure php.ini for FPM
+  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/fpm/php.ini
+  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/fpm/php.ini
+  sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.3/fpm/php.ini
+  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.3/fpm/php.ini
+  sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/8.3/fpm/php.ini
+  sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/8.3/fpm/php.ini
+  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.3/fpm/php.ini
+
+  printf "[openssl]\n" | tee -a /etc/php/8.3/fpm/php.ini
+  printf "openssl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.3/fpm/php.ini
+  printf "[curl]\n" | tee -a /etc/php/8.3/fpm/php.ini
+  printf "curl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.3/fpm/php.ini
+
+  # Configure FPM
+  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.3/fpm/pool.d/www.conf
+  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.3/fpm/pool.d/www.conf
+  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.3/fpm/pool.d/www.conf
+  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.3/fpm/pool.d/www.conf
+  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.3/fpm/pool.d/www.conf
+
+  touch /home/vagrant/.homestead-features/php83
+
   # Disable old PHP FPM
   systemctl disable php5.6-fpm
   systemctl disable php7.0-fpm
@@ -482,10 +526,11 @@ else
   systemctl disable php7.4-fpm
   systemctl disable php8.0-fpm
   systemctl disable php8.1-fpm
+  systemctl disable php8.2-fpm
 
-  update-alternatives --set php /usr/bin/php8.2
-  update-alternatives --set php-config /usr/bin/php-config8.2
-  update-alternatives --set phpize /usr/bin/phpize8.2
+  update-alternatives --set php /usr/bin/php8.3
+  update-alternatives --set php-config /usr/bin/php-config8.3
+  update-alternatives --set phpize /usr/bin/phpize8.3
 
   # Install Composer
   curl -sS https://getcomposer.org/installer | php
@@ -495,7 +540,7 @@ else
   # Install Global Packages
   sudo su vagrant <<'EOF'
   /usr/local/bin/composer global require "laravel/envoy=^2.0"
-  /usr/local/bin/composer global require "laravel/installer=^4.2"
+  /usr/local/bin/composer global require "laravel/installer=^5.0"
   /usr/local/bin/composer global config --no-plugins allow-plugins.slince/composer-registry-manager true
   /usr/local/bin/composer global require "slince/composer-registry-manager=^2.0"
 EOF
@@ -505,7 +550,7 @@ EOF
   sed -i "s/www-data/vagrant/" /etc/apache2/envvars
 
   # Enable FPM
-  a2enconf php8.2-fpm
+  a2enconf php8.3-fpm
 
   # Assume user wants mode_rewrite support
   sudo a2enmod rewrite
@@ -571,7 +616,7 @@ EOF
   sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.0/fpm/pool.d/www.conf
 
   service nginx restart
-  service php8.2-fpm restart
+  service php8.3-fpm restart
 
   # Add Vagrant User To WWW-Data
   usermod -a -G www-data vagrant
@@ -582,17 +627,6 @@ EOF
   curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
   chmod +x wp-cli.phar
   mv wp-cli.phar /usr/local/bin/wp
-
-  # Install Drush Launcher.
-  curl --silent --location https://github.com/drush-ops/drush-launcher/releases/download/0.6.0/drush.phar --output drush.phar
-  chmod +x drush.phar
-  mv drush.phar /usr/local/bin/drush
-  drush self-update
-
-  # Install Drupal Console Launcher.
-  curl --silent --location https://drupalconsole.com/installer --output drupal.phar
-  chmod +x drupal.phar
-  mv drupal.phar /usr/local/bin/drupal
 
   # Add Composer Global Bin To Path
   printf "\nPATH=\"$(sudo su - vagrant -c 'composer config -g home 2>/dev/null')/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
@@ -736,34 +770,50 @@ service redis-server start
 # Configure Beanstalkd
 sed -i "s/#START=yes/START=yes/" /etc/default/beanstalkd
 
-# Install & Configure MailHog
-wget --quiet -O /usr/local/bin/mailhog https://github.com/mailhog/MailHog/releases/download/v1.0.1/MailHog_linux_amd64
-chmod +x /usr/local/bin/mailhog
-sudo tee /etc/systemd/system/mailhog.service <<EOL
+# Install Golang
+if [[ "$ARCH" == "aarch64" ]]; then
+    GOLANG_LATEST_STABLE_VERSION=$(curl https://go.dev/dl/?mode=json | grep -o 'go.*.linux-arm64.tar.gz' | head -n 1 | tr -d '\r\n')
+    wget https://dl.google.com/go/${GOLANG_LATEST_STABLE_VERSION} -O golang.tar.gz
+else
+    GOLANG_LATEST_STABLE_VERSION=$(curl https://go.dev/dl/?mode=json | grep -o 'go.*.linux-amd64.tar.gz' | head -n 1 | tr -d '\r\n')
+    wget https://dl.google.com/go/${GOLANG_LATEST_STABLE_VERSION} -O golang.tar.gz
+fi
+
+tar -C /usr/local -xzf golang.tar.gz go
+printf "\nPATH=\"/usr/local/go/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
+rm -rf golang.tar.gz
+
+# Install & Configure Mailpit
+curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | bash
+chmod +x /usr/local/bin/mailpit
+tee /etc/systemd/system/mailpit.service <<EOL
 [Unit]
-Description=Mailhog
+Description=Mailpit
 After=network.target
 
 [Service]
 User=vagrant
-ExecStart=/usr/bin/env /usr/local/bin/mailhog > /dev/null 2>&1 &
+StandardOutput=journal
+StandardError=journal
+ExecStart=/usr/bin/env /usr/local/bin/mailpit
 
 [Install]
 WantedBy=multi-user.target
 EOL
 
-sudo systemctl daemon-reload
-sudo systemctl enable mailhog
-sudo service mailhog restart
+systemctl daemon-reload
+systemctl enable mailpit
+service mailpit restart
 
 # Configure Supervisor
 systemctl enable supervisor.service
 service supervisor start
 
 # Install ngrok
-wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
-tar xvzf ngrok-v3-stable-linux-amd64.tgz -C /usr/local/bin
-rm -rf ngrok-v3-stable-linux-amd64.tgz
+curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo gpg --dearmor -o /etc/apt/keyrings/ngrok.gpg
+echo "deb [signed-by=/etc/apt/keyrings/ngrok.gpg] https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+apt-get update
+apt-get install ngrok
 
 # Install & Configure Postfix
 echo "postfix postfix/mailname string homestead.test" | debconf-set-selections
@@ -812,7 +862,7 @@ apt-get -y purge ppp pppconfig pppoeconf
 sed -i "s/^makestep.*/makestep 1 -1/" /etc/chrony/chrony.conf
 
 # Delete oddities
-apt-get -y purge popularity-contest installation-report command-not-found friendly-recovery laptop-detect
+apt-get -y purge popularity-contest command-not-found friendly-recovery laptop-detect
 
 # Exlude the files we don't need w/o uninstalling linux-firmware
 echo "==> Setup dpkg excludes for linux-firmware"
