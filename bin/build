@@ -2,6 +2,9 @@
 
 set -a
 
+SETTLER_VERSION="v${SETTLER_VERSION:-13.0.0} (vmware-ubuntu)"
+HOMESTEAD_VERSION="Homestead v${HOMESTEAD_VERSION:-14.5.0} (support/14)"
+
 export vmbuild="$(realpath $(dirname $0)/../..)"
 echo "base path: $vmbuild"
 
@@ -38,8 +41,9 @@ fi
 settler_hash=$(pushd ../settler &>/dev/null && git rev-parse --short HEAD && popd &>/dev/null || return)
 homestead_hash=$(pushd ../homestead &>/dev/null && git rev-parse --short HEAD && popd &>/dev/null || return)
 
-SETTLER_VERSION="v13.0.0 (vmware-ubuntu) $settler_hash"
-HOMESTEAD_VERSION="Homestead v14.5.0 (support/14) $homestead_hash"
+SETTLER_VERSION="$SETTLER_VERSION $settler_hash"
+HOMESTEAD_VERSION="$HOMESTEAD_VERSION $homestead_hash"
+echo -e "\n$SETTLER_VERSION\n$HOMESTEAD_VERSION\n"
 
 read -n1 -t30 -p "Reset settler and bento changes before build (Y/n)? " gitreset
 gitreset=$(echo "${gitreset:-Y}"| tr "[:lower:]" "[:upper:]") # transform to uppercase and default to Y

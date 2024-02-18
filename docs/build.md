@@ -11,6 +11,10 @@ Or clone this repo and run
 ```
 bash bin/build 
 ```
+or specify versions (_for display purposes only_)
+``` 
+SETTLER_VERSION=13.0.1 HOMESTEAD_VERSION=14.5.1 bash bin/build
+```
 
 # Discovery Research
 
