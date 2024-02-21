@@ -16,6 +16,44 @@ or specify versions (_for display purposes only_)
 SETTLER_VERSION=13.0.1 HOMESTEAD_VERSION=14.5.1 bash bin/build
 ```
 
+## WIP switch to bento/main and settler/14
+
+- switch to bento/main
+- switch to forked settler/ubuntu-vmware-14
+- switch to forked homestead/support-15
+
+## Setup
+
+Install packer and optionally vagrant via brew
+```bash
+brew install vagrant vagrant-completion packer packer-completion
+```
+
+install VMWare Fusion and vagrant plugin
+```bash
+vagrant plugin install vagrant-vmware-desktop
+```
+
+https://developer.hashicorp.com/vagrant/docs/providers/vmware/vagrant-vmware-utility
+```bash
+
+
+http --download https://releases.hashicorp.com/vagrant-vmware-utility/1.0.22/vagrant-vmware-utility_1.0.22_darwin_amd64.dmg
+sudo mkdir -p /opt/vagrant-vmware-desktop/bin
+open vagrant-vmware-utility_1.0.0_linux_amd64.zip
+
+sudo /opt/vagrant-vmware-desktop/bin/vagrant-vmware-utility certificate generate
+sudo /opt/vagrant-vmware-desktop/bin/vagrant-vmware-utility service install
+
+sudo launchctl unload -w /Library/LaunchDaemons/com.vagrant.vagrant-vmware-utility.plist
+sudo launchctl load -w /Library/LaunchDaemons/com.vagrant.vagrant-vmware-utility.plist
+
+sudo /opt/vagrant-vmware-desktop/bin/vagrant-vmware-utility service uninstall
+sudo /opt/vagrant-vmware-desktop/bin/vagrant-vmware-utility service install -port=9999
+```
+
+
+
 # Discovery Research
 
 The VM is based on the standard build process as used for the Laravel/Homestead VM.   
@@ -130,7 +168,7 @@ The generated VM will be placed in the builds directory, `builds/ubuntu-20.04.vm
 This is to allow Homestead build testing using the generated VM.
 
 ```
-bash "$vmbuild/settler/bin/register-local-box.sh" "$vmbuild/bento/builds/ubuntu-20.04.vmware.box" 13.0.3
+bash "$vmbuild/settler/bin/register-local-box.sh" "$vmbuild/bento/builds/ubuntu-22.04-x86_64.vmware.box" 15.0.1
     
 vagrant box list    
 ```

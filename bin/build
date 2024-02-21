@@ -2,8 +2,13 @@
 
 set -a
 
-SETTLER_VERSION="v${SETTLER_VERSION:-13.0.0} (vmware-ubuntu)"
-HOMESTEAD_VERSION="Homestead v${HOMESTEAD_VERSION:-14.5.0} (support/14)"
+SETTLER_VERSION="v${SETTLER_VERSION:-14.0.0} (vmware-ubuntu-14)"
+HOMESTEAD_VERSION="Homestead v${HOMESTEAD_VERSION:-15.0.2} (support/15)"
+export PACKER_LOG=1
+if [ -z "$DEBUG" ]; then
+    # pass DEBUG=1 in env to enable debuging of packer build.
+    export PACKER_LOG=0
+fi
 
 export vmbuild="$(realpath $(dirname $0)/../..)"
 echo "base path: $vmbuild"
@@ -12,30 +17,45 @@ echo "base path: $vmbuild"
 # clone repositories
 #
 if [ ! -e "$vmbuild/settler" ]; then
-    pushd $vmbuild && git clone https://github.com/theodson/settler -b ubuntu-vmware && popd || {
+    pushd $vmbuild && git clone https://github.com/theodson/settler -b ubuntu-vmware-14 && popd || {
         echo "✋  problem cloning settler repo"
         exit 1
     }
 else
     echo "settler dir already exists : $vmbuild/settler"
+    pushd $vmbuild/settler && git checkout ubuntu-vmware-14 && popd || {
+        echo "✋  problem switching branch"
+        exit 1
+    }
+    #pushd $vmbuild/settler && git pull && popd || exit 1
 fi
 
 if [ ! -e "$vmbuild/bento" ]; then
-    pushd $vmbuild && git clone https://github.com/chef/bento -b bento_old_json_templates && popd || {
+    pushd $vmbuild && git clone https://github.com/chef/bento -b main && popd || {
         echo "✋  problem cloning bento repo"
         exit 1
     }
 else
     echo "bento dir already exists : $vmbuild/bento"
+    pushd $vmbuild/bento && git checkout main && popd || {
+        echo "✋  problem switching branch"
+        exit 1
+    }
+    pushd $vmbuild/bento && git pull && popd || exit 1
 fi
 
 if [ ! -e "$vmbuild/homestead" ]; then
-    pushd $vmbuild && git clone https://github.com/theodson/homestead -b support/14 && popd || {
+    pushd $vmbuild && git clone https://github.com/theodson/homestead -b support/15 && popd || {
         echo "✋  problem cloning homestead repo"
         exit 1
     }
 else
     echo "homestead dir already exists : $vmbuild/homestead"
+        pushd $vmbuild/homestead && git checkout support/15 && popd || {
+        echo "✋  problem switching branch"
+        exit 1
+    }
+    #pushd $vmbuild/homestead && git pull && popd || exit 1
 fi
 
 settler_hash=$(pushd ../settler &>/dev/null && git rev-parse --short HEAD && popd &>/dev/null || return)
@@ -52,7 +72,8 @@ echo
 if [ "$gitreset" = 'Y' ]; then
     echo -e "⚡️ git reset"
     pushd "$vmbuild/settler" && git checkout scripts/amd64.sh scripts/arm.sh && popd || true
-    pushd "$vmbuild/bento/packer_templates/ubuntu" && git checkout ubuntu-20.04-amd64.json ubuntu-20.04-arm64.json http/preseed.cfg http/preseed-hyperv.cfg && popd || true
+    pushd "$vmbuild/bento" && rm -f packer_templates/settler.hcl && popd || true
+    pushd "$vmbuild/bento/packer_templates" && git checkout pkr-builder.pkr.hcl pkr-variables.pkr.hcl && popd || true
 fi
 
 #
@@ -62,14 +83,25 @@ echo -e "⚡️ setup" &&
     pushd "$vmbuild/settler" &&
     source "$vmbuild/settler/bin/macos-sed-fix" &&
     bin/link-to-bento.sh &&
+    # link in preparation for overriding the default vars defined in pkr-variables
+    /bin/ln -f settler.hcl ../bento/packer_templates/settler.hcl &&
     bin/use-homestead-features.sh || {
         echo "✋ problem during setup!"
         exit 2
     }
 
 echo -e "⚡️ build" &&
-    pushd "$vmbuild/bento/packer_templates/ubuntu" &&
-    packer build -only=vmware-iso ubuntu-20.04-amd64.json || {
+    pushd "$vmbuild/bento" &&
+    packer init -upgrade ./packer_templates
+    packer build -only=vmware-iso.vm -var-file=os_pkrvars/ubuntu/ubuntu-22.04-x86_64.pkrvars.hcl -var-file=packer_templates/settler.hcl ./packer_templates || {
         echo "✋  problem during build!"
         exit 3
     }
+
+
+#echo -e "⚡️ build" &&
+#    pushd "$vmbuild/bento/packer_templates/ubuntu" &&
+#    packer build -only=vmware-iso ubuntu-20.04-amd64.json || {
+#        echo "✋  problem during build!"
+#        exit 3
+#    }

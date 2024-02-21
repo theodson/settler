@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 homestead_name="laravel/homestead"
-homestead_box="${1:-builds/ubuntu-20.04.vmware.box}"
-homestead_version="${2:-13.0.0}"
+homestead_box="${1:-builds/ubuntu-22.04-x86_64.vmware.box}"
+homestead_version="${2:-15.0.0}"
 homestead_arch="${3:-amd64}"
 
 if [ ! -e $homestead_box ]; then
