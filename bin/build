@@ -90,10 +90,16 @@ echo -e "⚡️ setup" &&
         exit 2
     }
 
+if [ "$(uname -p)" = "arm" ]; then
+    var_file='os_pkrvars/ubuntu/ubuntu-22.04-aarch64.pkrvars.hcl'
+else
+    var_file='os_pkrvars/ubuntu/ubuntu-22.04-x86_64.pkrvars.hcl'
+fi
+
 echo -e "⚡️ build" &&
     pushd "$vmbuild/bento" &&
     packer init -upgrade ./packer_templates
-    packer build -only=vmware-iso.vm -var-file=os_pkrvars/ubuntu/ubuntu-22.04-x86_64.pkrvars.hcl -var-file=packer_templates/settler.hcl ./packer_templates || {
+    packer build -debug -only=vmware-iso.vm -var-file=$var_file -var-file=packer_templates/settler.hcl ./packer_templates || {
         echo "✋  problem during build!"
         exit 3
     }
