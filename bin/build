@@ -99,7 +99,7 @@ fi
 echo -e "⚡️ build" &&
     pushd "$vmbuild/bento" &&
     packer init -upgrade ./packer_templates
-    packer build -debug -only=vmware-iso.vm -var-file=$var_file -var-file=packer_templates/settler.hcl ./packer_templates || {
+    packer build -on-error=ask -only=vmware-iso.vm -var-file=$var_file -var-file=packer_templates/settler.hcl ./packer_templates || {
         echo "✋  problem during build!"
         exit 3
     }

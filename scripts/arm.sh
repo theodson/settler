@@ -35,9 +35,9 @@ apt-add-repository ppa:ondrej/php -y
 # Prepare keyrings directory
 sudo mkdir -p /etc/apt/keyrings
 
-# NodeJS
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_21.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+# NodeJS (use NVM)
+# curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+# echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_21.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 # PostgreSQL
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
@@ -633,12 +633,18 @@ EOF
 fi
 
 # Install Node
-apt-get install -y nodejs
-/usr/bin/npm install -g npm
-/usr/bin/npm install -g gulp-cli
-/usr/bin/npm install -g bower
-/usr/bin/npm install -g yarn
-/usr/bin/npm install -g grunt-cli
+# apt-get install -y nodejs
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+nvm install 22 --latest-npm
+nvm install-latest-npm
+
+npm install -g npm
+npm install -g gulp-cli
+npm install -g bower
+npm install -g yarn
+npm install -g grunt-cli
 
 # Install SQLite
 apt-get install -y sqlite3 libsqlite3-dev
