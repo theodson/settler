@@ -52,6 +52,7 @@ done
 echo -e "\n# ===========================  FEATURES END  ============================\n" >> scripts/amd64.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/amd64.features
 sed -i -e "s/exit 0/echo 'skipping exit 0'/g" scripts/amd64.features
+sed -i -e "s/\[\[ \"\$ARCH\" == \"aarch64\" \]\]/arch|grep 'aarch64'/g" scripts/amd64.features
 sed -i -e "${insertline}r scripts/amd64.features" scripts/amd64.sh
 
 
@@ -81,6 +82,7 @@ done
 echo -e "\n# ===========================  FEATURES END  ============================\n" >> scripts/arm.features
 sed -i -e '/usr\/bin\/env bash/d' scripts/arm.features
 sed -i -e "s/exit 0/echo 'skipping exit 0'/g" scripts/arm.features
+sed -i -e "s/\[\[ \"\$ARCH\" == \"aarch64\" \]\]/arch|grep 'aarch64'/g" scripts/arm.features
 sed -i -e "${insertlinearm}r scripts/arm.features" scripts/arm.sh
 
 /bin/ln -f scripts/amd64.sh ../bento/packer_templates/scripts/ubuntu/homestead_amd64.sh
