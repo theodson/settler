@@ -208,7 +208,7 @@ then, form within the VMWare Fusion tool
 - remove all of the network devices - this will remove any MAC address references 
 - add a new network device (note don't generate a mac address... leave it blank) 
 
-> the VM mush be shutdown for this step.
+> the VM must be shutdown for this step.
 
 ### export the VM as a single file OVA 
 via the VMWare Fusion menu `File > Export to OVF`.
