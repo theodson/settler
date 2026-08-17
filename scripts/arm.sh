@@ -517,6 +517,97 @@ else
 
   touch /home/vagrant/.homestead-features/php83
 
+  # PHP 8.4
+  apt-get install -y --allow-change-held-packages \
+  php8.4 php8.4-bcmath php8.4-bz2 php8.4-cgi php8.4-cli php8.4-common php8.4-curl php8.4-dba php8.4-dev \
+  php8.4-enchant php8.4-fpm php8.4-gd php8.4-gmp  php8.4-interbase php8.4-intl php8.4-ldap \
+  php8.4-mbstring php8.4-mysql php8.4-odbc php8.4-opcache php8.4-pgsql php8.4-phpdbg php8.4-readline \
+  php8.4-snmp php8.4-soap php8.4-sqlite3 php8.4-sybase php8.4-tidy php8.4-xml php8.4-xsl \
+  php8.4-zip php8.4-imap  php8.4-pspell php8.4-xdebug php8.4-imagick php8.4-memcached php8.4-redis php8.4-xmlrpc \
+  php8.4-imap  php8.4-pspell php8.4-xdebug php8.4-imagick php8.4-memcached php8.4-redis php8.4-xmlrpc
+
+  # Configure php.ini for CLI
+  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/cli/php.ini
+  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/cli/php.ini
+  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/cli/php.ini
+  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/cli/php.ini
+
+  # Configure Xdebug
+  echo "xdebug.mode = debug" >> /etc/php/8.4/mods-available/xdebug.ini
+  echo "xdebug.discover_client_host = true" >> /etc/php/8.4/mods-available/xdebug.ini
+  echo "xdebug.client_port = 9003" >> /etc/php/8.4/mods-available/xdebug.ini
+  echo "xdebug.max_nesting_level = 512" >> /etc/php/8.4/mods-available/xdebug.ini
+  echo "opcache.revalidate_freq = 0" >> /etc/php/8.4/mods-available/opcache.ini
+
+  # Configure php.ini for FPM
+  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/fpm/php.ini
+  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/fpm/php.ini
+  sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/fpm/php.ini
+  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/fpm/php.ini
+  sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/8.4/fpm/php.ini
+  sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/8.4/fpm/php.ini
+  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/fpm/php.ini
+
+  printf "[openssl]\n" | tee -a /etc/php/8.4/fpm/php.ini
+  printf "openssl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.4/fpm/php.ini
+  printf "[curl]\n" | tee -a /etc/php/8.4/fpm/php.ini
+  printf "curl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.4/fpm/php.ini
+
+  # Configure FPM
+  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.4/fpm/pool.d/www.conf
+
+  touch /home/vagrant/.homestead-features/php84
+
+  # PHP 8.5
+  apt-get install -y --allow-change-held-packages \
+  php8.5 php8.5-bcmath php8.5-bz2 php8.5-cgi php8.5-cli php8.5-common php8.5-curl php8.5-dba php8.5-dev \
+  php8.5-enchant php8.5-fpm php8.5-gd php8.5-gmp  php8.5-interbase php8.5-intl php8.5-ldap \
+  php8.5-mbstring php8.5-mysql php8.5-odbc php8.5-pgsql php8.5-phpdbg php8.5-readline \
+  php8.5-snmp php8.5-soap php8.5-sqlite3 php8.5-sybase php8.5-tidy php8.5-xml php8.5-xsl \
+  php8.5-zip php8.5-imap  php8.5-pspell php8.5-xdebug php8.5-imagick php8.5-memcached php8.5-redis php8.5-xmlrpc \
+  php8.5-imap  php8.5-pspell php8.5-xdebug php8.5-imagick php8.5-memcached php8.5-redis php8.5-xmlrpc
+
+  # Configure php.ini for CLI
+  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.5/cli/php.ini
+  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.5/cli/php.ini
+  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.5/cli/php.ini
+  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.5/cli/php.ini
+
+  # Configure Xdebug
+  echo "xdebug.mode = debug" >> /etc/php/8.5/mods-available/xdebug.ini
+  echo "xdebug.discover_client_host = true" >> /etc/php/8.5/mods-available/xdebug.ini
+  echo "xdebug.client_port = 9003" >> /etc/php/8.5/mods-available/xdebug.ini
+  echo "xdebug.max_nesting_level = 512" >> /etc/php/8.5/mods-available/xdebug.ini
+  echo "opcache.revalidate_freq = 0" >> /etc/php/8.5/mods-available/opcache.ini
+
+  # Configure php.ini for FPM
+  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.5/fpm/php.ini
+  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.5/fpm/php.ini
+  sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.5/fpm/php.ini
+  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.5/fpm/php.ini
+  sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/8.5/fpm/php.ini
+  sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/8.5/fpm/php.ini
+  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.5/fpm/php.ini
+
+  printf "[openssl]\n" | tee -a /etc/php/8.5/fpm/php.ini
+  printf "openssl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.5/fpm/php.ini
+  printf "[curl]\n" | tee -a /etc/php/8.5/fpm/php.ini
+  printf "curl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.5/fpm/php.ini
+
+  # Configure FPM
+  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.5/fpm/pool.d/www.conf
+
+  touch /home/vagrant/.homestead-features/php85
+
+
   # Disable old PHP FPM
   systemctl disable php5.6-fpm
   systemctl disable php7.0-fpm
@@ -527,10 +618,12 @@ else
   systemctl disable php8.0-fpm
   systemctl disable php8.1-fpm
   systemctl disable php8.2-fpm
+  systemctl disable php8.3-fpm
+  systemctl disable php8.4-fpm
 
-  update-alternatives --set php /usr/bin/php8.3
-  update-alternatives --set php-config /usr/bin/php-config8.3
-  update-alternatives --set phpize /usr/bin/phpize8.3
+  update-alternatives --set php /usr/bin/php8.5
+  update-alternatives --set php-config /usr/bin/php-config8.5
+  update-alternatives --set phpize /usr/bin/phpize8.5
 
   # Install Composer
   curl -sS https://getcomposer.org/installer | php
@@ -550,7 +643,7 @@ EOF
   sed -i "s/www-data/vagrant/" /etc/apache2/envvars
 
   # Enable FPM
-  a2enconf php8.3-fpm
+  a2enconf php8.5-fpm
 
   # Assume user wants mode_rewrite support
   sudo a2enmod rewrite
@@ -585,21 +678,6 @@ EOF
   touch /home/vagrant/.config/nginx/nginx.conf
   ln -sf /home/vagrant/.config/nginx/nginx.conf /etc/nginx/conf.d/nginx.conf
 
-  # Setup Some PHP-FPM Options
-  sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.0/fpm/php.ini
-  sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.0/fpm/php.ini
-  sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.0/fpm/php.ini
-  sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.0/fpm/php.ini
-  sed -i "s/upload_max_filesize = .*/upload_max_filesize = 100M/" /etc/php/8.0/fpm/php.ini
-  sed -i "s/post_max_size = .*/post_max_size = 100M/" /etc/php/8.0/fpm/php.ini
-  sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.0/fpm/php.ini
-
-  printf "[openssl]\n" | tee -a /etc/php/8.0/fpm/php.ini
-  printf "openssl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.0/fpm/php.ini
-
-  printf "[curl]\n" | tee -a /etc/php/8.0/fpm/php.ini
-  printf "curl.cainfo = /etc/ssl/certs/ca-certificates.crt\n" | tee -a /etc/php/8.0/fpm/php.ini
-
   # Disable XDebug On The CLI
   sudo phpdismod -s cli xdebug
 
@@ -608,15 +686,15 @@ EOF
   sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
   sed -i "s/sendfile on;/sendfile on; client_max_body_size 100M;/" /etc/nginx/nginx.conf
 
-  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.0/fpm/pool.d/www.conf
-  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.0/fpm/pool.d/www.conf
+  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
 
-  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.0/fpm/pool.d/www.conf
-  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.0/fpm/pool.d/www.conf
-  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.0/fpm/pool.d/www.conf
+  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.4/fpm/pool.d/www.conf
 
   service nginx restart
-  service php8.3-fpm restart
+  service php8.4-fpm restart
 
   # Add Vagrant User To WWW-Data
   usermod -a -G www-data vagrant
@@ -632,19 +710,20 @@ EOF
   printf "\nPATH=\"$(sudo su - vagrant -c 'composer config -g home 2>/dev/null')/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
 fi
 
-# Install Node
-# apt-get install -y nodejs
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm install 22 --latest-npm
-nvm install-latest-npm
+# Download and install nvm:
+runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
 
-npm install -g npm
-npm install -g gulp-cli
-npm install -g bower
-npm install -g yarn
-npm install -g grunt-cli
+# Install Node (via nvm)
+#curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+#export NVM_DIR="$HOME/.nvm"
+#[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+#nvm install 22 --latest-npm
+#nvm install-latest-npm
+
+# Install Node
+apt-get install -y nodejs
+npm install -g gulp-cli bower yarn grunt-cli
+
 
 # Install SQLite
 apt-get install -y sqlite3 libsqlite3-dev
@@ -754,15 +833,15 @@ fi
 if "$SKIP_POSTGRESQL"; then
   echo "SKIP_POSTGRESQL is being used, so we're not installing PostgreSQL"
 else
-  # Install Postgres 14
-  apt-get install -y postgresql-15 postgresql-server-dev-15 postgresql-15-postgis-3 postgresql-15-postgis-3-scripts
+  # Install Postgres 16
+  apt-get install -y postgresql-16 postgresql-server-dev-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts
 
   # Configure Postgres Users
   sudo -u postgres psql -c "CREATE ROLE homestead LOGIN PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;"
 
   # Configure Postgres Remote Access
-  sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/15/main/postgresql.conf
-  echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/15/main/pg_hba.conf
+  sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/16/main/postgresql.conf
+  echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/16/main/pg_hba.conf
 
   sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead
   service postgresql restart
