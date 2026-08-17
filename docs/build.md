@@ -513,3 +513,105 @@ These packages are driven by [Homestead.yaml](..%2Flaravel-homestead%2Fresources
 |-----------|---------------|--------------|---------|-------|
 | blackfire | disabled      |              |         |
 
+
+# 2025: Apple Silicon M1 - WIP - ... your mileage will vary...  💨 🍏
+
+### 🎃 This is very much a WIP at the moment... 🎃
+
+[Broadcom: The Unofficial Fusion for Apple Silicon
+Companion Guide](https://community.broadcom.com/vmware-cloud-foundation/viewdocument/the-unofficial-fusion-for-apple-sil?CommunityKey=0c3a2021-5113-4ad1-af9e-018f5da40bc0&tab=librarydocuments)
+
+Note: the `arch` and `uname` command can be used to distinguish the platform, both on the Apple Silicon host and withing the guest arm based VM.
+
+#### apple silicon `arm64/arm`
+```bash
+# bash on Apple Silicon ARM
+
+arch
+arm64 
+
+uname -p
+arm
+
+uname -m
+arm64
+```
+
+#### ubuntu `aarch64`
+
+```bash
+# bash on Ubuntu/Debian ARM based VM
+
+arch
+aarch64
+
+uname -p
+aarch64
+
+uname -m
+aarch64
+```
+
+- Issue 1: "Networks with custom subnet/mask values are not supported" https://github.com/clong/DetectionLab/issues/602, https://github.com/hashicorp/vagrant/issues/13367
+- Issue 2: Vargant Up not working yet
+- Issue 3:  Export OVA on Apple Silicon - NOT SUPPORTED - https://community.broadcom.com/communities/community-home/digestviewer/viewthread?GroupId=7165&MessageKey=9f6c5e41-a4b6-4de2-a82b-da45ac3dff77&CommunityKey=0c3a2021-5113-4ad1-af9e-018f5da40bc0
+
+```
+Homestead.yaml file
+...
+box: laravel/homestead
+version: 15.0.2
+box_architecture: arm64
+...
+```
+
+Register the VM locally with
+```bash
+bin/register-local-box.sh ../bento/builds/ubuntu-22.04-aarch64.vmware.box 15.0.2 arm64
+```
+
+### Possible workflow
+
+#### macOs Setup
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/packer
+brew install hashicorp/tap/hashicorp-vagrant
+
+sudo vagrant plugin install vagrant-vmware-desktop
+```
+
+
+1. Build VM with Settler/Packer
+```bash
+# might be other options...
+bash bin/build
+
+# DEBUG packer builds by exporting or prepending PACKER_LOG=1
+# e.g. `PACKER_LOG=1 packer build -only=vmware-iso.vm -var-file=os_pkrvars/ubuntu/ubuntu-22.04-x86_64.pkrvars.hcl -var headless=false ./packer_templates`
+```
+2. Add/Register box locally `register-local-box.sh`
+3. Convert the local box (just registered) using VMware Fusion tools `ovftool`
+```bash
+pushd "/Applications/VMware Fusion.app/Contents/Library"/
+
+# vagrant up might fail - if Fusion Network doesn't exist add the network with this.
+sudo vmnet-cfgcli vnetcfgadd VNET_2_DHCP no
+sudo vmnet-cfgcli vnetcfgadd VNET_2_HOSTONLY_SUBNET 192.168.56.0
+sudo vmnet-cfgcli vnetcfgadd VNET_2_HOSTONLY_NETMASK 255.255.255.0
+sudo vmnet-cfgcli vnetcfgadd VNET_2_VIRTUAL_ADAPTER yes
+sudo vmnet-cli --configure
+sudo vmnet-cli --stop
+sudo vmnet-cli --start
+
+#ovftool ~/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/12.1.0/vmware_desktop/ubuntu-20.04-arm64.vmx ~/Downloads/ubuntu-20.04.arm.ova
+ovftool ~/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/15.0.2/arm64/vmware_desktop/ubuntu-22.04-aarch64.vmx ~/Downloads/homestead-arm.15.0.2.ova
+
+# or if you've copued the box from ~/.vagrant.d to Downloads... something like this.
+ovftool /Users/theodickinson/Downloads/VMWARE/vmware_desktop/ubuntu-22.04-aarch64.vmx /Users/theodickinson/Downloads/homestead.ova
+
+
+# extract into folder to extract the vmdk file (this will be used as the base image). 
+mkdir homestead-15.0.2
+tar -xvf ~/Downloads/homestead-arm.15.0.2.ova -C homestead-15.0.2
+```
