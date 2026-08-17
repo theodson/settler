@@ -683,6 +683,8 @@ EOF
   mysql --user="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'homestead'@'%' WITH GRANT OPTION;"
   mysql --user="root" -e "FLUSH PRIVILEGES;"
   mysql --user="root" -e "CREATE DATABASE homestead character set UTF8mb4 collate utf8mb4_bin;"
+  mysql --user="root" -e "SET GLOBAL time_zone = '+00:00';"
+  mysql --user="root" -e "SET time_zone = '+00:00';"
 
   sudo tee /home/vagrant/.my.cnf <<EOL
 [mysqld]
@@ -830,8 +832,6 @@ sed -i "s/relayhost =/relayhost = [localhost]:1025/g" /etc/postfix/main.cf
 
 # Update / Override motd
 echo "export ENABLED=1"| tee -a /etc/default/motd-news
-sed -i "s/motd.ubuntu.com/homestead.joeferguson.me/g" /etc/update-motd.d/50-motd-news
-sed -i "s/motd.ubuntu.com/homestead.joeferguson.me/g" /etc/default/motd-news
 rm -rf /var/cache/motd-news
 rm -rf /etc/update-motd.d/10-help-text
 rm -rf /etc/update-motd.d/50-landscape-sysinfo
