@@ -686,15 +686,15 @@ EOF
   sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
   sed -i "s/sendfile on;/sendfile on; client_max_body_size 100M;/" /etc/nginx/nginx.conf
 
-  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
-  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/user = www-data/user = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/group = www-data/group = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
 
-  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
-  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.4/fpm/pool.d/www.conf
-  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.4/fpm/pool.d/www.conf
+  sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
+  sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.5/fpm/pool.d/www.conf
 
   service nginx restart
-  service php8.4-fpm restart
+  service php8.5-fpm restart
 
   # Add Vagrant User To WWW-Data
   usermod -a -G www-data vagrant
