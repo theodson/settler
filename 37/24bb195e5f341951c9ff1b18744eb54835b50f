@@ -1,0 +1,24 @@
+scripts/amd64.sh
+  h_6bb49d5e53f88a 718-719
+  h_6bb49d5e53f88a 520-564,567-572,609-611,622,624-626,646,689-690,692-694,697,713-715,720-727,837-838,844-845
+scripts/arm.sh
+  h_6bb49d5e53f88a 717-718
+  h_6bb49d5e53f88a 520-610,621-622,624-626,646,689-690,692-694,697,713-716,719-722,724-726,836-837,843-844
+Vagrantfile
+  h_6bb49d5e53f88a 6-8
+bin/link-to-bento.sh
+  h_6bb49d5e53f88a 13,15
+readme.md
+  h_6bb49d5e53f88a 16-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3724bb195e5f341951c9ff1b18744eb54835b50f",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
