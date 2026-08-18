@@ -2,8 +2,13 @@
 
 set -a
 
-SETTLER_VERSION="v${SETTLER_VERSION:-14.0.0} (vmware-ubuntu-14)"
-HOMESTEAD_VERSION="Homestead v${HOMESTEAD_VERSION:-15.0.2} (support/15)"
+BENTO_BRANCH="main"
+SETTLER_BRANCH="ubuntu-vmware-16"
+HOMESTEAD_BRANCH="support/17"
+UBUNTU_VERSION="24.04"
+
+SETTLER_VERSION="v${SETTLER_VERSION:-16.0.0} ( ${SETTLER_BRANCH} - Ubuntu ${UBUNTU_VERSION})"
+HOMESTEAD_VERSION="Homestead v${HOMESTEAD_VERSION:-17.0.4} ( ${HOMESTEAD_BRANCH} )"
 export PACKER_LOG=1
 if [ -z "$DEBUG" ]; then
     # pass DEBUG=1 in env to enable debuging of packer build.
@@ -17,13 +22,13 @@ echo "base path: $vmbuild"
 # clone repositories
 #
 if [ ! -e "$vmbuild/settler" ]; then
-    pushd $vmbuild && git clone https://github.com/theodson/settler -b ubuntu-vmware-14 && popd || {
+    pushd $vmbuild && git clone https://github.com/theodson/settler -b "${SETTLER_BRANCH}" && popd || {
         echo "✋  problem cloning settler repo"
         exit 1
     }
 else
     echo "settler dir already exists : $vmbuild/settler"
-    pushd $vmbuild/settler && git checkout ubuntu-vmware-14 && popd || {
+    pushd $vmbuild/settler && git checkout "${SETTLER_BRANCH}" && popd || {
         echo "✋  problem switching branch"
         exit 1
     }
@@ -31,13 +36,13 @@ else
 fi
 
 if [ ! -e "$vmbuild/bento" ]; then
-    pushd $vmbuild && git clone https://github.com/chef/bento -b main && popd || {
+    pushd $vmbuild && git clone https://github.com/chef/bento -b "${BENTO_BRANCH}" && popd || {
         echo "✋  problem cloning bento repo"
         exit 1
     }
 else
     echo "bento dir already exists : $vmbuild/bento"
-    pushd $vmbuild/bento && git checkout main && popd || {
+    pushd $vmbuild/bento && git checkout "${BENTO_BRANCH}" && popd || {
         echo "✋  problem switching branch"
         exit 1
     }
@@ -45,13 +50,13 @@ else
 fi
 
 if [ ! -e "$vmbuild/homestead" ]; then
-    pushd $vmbuild && git clone https://github.com/theodson/homestead -b support/15 && popd || {
+    pushd $vmbuild && git clone https://github.com/theodson/homestead -b "${HOMESTEAD_BRANCH}" && popd || {
         echo "✋  problem cloning homestead repo"
         exit 1
     }
 else
     echo "homestead dir already exists : $vmbuild/homestead"
-        pushd $vmbuild/homestead && git checkout support/15 && popd || {
+        pushd $vmbuild/homestead && git checkout "${HOMESTEAD_BRANCH}" && popd || {
         echo "✋  problem switching branch"
         exit 1
     }
@@ -91,9 +96,11 @@ echo -e "⚡️ setup" &&
     }
 
 if [ "$(uname -p)" = "arm" ]; then
-    var_file='os_pkrvars/ubuntu/ubuntu-22.04-aarch64.pkrvars.hcl'
+    #var_file='os_pkrvars/ubuntu/ubuntu-22.04-aarch64.pkrvars.hcl'
+    var_file='os_pkrvars/ubuntu/ubuntu-24.04-aarch64.pkrvars.hcl '
 else
-    var_file='os_pkrvars/ubuntu/ubuntu-22.04-x86_64.pkrvars.hcl'
+    #var_file='os_pkrvars/ubuntu/ubuntu-22.04-x86_64.pkrvars.hcl'
+    var_file='os_pkrvars/ubuntu/ubuntu-24.04-x86_64.pkrvars.hcl'
 fi
 
 echo -e "⚡️ build" &&

@@ -13,20 +13,22 @@ bash bin/build
 ```
 or specify versions (_for display purposes only_)
 ``` 
-SETTLER_VERSION=13.0.1 HOMESTEAD_VERSION=14.5.1 bash bin/build
+SETTLER_VERSION=16.0.0 HOMESTEAD_VERSION=17.0.4 bash bin/build
 ```
 
-## WIP switch to bento/main and settler/14
+## WIP switch to bento/main and settler/16
 
 - switch to bento/main
-- switch to forked settler/ubuntu-vmware-14
-- switch to forked homestead/support-15
+- switch to forked settler/ubuntu-vmware-16 (Ubuntu 24.04)
+- switch to forked homestead/support-17
 
 ## Setup
 
 Install packer and optionally vagrant via brew
 ```bash
-brew install vagrant vagrant-completion packer packer-completion
+brew install vagrant
+brew tap hashicorp/tap
+brew install hashicorp/tap/packer
 ```
 
 install VMWare Fusion and vagrant plugin
