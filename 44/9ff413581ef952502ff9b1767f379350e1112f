@@ -1,0 +1,16 @@
+bin/build
+  h_6bb49d5e53f88a 5-11,25,31,39,45,53,59,99-100,102-103
+docs/build.md
+  h_6bb49d5e53f88a 16,19,22-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "449ff413581ef952502ff9b1767f379350e1112f",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
