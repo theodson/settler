@@ -1,0 +1,18 @@
+scripts/amd64.sh
+  h_6bb49d5e53f88a 43-45,633-634,721-725,727,925
+bin/use-homestead-features.sh
+  h_6bb49d5e53f88a 66,98
+scripts/arm.sh
+  h_6bb49d5e53f88a 43-45,633-634,719-725
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "31fc2f6c4eb9941b7aab96d5b68b463a6c9ddc02",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
