@@ -1,0 +1,14 @@
+bin/use-homestead-features.sh
+  h_6bb49d5e53f88a 12-20,22,43,74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "05b8e6e4027c574bb191f286e90f6d8678e3bf69",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
