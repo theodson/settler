@@ -35,9 +35,10 @@ apt-add-repository ppa:ondrej/php -y
 # Prepare keyrings directory
 sudo mkdir -p /etc/apt/keyrings
 
-# NodeJS (use NVM)
-# curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-# echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_21.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+# NodeJS
+NODE_MAJOR=22
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 # PostgreSQL
 sudo install -d -m 0755 /etc/apt/keyrings
@@ -54,6 +55,9 @@ python3-pip re2c supervisor unattended-upgrades whois vim cifs-utils bash-comple
 
 # Set My Timezone
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+
+# Configure feature tracking path
+mkdir -p /home/vagrant/.homestead-features
 
 # SKIPPER 
 if [ 1 -eq 2 ]; then
@@ -720,23 +724,11 @@ fi
 # SKIPPER END
 
 # Install Node
- apt-get install -y nodejs
-
-# Download and install nvm:
-runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
-#export NVM_DIR="$HOME/.nvm"
-#if [ -s "$NVM_DIR/nvm.sh" ]; then
-#  . "$NVM_DIR/nvm.sh" || true  # This loads nvm
-#fi
-#if [ type -t nvm ]; then
-#  nvm install 22 --latest-npm
-#  nvm install-latest-npm
-#fi
-
-# Install Node
 apt-get install -y nodejs
 npm install -g gulp-cli bower yarn grunt-cli
 
+# Download and install nvm:
+runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
 
 # Install SQLite
 apt-get install -y sqlite3 libsqlite3-dev
