@@ -1,0 +1,14 @@
+scripts/arm.sh
+  h_6bb49d5e53f88a 839,843-844,850-851
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0c53b8886b7b6696f7cb6bb9aee490d35b5186f0",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
