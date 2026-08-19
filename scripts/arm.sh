@@ -672,8 +672,8 @@ EOF
   # Install Nginx
   apt-get install -y --allow-downgrades --allow-remove-essential --allow-change-held-packages nginx
 
-  rm /etc/nginx/sites-enabled/default
-  rm /etc/nginx/sites-available/default
+  rm /etc/nginx/sites-enabled/default || true
+  rm /etc/nginx/sites-available/default || true
 
   # Create a configuration file for Nginx overrides.
   mkdir -p /home/vagrant/.config/nginx
@@ -696,8 +696,8 @@ EOF
   sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
   sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.5/fpm/pool.d/www.conf
 
-  service nginx restart
-  service php8.5-fpm restart
+  systemctl restart nginx || true
+  systemctl restart php8.5-fpm || true
 
   # Add Vagrant User To WWW-Data
   usermod -a -G www-data vagrant
@@ -718,9 +718,11 @@ runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nv
 
 # Install Node
 # apt-get install -y nodejs
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+#curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  || true # This loads nvm
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh" || true  # This loads nvm
+fi
 nvm install 22 --latest-npm
 nvm install-latest-npm
 
