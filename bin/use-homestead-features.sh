@@ -18,7 +18,7 @@ validate_number() {
     fi
 }
 
-insertline=$(echo "$(grep -n '# Linux Shell scipts' $packer_builder | cut -d : -f 1)" | bc)
+insertline=$(echo "$(grep -n '# Linux Shell scripts' $packer_builder | cut -d : -f 1)" | bc)
 validate_number "$insertline" "insertline for $packer_builder"
 cat << COPY_FEATURE_FOLDER > "scripts/amd64.features-upload"
   provisioner "shell" {
