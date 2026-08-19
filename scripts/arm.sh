@@ -719,18 +719,19 @@ fi
 fi
 # SKIPPER END
 
+# Install Node
+ apt-get install -y nodejs
+
 # Download and install nvm:
 runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
-
-# Install Node
-# apt-get install -y nodejs
-#curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-export NVM_DIR="$HOME/.nvm"
-if [ -s "$NVM_DIR/nvm.sh" ]; then
-  . "$NVM_DIR/nvm.sh" || true  # This loads nvm
-fi
-nvm install 22 --latest-npm
-nvm install-latest-npm
+#export NVM_DIR="$HOME/.nvm"
+#if [ -s "$NVM_DIR/nvm.sh" ]; then
+#  . "$NVM_DIR/nvm.sh" || true  # This loads nvm
+#fi
+#if [ type -t nvm ]; then
+#  nvm install 22 --latest-npm
+#  nvm install-latest-npm
+#fi
 
 # Install Node
 apt-get install -y nodejs
