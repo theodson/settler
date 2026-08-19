@@ -40,7 +40,9 @@ sudo mkdir -p /etc/apt/keyrings
 # echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_21.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 # PostgreSQL
-curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+sudo install -d -m 0755 /etc/apt/keyrings
+sudo rm -f /etc/apt/keyrings/postgresql.gpg
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg
 sudo sh -c 'echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 
 ## Update Package Lists
@@ -628,7 +630,8 @@ else
   # Install Composer
   curl -sS https://getcomposer.org/installer | php
   mv composer.phar /usr/local/bin/composer
-  chown -R vagrant:vagrant /home/vagrant/.config
+  mkdir -p /home/vagrant/.config || true
+  sudo chown -R vagrant:vagrant /home/vagrant/
 
   # Install Global Packages
   sudo su vagrant <<'EOF'
@@ -713,12 +716,13 @@ fi
 # Download and install nvm:
 runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
 
-# Install Node (via nvm)
-#curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-#export NVM_DIR="$HOME/.nvm"
-#[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-#nvm install 22 --latest-npm
-#nvm install-latest-npm
+# Install Node
+# apt-get install -y nodejs
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  || true # This loads nvm
+nvm install 22 --latest-npm
+nvm install-latest-npm
 
 # Install Node
 apt-get install -y nodejs
