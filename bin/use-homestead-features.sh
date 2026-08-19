@@ -9,7 +9,17 @@ HOMESTEAD_VERSION='$HOMESTEAD_VERSION'
 "
 
 
+validate_number() {
+    local value="$1"
+    local name="$2"
+    if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+        echo "✋ $name must be a valid number, got: '$value'"
+        exit 1
+    fi
+}
+
 insertline=$(echo "$(grep -n '# Linux Shell scipts' $packer_builder | cut -d : -f 1)" | bc)
+validate_number "$insertline" "insertline for $packer_builder"
 cat << COPY_FEATURE_FOLDER > "scripts/amd64.features-upload"
   provisioner "shell" {
     inline = [
@@ -30,6 +40,7 @@ sed -i -e "${insertline}r scripts/amd64.features-upload" $packer_builder
 # AMD64
 #
 insertline=$(echo "$(grep -n '# One last upgrade check' scripts/amd64.sh | cut -d : -f 1) -1" | bc)
+validate_number "$insertline" "insertline for scripts/amd64.sh"
 echo > scripts/amd64.features
 echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/amd64.features 
 echo "
@@ -60,6 +71,7 @@ sed -i -e "${insertline}r scripts/amd64.features" scripts/amd64.sh
 # ARM
 #
 insertlinearm=$(echo "$(grep -n '# One last upgrade check' scripts/arm.sh | cut -d : -f 1) -1" | bc)
+validate_number "$insertlinearm" "insertlinearm for scripts/arm.sh"
 echo > scripts/arm.features
 echo -e "\n# =========================== FEATURES START ============================\n" >> scripts/arm.features
 echo "
