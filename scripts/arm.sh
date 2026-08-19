@@ -55,6 +55,9 @@ python3-pip re2c supervisor unattended-upgrades whois vim cifs-utils bash-comple
 # Set My Timezone
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
+# SKIPPER 
+if [ 1 -eq 2 ]; then
+
 # Install docker-ce
 curl -fsSL https://get.docker.com | bash -s
 
@@ -712,6 +715,9 @@ EOF
   # Add Composer Global Bin To Path
   printf "\nPATH=\"$(sudo su - vagrant -c 'composer config -g home 2>/dev/null')/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
 fi
+
+fi
+# SKIPPER END
 
 # Download and install nvm:
 runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
