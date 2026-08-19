@@ -76,9 +76,9 @@ echo
 
 if [ "$gitreset" = 'Y' ]; then
     echo -e "⚡️ git reset"
-    pushd "$vmbuild/settler" && git checkout scripts/amd64.sh scripts/arm.sh && popd || true
-    pushd "$vmbuild/bento" && rm -f packer_templates/settler.hcl && popd || true
-    pushd "$vmbuild/bento/packer_templates" && git checkout pkr-builder.pkr.hcl pkr-variables.pkr.hcl && popd || true
+    pushd "$vmbuild/settler" && git checkout scripts/amd64.sh scripts/arm.sh && popd || echo "could not reset settler"
+    pushd "$vmbuild/bento" && rm -f packer_templates/settler.hcl && popd || echo "could not reset bento"
+    pushd "$vmbuild/bento/packer_templates" && git checkout pkr-builder.pkr.hcl pkr-variables.pkr.hcl && popd || echo "could not reset bento"
 fi
 
 #
