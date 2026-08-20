@@ -1,0 +1,14 @@
+bin/register-local-box.sh
+  h_6bb49d5e53f88a 26-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9e3de001b379c43d4a6056676ddf53e28a298e28",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
