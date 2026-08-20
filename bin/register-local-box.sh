@@ -23,7 +23,8 @@ vagrant box add --force --name $homestead_name --architecture $homestead_arch $h
 box_base_dir="$HOME/.vagrant.d/boxes/$(echo $homestead_name | sed 's/\//-VAGRANTSLASH-/')"
 
 # manually move box version 0 to a specified versioned box
-src_box="$box_base_dir/0/vmware_desktop"
+#src_box="$box_base_dir/0/vmware_desktop"
+src_box=$(find "$box_base_dir/0" -path '*/vmware_desktop' | grep $(uname -m))
 ver_box="$box_base_dir/$homestead_version/$homestead_arch/"
 
 if [ -e "$src_box" ]; then
