@@ -1,0 +1,16 @@
+scripts/build-customizations.sh
+  h_6bb49d5e53f88a 5,19
+scripts/arm.sh
+  h_6bb49d5e53f88a 908-909,968-972,976-977,983-987,991-995,1003-1006
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1903011fb6963df6c73ce00442ae700eb9e560cc",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
