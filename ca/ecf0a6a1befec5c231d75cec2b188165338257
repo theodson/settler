@@ -1,0 +1,14 @@
+bin/build
+  h_6bb49d5e53f88a 81,85-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "caecf0a6a1befec5c231d75cec2b188165338257",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
