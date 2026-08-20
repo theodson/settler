@@ -2,6 +2,7 @@
 export DEBIAN_FRONTEND=noninteractive
 
 ARCH=$(arch)
+PGVER="${PGVER:-15}"
 
 echo "### Settler Build Configuration ###"
 echo "ARCH             = ${ARCH}"
@@ -15,7 +16,7 @@ sudo apt install -y \
 
 # Common postgresql extensions
 sudo apt install -y \
-    postgresql-plpython3-15
+    postgresql-plpython3-$PGVER
 
 # RESH - Context-based replacement for zsh and bash shell history. Full-text search your shell history.
 # curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash

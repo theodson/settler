@@ -56,12 +56,6 @@ python3-pip re2c supervisor unattended-upgrades whois vim cifs-utils bash-comple
 # Set My Timezone
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
-# Configure feature tracking path
-mkdir -p /home/vagrant/.homestead-features
-
-# SKIPPER 
-if [ 1 -eq 2 ]; then
-
 # Install docker-ce
 curl -fsSL https://get.docker.com | bash -s
 
@@ -720,9 +714,6 @@ EOF
   printf "\nPATH=\"$(sudo su - vagrant -c 'composer config -g home 2>/dev/null')/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
 fi
 
-fi
-# SKIPPER END
-
 # Install Node
 apt-get install -y nodejs
 npm install -g gulp-cli bower yarn grunt-cli
@@ -905,8 +896,8 @@ service supervisor start
 # Install ngrok
 curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo gpg --dearmor -o /etc/apt/keyrings/ngrok.gpg
 echo "deb [signed-by=/etc/apt/keyrings/ngrok.gpg] https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-apt-get update
-apt-get install ngrok
+apt-get update -y
+apt-get install -y ngrok
 
 # Install & Configure Postfix
 echo "postfix postfix/mailname string homestead.test" | debconf-set-selections
@@ -965,19 +956,34 @@ path-exclude=/usr/share/doc/linux-firmware/*
 _EOF_
 
 # Delete the massive firmware packages
+# REVIEW: fine for a VMware Fusion guest (virtio/vmw devices need no firmware blobs)
+# and it is a large image-size win. Just be aware this is riskier on arm64 than on
+# x86 if the box is ever booted on different virtualisation or on real hardware -
+# there is no firmware left to load at all. The dpkg path-exclude above correctly
+# stops it coming back on the next linux-firmware upgrade.
 rm -rf /lib/firmware/*
 rm -rf /usr/share/doc/linux-firmware/*
 
-apt-get -y autoremove;
-apt-get -y clean;
+apt-get -y autoremove
+apt-get -y clean
 
 # Remove docs
 rm -rf /usr/share/doc/*
 
 # Remove caches
+# REVIEW: under `set -e` this is a real abort risk - if any file vanishes between
+# find listing it and rm running (systemd/journald/apt are all still live), rm
+# returns non-zero, find exits 1, and the build fails at the very last step.
+# Use `find /var/cache -type f -delete` - faster (no fork per file) and it does not
+# propagate a failure for an already-deleted path.
 find /var/cache -type f -exec rm -rf {} \;
 
 # delete any logs that have built up during the install
+# REVIEW: `*.log` is unquoted, so the shell glob-expands it against the *current
+# working directory* before find ever sees it. Thanks to the un-reverted `cd` at
+# line ~1421 that directory is /usr/src/pghashlib-$ver. If any .log file exists
+# there, find is handed that filename instead of the pattern and the intended log
+# cleanup silently does nothing. Quote it: `find /var/log/ -name '*.log' -delete`.
 find /var/log/ -name *.log -exec rm -f {} \;
 
 # Disable sleep https://github.com/laravel/homestead/issues/1624
@@ -985,6 +991,10 @@ systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
 # What are you doing Ubuntu?
 # https://askubuntu.com/questions/1250974/user-root-cant-write-to-file-in-tmp-owned-by-someone-else-in-20-04-but-can-in
+# REVIEW: `sysctl` only changes the running kernel; this is a VM image, so the
+# setting is lost on the first boot of the built box - i.e. exactly when it is
+# needed. Persist it instead:
+#   echo 'fs.protected_regular=0' > /etc/sysctl.d/99-homestead.conf
 sysctl fs.protected_regular=0
 
 # Blank netplan machine-id (DUID) so machines get unique ID generated on boot.
