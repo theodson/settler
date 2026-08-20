@@ -10,8 +10,8 @@ echo "### Settler Build Configuration ###"
 # Update Package List
 sudo apt install -y \
     httpie iftop inotify-tools jq ngrep nmap openconnect sntp poppler-utils \
-    traceroute tree virt-what python3-docutils python-setuptools \
-    mlocate
+    traceroute tree virt-what python3-docutils python3-setuptools \
+    plocate
 
 # Common postgresql extensions
 sudo apt install -y \
