@@ -1,0 +1,19 @@
+docs/packaging-arm64.md
+  s_d17ee24c109ae4::t_75b2d29b89d2e6 264-299
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "8f7f4f9d2202bad8f9835e6fe222dba6994bc95c",
+  "prompts": {},
+  "sessions": {
+    "s_d17ee24c109ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "05139771-9314-46c7-a72c-428f4d8558d0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
