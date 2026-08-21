@@ -1,0 +1,25 @@
+docs/homestead-features-arch-review.md
+  s_681242d9da3618::t_69c06abdc38757 71,286,374
+  s_681242d9da3618::t_101b386bffd241 1-70,72-285,287-373,375-379
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f765a32d791a112999b0a44453b962ec8446137f",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_681242d9da3618": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29735a2a-8b9b-42f1-a187-370f18a184a6",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
