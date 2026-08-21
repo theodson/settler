@@ -87,7 +87,15 @@ while [ $# -gt 0 ]; do
         ;;
     *)
         # explicit project directory, useful with --register-only
-        project_dir="$(cd "$1" && pwd)"
+        if [ -d "$1" ]; then
+            project_dir="$(cd "$1" && pwd)"
+        else
+            # not created yet - normalise without requiring it to exist
+            case "$1" in
+            /*) project_dir="$1" ;;
+            *) project_dir="$PWD/$1" ;;
+            esac
+        fi
         ;;
     esac
     shift
