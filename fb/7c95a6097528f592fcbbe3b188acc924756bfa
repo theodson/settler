@@ -1,0 +1,22 @@
+bin/register-fusion-vm.sh
+  s_c5a6532ab60bbb::t_1937d347036bb6 75
+  s_c5a6532ab60bbb::t_058b0e41c19237 210-219
+  s_c5a6532ab60bbb::t_e9f8f488cb096e 1-65,67-74,76-209,220-232
+  s_c5a6532ab60bbb::t_8d90b0de70d10f 66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fb7c95a6097528f592fcbbe3b188acc924756bfa",
+  "prompts": {},
+  "sessions": {
+    "s_c5a6532ab60bbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "95f132b1-4732-4e8f-beb8-f90a6eda5f41",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
