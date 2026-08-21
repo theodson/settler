@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+#
+# register-fusion-vm.sh
+#
+# Make a Vagrant-managed VM show up in the VMware Fusion "Virtual Machine
+# Library" window.
+#
+# Why it is needed
+# ----------------
+# The vagrant-vmware-desktop plugin clones each box into the project's *hidden*
+# .vagrant/machines/<name>/<provider>/<uuid>/ directory and boots it with
+# `vmrun start <vmx> nogui`. Two consequences:
+#
+#   1. nogui  -> no VM window is ever shown.
+#   2. Vagrant never writes to Fusion's library index
+#      (~/Library/Application Support/VMware Fusion/vmInventory), so the VM is
+#      absent from the library list even while it is running.
+#
+# `vagrant up` succeeding and the VM being invisible in Fusion are therefore
+# entirely consistent - the plugin drives vmrun directly and bypasses the GUI.
+#
+# What this script does
+# ---------------------
+#   1. creates scratch/<name>/ and runs the documented `vagrant init`
+#   2. writes a Vagrantfile with a provider block that sets gui = true, a
+#      readable displayName, and a clone_directory outside the hidden .vagrant
+#      folder
+#   3. `vagrant up`s it
+#   4. hands the resulting .vmx to Fusion
+#
+# What actually does the registering
+# ----------------------------------
+# Measured on Fusion 26 / plugin 3.0.5: `gui = true` is the part that matters.
+# A VM booted that way is owned by Fusion from power-on and gets a permanent
+# vmInventory entry. `open`ing the .vmx of a VM that is *already running
+# headless* only attaches a window to it - Fusion does not add a library entry,
+# even after it flushes vmInventory to disk.
+#
+# So for an existing headless VM, --register-only is not enough on its own:
+# add the provider block to its Vagrantfile and `vagrant reload`.
+#
+# Usage
+# -----
+#   bin/register-fusion-vm.sh                  # init + up + register
+#   bin/register-fusion-vm.sh --no-up          # init + write Vagrantfile only
+#   bin/register-fusion-vm.sh --register-only  # register an already-built VM
+#   bin/register-fusion-vm.sh --register-only /path/to/vagrant/project
+#
+# Environment overrides
+# ---------------------
+#   HOMESTEAD_VERSION  box version to init         (default 17.0.4)
+#   VM_NAME            folder under scratch/       (default homestead17)
+#   VM_PROVIDER        vagrant provider            (default vmware_desktop)
+#   VM_CLONE_DIR       where the VM files live     (default ~/Virtual Machines.localized/vagrant)
+#                      set to "" to keep vagrant's default .vagrant location
+#   VM_MEMORY          MB                          (default 4096)
+#   VM_CPUS            vCPUs                       (default 4)
+#   VM_GUI             true|false                  (default true)
+#   FUSION_APP         path to Fusion              (default /Applications/VMware Fusion.app)
+#
+set -euo pipefail
+
+HOMESTEAD_VERSION="${HOMESTEAD_VERSION:-17.0.4}"
+VM_NAME="${VM_NAME:-homestead17}"
+VM_PROVIDER="${VM_PROVIDER:-vmware_desktop}"
+VM_CLONE_DIR="${VM_CLONE_DIR-$HOME/Virtual Machines.localized/vagrant}"
+VM_MEMORY="${VM_MEMORY:-4096}"
+VM_CPUS="${VM_CPUS:-4}"
+VM_GUI="${VM_GUI:-true}"
+FUSION_APP="${FUSION_APP:-/Applications/VMware Fusion.app}"
+
+settler_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+project_dir="$settler_root/scratch/$VM_NAME"
+
+do_init=1
+do_up=1
+register_only=0
+
+usage() { sed -n '3,48p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --register-only)
+        do_init=0
+        do_up=0
+        register_only=1
+        ;;
+    --no-up)
+        do_up=0
+        ;;
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    -*)
+        echo "✋ unknown option: $1" >&2
+        exit 1
+        ;;
+    *)
+        # explicit project directory, useful with --register-only
+        if [ -d "$1" ]; then
+            project_dir="$(cd "$1" && pwd)"
+        else
+            # not created yet - normalise without requiring it to exist
+            case "$1" in
+            /*) project_dir="$1" ;;
+            *) project_dir="$PWD/$1" ;;
+            esac
+        fi
+        ;;
+    esac
+    shift
+done
+
+#
+# preflight
+#
+if [ ! -d "$FUSION_APP" ]; then
+    echo "✋ VMware Fusion not found at $FUSION_APP"
+    echo "   set FUSION_APP=/path/to/VMware Fusion.app"
+    exit 1
+fi
+
+if ! command -v vagrant >/dev/null 2>&1; then
+    echo "✋ vagrant is not on PATH"
+    exit 1
+fi
+
+if ! vagrant plugin list 2>/dev/null | grep -q vagrant-vmware-desktop; then
+    echo "✋ the vagrant-vmware-desktop plugin is not installed"
+    echo "   vagrant plugin install vagrant-vmware-desktop"
+    exit 1
+fi
+
+#
+# 1 - initialise the project, as documented in docs/build.md
+#
+if [ "$do_init" = 1 ]; then
+    if ! vagrant box list 2>/dev/null | grep -q "laravel/homestead .*$HOMESTEAD_VERSION"; then
+        echo "⚠️  laravel/homestead $HOMESTEAD_VERSION is not registered locally, e.g."
+        echo "   bin/register-local-box.sh ../bento/builds/ubuntu-24.04-aarch64.vmware.box $HOMESTEAD_VERSION arm64"
+    fi
+
+    mkdir -p "$project_dir"
+    pushd "$project_dir" >/dev/null
+
+    if [ ! -e Vagrantfile ]; then
+        vagrant init --box-version "$HOMESTEAD_VERSION" laravel/homestead
+    fi
+
+    #
+    # 2 - replace the stock Vagrantfile with one Fusion can see
+    #
+    if ! grep -q 'register-fusion-vm.sh' Vagrantfile; then
+        [ -e Vagrantfile.orig ] || cp Vagrantfile Vagrantfile.orig
+    fi
+
+    clone_line="    # VM_CLONE_DIR unset - VM stays in the hidden .vagrant directory"
+    if [ -n "$VM_CLONE_DIR" ]; then
+        mkdir -p "$VM_CLONE_DIR"
+        clone_line="    v.clone_directory = \"$VM_CLONE_DIR\""
+    fi
+
+    cat >Vagrantfile <<VAGRANTFILE_EOF
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+# Generated by settler/bin/register-fusion-vm.sh - re-running the script
+# overwrites this file. The stock \`vagrant init\` output is in Vagrantfile.orig.
+
+Vagrant.configure("2") do |config|
+  config.vm.box         = "laravel/homestead"
+  config.vm.box_version = "$HOMESTEAD_VERSION"
+
+  config.vm.provider "$VM_PROVIDER" do |v|
+    # Boot with a window attached. Without this the plugin runs
+    # \`vmrun start <vmx> nogui\` and the VM has no visible presence at all.
+    v.gui = $VM_GUI
+
+    # Name shown in Fusion's Virtual Machine Library. Vagrant otherwise names
+    # it "<project folder>: <machine name>".
+    v.vmx["displayname"] = "$VM_NAME"
+
+    # Keep the VM files out of the hidden .vagrant directory, so Fusion's
+    # File > Open dialog and the Finder can both reach them.
+$clone_line
+
+    v.memory = $VM_MEMORY
+    v.cpus   = $VM_CPUS
+  end
+end
+VAGRANTFILE_EOF
+
+    echo "📄 wrote $project_dir/Vagrantfile"
+    popd >/dev/null
+fi
+
+#
+# 3 - boot it
+#
+if [ "$do_up" = 1 ]; then
+    pushd "$project_dir" >/dev/null
+    if [ -d .vagrant/machines ]; then
+        # already imported - the provider is fixed at import time
+        vagrant up
+    else
+        vagrant up --provider "$VM_PROVIDER"
+    fi
+    popd >/dev/null
+fi
+
+#
+# 4 - register the .vmx with Fusion
+#
+# Vagrant records the absolute vmx path in
+# .vagrant/machines/<name>/<provider>/id - more reliable than searching for it.
+#
+vmx=""
+for id_file in "$project_dir"/.vagrant/machines/*/vmware_*/id; do
+    [ -f "$id_file" ] || continue
+    candidate="$(cat "$id_file")"
+    if [ -f "$candidate" ]; then
+        vmx="$candidate"
+        break
+    fi
+done
+
+if [ -z "$vmx" ]; then
+    if [ "$do_up" = 1 ] || [ "$register_only" = 1 ]; then
+        echo "✋ no .vmx found under $project_dir"
+        echo "   has the VM been created?  (cd $project_dir && vagrant up)"
+        exit 1
+    fi
+    # --no-up on a fresh project: nothing to register yet, not an error
+    echo "ℹ️  no VM created yet - next step:"
+    echo "   cd $project_dir && vagrant up"
+    echo "   then: bin/register-fusion-vm.sh --register-only $project_dir"
+    exit 0
+fi
+
+echo "🔎 vmx: $vmx"
+
+# Was this VM booted headless by a previous `vagrant up` (no gui = true)?
+# Fusion will attach a window to it but will not add it to the library.
+booted_headless=0
+if [ "$do_up" != 1 ]; then
+    if "$FUSION_APP/Contents/Public/vmrun" list 2>/dev/null | grep -qxF "$vmx"; then
+        booted_headless=1
+    fi
+fi
+
+# Fusion's vmrun has no 'register' verb - that is Workstation/ESXi only.
+# Opening the .vmx with the app is the only way in.
+open -a "$FUSION_APP" "$vmx"
+
+if [ "$booted_headless" = 1 ]; then
+    echo "⚠️  this VM is already running, started headless by a previous \`vagrant up\`."
+    echo "   Fusion will show a window for it, but will NOT add it to the library."
+    echo "   To register it permanently, add to its Vagrantfile:"
+    echo
+    echo "       config.vm.provider \"$VM_PROVIDER\" do |v|"
+    echo "         v.gui = true"
+    echo "       end"
+    echo
+    echo "   then:  cd $project_dir && vagrant reload"
+else
+    echo "📦 handed to Fusion - look under Window > Virtual Machine Library (⇧⌘L)."
+    echo "   Fusion holds the library in memory and flushes vmInventory to disk"
+    echo "   on quit, so the entry survives restarts from that point on."
+fi
