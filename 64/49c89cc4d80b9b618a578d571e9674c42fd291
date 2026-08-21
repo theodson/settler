@@ -1,0 +1,18 @@
+.gitignore
+  h_6bb49d5e53f88a 4
+docs/build.md
+  h_6bb49d5e53f88a 36,43-44,46,190-196,621
+docs/homestead-features-arch-review.md
+  h_6bb49d5e53f88a 11-46,101,104-105,108,125,148,155,162,167-168,178,222,251,254,256-257,260-270,287,331-339,342-343,351-355,414-416,425-428
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6449c89cc4d80b9b618a578d571e9674c42fd291",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
