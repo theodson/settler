@@ -1,0 +1,14 @@
+.gitignore
+  h_6bb49d5e53f88a 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "79c193a8c7df4cab75183a49666974dd56c04620",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
