@@ -26,7 +26,18 @@
 #      readable displayName, and a clone_directory outside the hidden .vagrant
 #      folder
 #   3. `vagrant up`s it
-#   4. hands the resulting .vmx to Fusion, which adds it to the library
+#   4. hands the resulting .vmx to Fusion
+#
+# What actually does the registering
+# ----------------------------------
+# Measured on Fusion 26 / plugin 3.0.5: `gui = true` is the part that matters.
+# A VM booted that way is owned by Fusion from power-on and gets a permanent
+# vmInventory entry. `open`ing the .vmx of a VM that is *already running
+# headless* only attaches a window to it - Fusion does not add a library entry,
+# even after it flushes vmInventory to disk.
+#
+# So for an existing headless VM, --register-only is not enough on its own:
+# add the provider block to its Vagrantfile and `vagrant reload`.
 #
 # Usage
 # -----
@@ -229,12 +240,31 @@ fi
 
 echo "🔎 vmx: $vmx"
 
+# Was this VM booted headless by a previous `vagrant up` (no gui = true)?
+# Fusion will attach a window to it but will not add it to the library.
+booted_headless=0
+if [ "$do_up" != 1 ]; then
+    if "$FUSION_APP/Contents/Public/vmrun" list 2>/dev/null | grep -qxF "$vmx"; then
+        booted_headless=1
+    fi
+fi
+
 # Fusion's vmrun has no 'register' verb - that is Workstation/ESXi only.
-# Opening the .vmx with the app is what adds an entry to the library index at
-# ~/Library/Application Support/VMware Fusion/vmInventory.
+# Opening the .vmx with the app is the only way in.
 open -a "$FUSION_APP" "$vmx"
 
-echo "📦 handed to Fusion - it should now be listed under"
-echo "   Window > Virtual Machine Library (⇧⌘L)."
-echo "   Fusion holds the library in memory and flushes vmInventory when it"
-echo "   quits, so the entry survives restarts from that point on."
+if [ "$booted_headless" = 1 ]; then
+    echo "⚠️  this VM is already running, started headless by a previous \`vagrant up\`."
+    echo "   Fusion will show a window for it, but will NOT add it to the library."
+    echo "   To register it permanently, add to its Vagrantfile:"
+    echo
+    echo "       config.vm.provider \"$VM_PROVIDER\" do |v|"
+    echo "         v.gui = true"
+    echo "       end"
+    echo
+    echo "   then:  cd $project_dir && vagrant reload"
+else
+    echo "📦 handed to Fusion - look under Window > Virtual Machine Library (⇧⌘L)."
+    echo "   Fusion holds the library in memory and flushes vmInventory to disk"
+    echo "   on quit, so the entry survives restarts from that point on."
+fi
