@@ -1,0 +1,15 @@
+docs/build-on-apple.md
+  h_6bb49d5e53f88a 220,228-229,232-237,240,242,247-249,253-255,262,264,268,275-278
+  h_6bb49d5e53f88a 256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "ff270c71c73117848cfb4f844edb99e4626bfb0c",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
