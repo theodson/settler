@@ -8,6 +8,42 @@
 
 ---
 
+## 0. Status — four fixes applied 2026-08-21
+
+The confirmed one-liners from §11.3 have been fixed in `homestead` (branch `support/17`, uncommitted):
+
+| Script | Change |
+|---|---|
+| `openresty.sh` | arm64 now uses the `package/arm64/ubuntu` path prefix, selected via `dpkg --print-architecture` |
+| `chronograf.sh` | `.deb` filename now interpolates `$(dpkg --print-architecture)` instead of hardcoding `amd64` |
+| `webdriver.sh` | `[[ ]]` → POSIX `[ ]`, plus an `else` branch that logs the ARM Chrome skip |
+| `r-base.sh` | `jammy-cran40` → `$(lsb_release -cs)-cran40` |
+
+All four pass `bash -n` **and** `dash -n`.
+
+### The §11.4 dash batch — also applied 2026-08-21
+
+| Script | Change |
+|---|---|
+| `php5.6`→`php8.5` (12 files), line 15 | `[ "$X" == "disabled" ]` → `=` (dash: `[: unexpected operator`) |
+| `rvm.sh:27` | bash `source` → POSIX `.`, wrapped in an `[ -s … ]` guard so it cannot become the provisioner's exit status |
+| `mariadb.sh:48-50` | `<<<` herestrings → `echo … \| debconf-set-selections` (the herestring was a dash **parse** error) |
+| `neo4j.sh:41,44` | bash `$SECONDS` + `[[ ]]` → `date +%s` deadline + POSIX `[ ]`, so the 60s timeout actually fires |
+| `postgres-9.5.sh:46` | `echo -e` → `printf` (dash's echo has no `-e`; it printed a literal `-e `) |
+
+`postgres-9.5.sh` was a small extension beyond the four named items — it was the last bashism in the tree and
+leaving it would have meant the sweep below still had an exception.
+
+**Result: all 51 scripts now pass `dash -n` and `bash -n`, and a tree-wide sweep for `[[ ]]`, `==` inside
+`[ ]`, `<<<`, `source`, `echo -e` and `$SECONDS` returns nothing in code.** Verified 2026-08-21.
+
+> **Correction to this document.** §5-C5 originally claimed CRAN's Ubuntu repo is amd64-only. **That was
+> wrong.** Probed 2026-08-21: `noble-cran40` publishes 74 arm64 packages and `jammy-cran40` publishes 71.
+> `r-base.sh` therefore moves from bucket **C** to bucket **B** — its only defect was the stale suite name,
+> which is now fixed. Bucket counts below have been amended accordingly.
+
+---
+
 ## 1. How to read this document
 
 A feature script reaches the VM by **one of two paths**, and they run under **different shells**. Which path a
@@ -62,14 +98,14 @@ Three post-processing `sed`s are applied to the inlined text (`use-homestead-fea
 
 | # | Severity | Finding | Where |
 |---|---|---|---|
-| 1 | **High** | `openresty` repo line is amd64-only; arm64 is served from a **different path prefix**. Confirmed by HTTP probe. | `openresty.sh:24` |
+| 1 | **High** · ✅ FIXED | `openresty` repo line is amd64-only; arm64 is served from a **different path prefix**. Confirmed by HTTP probe. | `openresty.sh:24` |
 | 2 | **High** | `cassandra` hardcodes **10** `_amd64.deb` URLs plus an `java-8-openjdk-amd64` path | `cassandra.sh:34-42,95` |
 | 3 | **High** | `mariadb` **fails to parse under dash** — a herestring. Zero lines would execute if it were ever inlined. | `mariadb.sh:48-50` |
-| 4 | **Medium** | `webdriver`'s ARM carve-out uses `[[ ]]` → under dash the test is always false → wrong branch. The tree's last broken arch test. | `webdriver.sh:25` |
-| 5 | **Medium** | `chronograf` hardcodes an amd64 `.deb`. An arm64 build **does exist** at the same version — one-line fix. | `chronograf.sh:22` |
+| 4 | **Medium** · ✅ FIXED | `webdriver`'s ARM carve-out uses `[[ ]]` → under dash the test is always false → wrong branch. The tree's last broken arch test. | `webdriver.sh:25` |
+| 5 | **Medium** · ✅ FIXED | `chronograf` hardcodes an amd64 `.deb`. An arm64 build **does exist** at the same version — one-line fix. | `chronograf.sh:22` |
 | 6 | **Medium** | `flyway` pulls a `linux-x64` tarball bundling an **x86_64 JRE** → `Exec format error` on Apple Silicon | `flyway.sh:23-27` |
 | 7 | **Medium** | `neo4j` timeout uses bash-only `SECONDS` + `[[ ]]` → dead timeout → possible infinite loop | `neo4j.sh:41,44` |
-| 8 | **Medium** | `r-base` uses an amd64-only CRAN repo **and** hardcodes `jammy-cran40` on a noble box | `r-base.sh:23` |
+| 8 | **Low** · ✅ FIXED | `r-base` hardcodes `jammy-cran40` on a noble box. (CRAN is *not* amd64-only — see §0.) | `r-base.sh:23` |
 | 9 | **Low** | 12 × `php*.sh` use `==` inside `[ ]` → dash "unexpected operator" → wrong branch | `php*.sh:15` |
 | 10 | **Low** | `rvm` ends with `source` → 127 under dash → would fail the provisioner as its last command | `rvm.sh:27` |
 
@@ -86,7 +122,7 @@ break the box at `vagrant provision` time on Apple Silicon.
 |---|---|---|---|---|---|
 | `blackfire.sh` | | none | repo serves both | same | **B** |
 | `cassandra.sh` | | none | **404s / wrong arch** | works | **C** |
-| `chronograf.sh` | | none | **dpkg arch mismatch** | works | **C** |
+| `chronograf.sh` | | `$(dpkg --print-architecture)` in URL | arm64 `.deb` | amd64 `.deb` | **A** ✅ fixed |
 | `couchdb.sh` | | none | repo serves both | same | **B** |
 | `crystal.sh` | | none | **repo has no arm64 index** | works | **C** |
 | `dockstead.sh` + `dockstead/` | | none | docker multi-arch | same | **B** |
@@ -109,26 +145,27 @@ break the box at `vagrant provision` time on Apple Silicon.
 | `ohmyzsh.sh` | | none | git clone | same | **B** |
 | `openjdk-17.sh` | **YES** | none | ubuntu archive | same | **B** |
 | `openjdk-8.sh` | **YES** | none | ubuntu archive | same | **B** |
-| `openresty.sh` | | none | **404 — wrong repo path** | works | **C** |
+| `openresty.sh` | | `$(dpkg --print-architecture)` `:24` | `package/arm64/ubuntu` | `package/ubuntu` | **A** ✅ fixed |
 | `php5.6`→`php8.5` (12 files) | | none | ondrej PPA builds arm64 | same | **B** (but `==` in `[ ]`) |
 | `pm2.sh` | **YES** | none | npm | same | **B** |
 | `postgres-9.5.sh` | | none | source build | same | **B** (dead on noble anyway) |
 | `postgres-pghashlib.sh` | **YES** | none | source build | same | **B** |
 | `postgresql.sh` | | none | PGDG builds arm64 | same | **B** |
 | `python.sh` | **YES** | none | ubuntu archive | same | **B** |
-| `r-base.sh` | | none | **CRAN amd64-only** | works | **C** |
+| `r-base.sh` | | none | CRAN ships arm64 | same | **B** ✅ suite fixed |
 | `rabbitmq.sh` | **YES** | `arch\|grep` → `DEB_ARCH` `:31-34` | `arch=arm64` | `arch=amd64` | **A** |
 | `rustc.sh` | **YES** | none | rustup self-detects | same | **B** |
 | `rvm.sh` | | none | source build | same | **B** (but `source`) |
 | `solr.sh` | | none | pure-Java tarball | same | **B** |
 | `timescaledb.sh` | | none | repo serves both | same | **B** (PGVER mismatch) |
 | `trader.sh` | | none | `pecl` compiles locally | same | **B** |
-| `webdriver.sh` | | `[[ "$ARCH" != … ]]` `:25` | *intends* to skip Chrome | installs Chrome | **D** — broken under dash |
+| `webdriver.sh` | | `[ "$ARCH" != … ]` `:25` | skips Chrome, logs why | installs Chrome | **D** ✅ fixed |
 
 ★ `dragonflydb.sh` is the cleanest pattern in the tree — upstream asset names match `arch` output exactly, so it
 needs no branch at all.
 
-**Counts:** A = 5 · B = 37 · C = 6 · D = 1 · E = 2 · **total 51**.
+**Counts (after the §0 fixes):** A = 7 · B = 38 · C = 3 · D = 1 · E = 2 · **total 51**.
+*Before the fixes: A = 5 · B = 37 · C = 6 · D = 1 · E = 2. Remaining bucket C: `cassandra.sh`, `flyway.sh`, `crystal.sh`.*
 
 Only **7 lines in the entire tree** perform architecture detection, across 6 files:
 `dragonflydb.sh:18`, `golang.sh:22,25`, `mongodb.sh:19,25`, `minio.sh:19,22,68`, `rabbitmq.sh:31`,
@@ -138,7 +175,7 @@ Only **7 lines in the entire tree** perform architecture detection, across 6 fil
 
 ## 5. Bucket C — latent ARM bugs, with fixes
 
-### C1. `openresty.sh:24` — wrong repo path for arm64 · **CONFIRMED by probe**
+### C1. `openresty.sh:24` — wrong repo path for arm64 · **CONFIRMED by probe** · ✅ FIXED
 
 ```sh
 echo "deb [signed-by=…/openresty.gpg] http://openresty.org/package/ubuntu noble main" | sudo tee …
@@ -182,7 +219,7 @@ style of `webdriver.sh`. At minimum make `JAVA_HOME` derived:
 JAVA_HOME=/usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)
 ```
 
-### C3. `chronograf.sh:22` — amd64 `.deb`, but arm64 exists · **CONFIRMED by probe**
+### C3. `chronograf.sh:22` — amd64 `.deb`, but arm64 exists · **CONFIRMED by probe** · ✅ FIXED
 
 ```sh
 chronourl="https://dl.influxdata.com/chronograf/releases/chronograf_1.5.0.1_amd64.deb"
@@ -211,16 +248,26 @@ runtime because the bundled JRE is x86_64. Flyway 4.2.0 predates ARM support ent
 Interim option: drop the bundled JRE and use the `flyway-commandline-<v>.tar.gz` (no `-linux-*` suffix) with the
 system JDK, which `openjdk-17.sh` already installs.
 
-### C5. `r-base.sh:23` — two defects on one line
+### C5. `r-base.sh:23` — stale suite · ✅ FIXED · **reclassified to bucket B**
 
 ```sh
+# before
 echo "deb [signed-by=…/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | sudo tee …
+# after
+echo "deb [signed-by=…/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/" | sudo tee …
 ```
 
-(a) `jammy-cran40` on a **noble** box — stale regardless of architecture; (b) CRAN's Ubuntu binary repo is
-amd64-only, so `:26 apt install -y r-base` cannot resolve on ARM. Fix (a) with `$(lsb_release -cs)-cran40`;
-(b) has no clean fix — on ARM, fall back to the Ubuntu-archive `r-base` (older, but arch-native) or guard the
-feature off.
+I originally listed a second defect here — that CRAN's Ubuntu binary repo is amd64-only. **That was wrong.**
+Probed 2026-08-21:
+
+| Suite | `Architecture: all` | `amd64` | `arm64` |
+|---|---|---|---|
+| `noble-cran40` | 134 | 96 | **74** |
+| `jammy-cran40` | 248 | 186 | **71** |
+
+CRAN ships arm64 for both suites, so there was never an ARM-specific problem here — only a stale hardcoded
+release, which would have installed jammy packages on a noble box on *both* architectures. The one-line suite
+fix resolves it completely and `r-base.sh` moves to bucket **B**.
 
 ### C6. `crystal.sh:24` — repo has no arm64 index
 
@@ -237,7 +284,7 @@ indicates no arm64 index exists.
 
 ---
 
-## 6. Bucket D — the one deliberate ARM carve-out, and why it doesn't work
+## 6. Bucket D — the one deliberate ARM carve-out, and why it didn't work · ✅ FIXED
 
 `webdriver.sh:22-29`:
 
@@ -281,16 +328,18 @@ architecture**, which is why §6 sits in both axes.
 
 | Script | Line | Construct | Effect under dash |
 |---|---|---|---|
-| `mariadb.sh` | 48-50 | `<<<` herestring | **Parse failure** — `dash -n` fails; *no* line executes |
-| `webdriver.sh` | 25 | `[[ ]]` on `$ARCH` | Wrong branch, silently |
-| `neo4j.sh` | 41,44 | `SECONDS` + `[[ ]]` | `SECONDS` unset → `end=60`; `[[` → 127 → timeout dead → **possible infinite loop** |
-| `rvm.sh` | 27 | `source` | 127; it is the **last** line, so the provisioner's exit status is 127 |
-| `php*.sh` × 12 | 15 | `[ "$X" == "disabled" ]` | `[: unexpected operator` → wrong branch |
-| `postgres-9.5.sh` | 46 | `echo -e` | Prints a literal `-e ` (cosmetic) |
+| `mariadb.sh` | 48-50 | `<<<` herestring | ✅ FIXED — was a parse failure; *no* line would execute |
+| `webdriver.sh` | 25 | `[[ ]]` on `$ARCH` | ✅ FIXED — was silently taking the wrong branch |
+| `neo4j.sh` | 41,44 | `SECONDS` + `[[ ]]` | ✅ FIXED — timeout was dead, loop could spin forever |
+| `rvm.sh` | 27 | `source` | ✅ FIXED — was 127 as the last line, failing the provisioner |
+| `php*.sh` × 12 | 15 | `[ "$X" == "disabled" ]` | ✅ FIXED — was taking the wrong branch |
+| `postgres-9.5.sh` | 46 | `echo -e` | ✅ FIXED — was printing a literal `-e ` |
 
-Verified across all 51 scripts: `dash -n` fails on **exactly one** file (`mariadb.sh`); `bash -n` passes on all
-51. Also swept and found **zero** occurrences of arrays, `declare`, `function`, `&>`, `+=`, `${var,,}`,
+Verified across all 51 scripts **after the fixes**: `dash -n` and `bash -n` both pass on all 51 — zero parse
+failures. Also swept and found **zero** occurrences of arrays, `declare`, `function`, `&>`, `+=`, `${var,,}`,
 `${!var}`, `pushd`/`popd`, `set -o pipefail`, or process substitution.
+
+*(Before the fixes, `dash -n` failed on `mariadb.sh` and six scripts carried runtime bashisms.)*
 
 **False positive to ignore:** `postgres-9.5.sh:54` contains `[[` but it is the POSIX character class
 `[[:digit:]]` inside a `grep` pattern — not a shell test. Do not "fix" it.
@@ -299,8 +348,11 @@ Verified across all 51 scripts: `dash -n` fails on **exactly one** file (`mariad
 
 The commit *"adapt for bento run shell `dash`…"* migrated precisely the scripts that get inlined —
 `golang.sh:25`, `mongodb.sh:25`, `minio.sh:22,27,68,80,91`, `rabbitmq.sh:31-34`, `postgres-pghashlib.sh`. **All
-10 inlined scripts are dash-clean.** That is why the build works today. The outstanding work is the 4 scripts in
-the table above plus the 12 `php*.sh`, none of which is currently inlined.
+10 inlined scripts are dash-clean.** That is why the build works today.
+
+The remaining work it left — 4 scripts plus the 12 `php*.sh` — was completed on 2026-08-21 (see §0). **The whole
+`features/` tree is now dash-safe**, so any script may be added to the inlined set without a shell-compat
+audit first.
 
 > The commit message states *"dash does support some bashisms, e.g. `[[ ]]`"*. That is inverted — dash does
 > **not** support `[[ ]]`; that is exactly why the migration was necessary. Worth correcting in a future commit
@@ -359,7 +411,9 @@ Stated here as unknown rather than guessed. Each needs one command on a running 
 companion review of `scripts/arm.sh`, five package-availability concerns raised from memory (`sntp`,
 `openjdk-8-jdk-headless`, `libmcrypt4`, and the arm64 pockets of `ppa:ondrej/php` and
 `ppa:rabbitmq/rabbitmq-erlang`) turned out to be **wrong** once checked against the Launchpad API — all five are
-present for noble/arm64. Hence the discipline here of separating *probed* from *inferred*.
+present for noble/arm64. A sixth — the claim that CRAN's Ubuntu repo is amd64-only (§5-C5) — was likewise
+**wrong**, caught only because the fix was probed before being applied. Hence the discipline here of separating
+*probed* from *inferred*.
 
 ---
 
@@ -368,10 +422,10 @@ present for noble/arm64. Hence the discipline here of separating *probed* from *
 1. **Nothing here blocks the current build.** All 10 inlined scripts are dash-clean and arch-correct.
 2. **Add a lint gate** — run `dash -n` over the selected features inside `use-homestead-features.sh` before
    inlining, and delete the dead sed at `:67`/`:99`. This prevents recurrence rather than fixing instances.
-3. **Fix the confirmed one-liners:** `openresty.sh:24` (path prefix), `chronograf.sh:22` (arch in filename),
-   `webdriver.sh:25` (`[[` → `[`), `r-base.sh:23` (`$(lsb_release -cs)`).
-4. **Sweep the cheap dash fixes:** `php*.sh:15` × 12 (`==` → `=`), `rvm.sh:27` (`source` → `.`),
-   `mariadb.sh:48-50` (herestring → `printf … | debconf-set-selections`), `neo4j.sh:41,44`.
+3. ~~**Fix the confirmed one-liners**~~ — **DONE 2026-08-21**, see §0: `openresty.sh:24` (path prefix),
+   `chronograf.sh:22` (arch in filename), `webdriver.sh:25` (`[[` → `[`), `r-base.sh:23` (`$(lsb_release -cs)`).
+4. ~~**Sweep the cheap dash fixes**~~ — **DONE 2026-08-21**, see §0: `php*.sh:15` × 12, `rvm.sh:27`,
+   `mariadb.sh:48-50`, `neo4j.sh:41,44`, plus `postgres-9.5.sh:46`.
 5. **Standardise on one arch helper** using `dpkg --print-architecture`, then migrate the five existing idioms
    onto it.
 6. **Decide on `cassandra.sh` and `crystal.sh`** — upstream has no arm64 artefact, so these need either a source
