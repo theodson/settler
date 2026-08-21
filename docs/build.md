@@ -33,16 +33,17 @@ brew install hashicorp/tap/packer
 
 install VMWare Fusion and vagrant plugin
 ```bash
+brew install --cask vagrant-vmware-utility
 vagrant plugin install vagrant-vmware-desktop
 ```
 
 https://developer.hashicorp.com/vagrant/docs/providers/vmware/vagrant-vmware-utility
 ```bash
 
-
-http --download https://releases.hashicorp.com/vagrant-vmware-utility/1.0.22/vagrant-vmware-utility_1.0.22_darwin_amd64.dmg
+#http --download https://releases.hashicorp.com/vagrant-vmware-utility/1.0.24/vagrant-vmware-utility_1.0.24_darwin_amd64.dmg
+http --download https://releases.hashicorp.com/vagrant-vmware-utility/1.0.24/vagrant-vmware-utility_1.0.24_darwin_arm64.dmg
 sudo mkdir -p /opt/vagrant-vmware-desktop/bin
-open vagrant-vmware-utility_1.0.0_linux_amd64.zip
+open vagrant-vmware-utility_1.0.24_darwin_*.dmg
 
 sudo /opt/vagrant-vmware-desktop/bin/vagrant-vmware-utility certificate generate
 sudo /opt/vagrant-vmware-desktop/bin/vagrant-vmware-utility service install
@@ -185,6 +186,13 @@ Your mileage may vary...  💨 🍃
 ### vagrant up
 Create a VM with your recently locally built and registered box. 
 Create a project that uses Homestead, you may need to specify version and provider in your `Homestead.yaml`, e.g. 
+
+```bash
+# from settler folder
+mkdir -p scratch/homestead17
+pushd scratch/homestead17
+vagrant init --box-version 17.0.4 laravel/homestead
+```
 
 ```yaml
 box: laravel/homestead
@@ -610,7 +618,7 @@ sudo vmnet-cli --start
 ovftool ~/.vagrant.d/boxes/laravel-VAGRANTSLASH-homestead/15.0.2/arm64/vmware_desktop/ubuntu-22.04-aarch64.vmx ~/Downloads/homestead-arm.15.0.2.ova
 
 # or if you've copued the box from ~/.vagrant.d to Downloads... something like this.
-ovftool /Users/theodickinson/Downloads/VMWARE/vmware_desktop/ubuntu-22.04-aarch64.vmx /Users/theodickinson/Downloads/homestead.ova
+ovftool $HOME/Downloads/VMWARE/vmware_desktop/ubuntu-22.04-aarch64.vmx $HOME/Downloads/homestead.ova
 
 
 # extract into folder to extract the vmdk file (this will be used as the base image). 
