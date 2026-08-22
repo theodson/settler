@@ -1,0 +1,41 @@
+docs/build-on-apple.md
+  s_d17ee24c109ae4::t_8e2b38514bac2b 22-32
+docs/build.md
+  s_d17ee24c109ae4::t_3b24e4556ea1b3 19-30
+  s_d17ee24c109ae4::t_00807cd3c1043f 193-204
+readme.md
+  s_d17ee24c109ae4::t_c3bdabe8eae5ac 35,38-51
+bin/package
+  s_d17ee24c109ae4::t_cfc0fbf86ca1c0 1-120
+docs/packaging-arm64.md
+  s_d17ee24c109ae4::t_cf810a70d75f4e 478-479,481
+  s_d17ee24c109ae4::t_5e1d8f4e407bc8 12,15-16,19-20
+  s_d17ee24c109ae4::t_1f6af6df28c6a1 454-473
+  s_d17ee24c109ae4::t_2e184f61d75a11 361-391
+  s_d17ee24c109ae4::t_ee6c94d61e839e 138-171
+bin/build
+  s_d17ee24c109ae4::t_466949d8e3bb7c 118-139
+bin/package-vmwarevm.sh
+  s_d17ee24c109ae4::t_4acdfa2df97d91 93,281,422-515
+  s_d17ee24c109ae4::t_d6d530d1593b48 113-117
+  s_d17ee24c109ae4::t_cdb912e2d75cbe 136-138
+  s_d17ee24c109ae4::t_97e9d851b8d2ab 282-309
+  s_d17ee24c109ae4::t_405e1d4a8216c0 122
+  s_d17ee24c109ae4::t_a15525994113b6 77-82,91-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "d7652833a6ef9af5be3cede9ef924a36e5faaa37",
+  "prompts": {},
+  "sessions": {
+    "s_d17ee24c109ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "05139771-9314-46c7-a72c-428f4d8558d0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
