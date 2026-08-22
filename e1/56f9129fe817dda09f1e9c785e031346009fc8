@@ -1,0 +1,25 @@
+bin/package
+  s_d17ee24c109ae4::t_bcf26bca385d05 79-83
+docs/packaging-arm64.md
+  s_d17ee24c109ae4::t_2f190659492604 420-473
+bin/build
+  s_d17ee24c109ae4::t_d7b76b0dce2e05 155
+  s_d17ee24c109ae4::t_24e6cc98b19f47 137-138
+  s_d17ee24c109ae4::t_437cb3e3bbd876 10-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "e156f9129fe817dda09f1e9c785e031346009fc8",
+  "prompts": {},
+  "sessions": {
+    "s_d17ee24c109ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "05139771-9314-46c7-a72c-428f4d8558d0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
