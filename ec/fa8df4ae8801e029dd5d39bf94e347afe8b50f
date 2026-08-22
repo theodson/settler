@@ -1,0 +1,34 @@
+docs/packaging-arm64.md
+  s_d17ee24c109ae4::t_4351b57eb56a2d 509-510
+  s_d17ee24c109ae4::t_815eb6160d7a05 138-168
+docs/build-on-apple.md
+  s_d17ee24c109ae4::t_90b2864becb639 387-399
+bin/vm-generalize.sh
+  s_d17ee24c109ae4::t_30a32f5ec6c794 86-94
+  s_d17ee24c109ae4::t_e2185a970549b3 183,186
+docs/build.md
+  s_d17ee24c109ae4::t_db1968e571a794 314-328
+bin/build
+  s_d17ee24c109ae4::t_582c636113171e 102-112
+bin/inject-firstboot.sh
+  s_d17ee24c109ae4::t_527bd55cbbe4b3 122-124,126
+  s_d17ee24c109ae4::t_0c79db46685e05 169-171,174-182,185
+  s_d17ee24c109ae4::t_cdc65c23f15a1f 1-105,115-121,125,127-168,172-173,183-184,186-216
+  s_d17ee24c109ae4::t_d4629fcf5903b2 106-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "ecfa8df4ae8801e029dd5d39bf94e347afe8b50f",
+  "prompts": {},
+  "sessions": {
+    "s_d17ee24c109ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "05139771-9314-46c7-a72c-428f4d8558d0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
