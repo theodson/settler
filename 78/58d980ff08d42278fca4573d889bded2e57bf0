@@ -1,0 +1,14 @@
+bin/package-vmwarevm.sh
+  h_6bb49d5e53f88a 72,98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "7858d980ff08d42278fca4573d889bded2e57bf0",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
