@@ -7,6 +7,11 @@ SETTLER_BRANCH="ubuntu-vmware-16"
 HOMESTEAD_BRANCH="support/17"
 UBUNTU_VERSION="24.04"
 
+# Keep the bare version numbers before they are wrapped into the display
+# strings below - the closing message needs them as arguments, not as prose.
+SETTLER_VERSION_RAW="${SETTLER_VERSION:-16.0.0}"
+HOMESTEAD_VERSION_RAW="${HOMESTEAD_VERSION:-17.0.4}"
+
 SETTLER_VERSION="v${SETTLER_VERSION:-16.0.0} ( ${SETTLER_BRANCH} - Ubuntu ${UBUNTU_VERSION})"
 HOMESTEAD_VERSION="Homestead v${HOMESTEAD_VERSION:-17.0.4} ( ${HOMESTEAD_BRANCH} )"
 export PACKER_LOG=1
@@ -114,6 +119,29 @@ echo -e "⚡️ build" &&
         echo "✋  problem during build!"
         exit 3
     }
+
+#
+# the box is built - tell the operator how to turn it into something shippable
+#
+# packer's vagrant post-processor writes to builds/build_complete/, so recurse
+built_box="$(find "$vmbuild/bento/builds" -name '*.vmware.box' -print0 2>/dev/null |
+    xargs -0 ls -t 2>/dev/null | head -1)"
+
+echo
+echo "✅ build complete"
+[ -n "$built_box" ] && echo "   📦 $built_box  ($(du -h "$built_box" | awk '{print $1}'))"
+echo
+echo "   Next - package it for distribution to the Mac mini fleet:"
+echo
+echo "       cd $vmbuild/settler && bash bin/package"
+echo
+echo "   That generalizes the guest (so every deployed copy gets its own"
+echo "   hostname, machine-id and SSH host keys) and writes a double-clickable"
+echo "   .vmwarevm plus a .dmg to settler/dist/."
+echo "   See docs/packaging.md."
+echo
+echo "   Or, to test the box with Vagrant instead:"
+echo "       bash bin/register-local-box.sh \"$built_box\" $HOMESTEAD_VERSION_RAW"
 
 
 #echo -e "⚡️ build" &&

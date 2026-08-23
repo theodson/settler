@@ -2,3 +2,8 @@
 *.box
 *.log
 /.claude/worktrees/
+
+# packaging output - multi-GB VM bundles and disk images
+/dist/
+*.vmwarevm
+*.dmg
