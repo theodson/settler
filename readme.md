@@ -29,3 +29,23 @@ cd <path/to>/bento
 packer init -upgrade ./packer_templates
 packer build -only=virtualbox-iso.vm -var-file=os_pkrvars/ubuntu/ubuntu-24.04-x86_64.pkrvars.hcl ./packer_templates
 ```
+
+## Apple Silicon
+
+Two commands: build the VM, then package it for the Mac mini fleet.
+
+```shell
+SETTLER_VERSION=16.0.0 HOMESTEAD_VERSION=17.0.4 bash bin/build
+bash bin/package
+```
+
+`bin/package` takes the box `bin/build` just produced, generalizes the guest so
+every deployed copy gets its own hostname, machine-id and SSH host keys, and
+writes a double-clickable `.vmwarevm` plus a `.dmg` to `dist/`.
+
+Copy the `.dmg` to a Mac mini, open it, and run `Install.command` once per
+customer. Fusion on Apple Silicon cannot import OVA/OVF, so this replaces the
+old OVA route entirely.
+
+- Building: [docs/build.md](docs/build.md)
+- Packaging and distribution: [docs/packaging.md](docs/packaging.md)
