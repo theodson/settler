@@ -1,0 +1,24 @@
+bin/build
+  s_d17ee24c109ae4::t_466949d8e3bb7c 123-125,128-140,142-143,145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b3927648cd9dbd29695be8dcc427f2870d88e0e8",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_d17ee24c109ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "05139771-9314-46c7-a72c-428f4d8558d0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
