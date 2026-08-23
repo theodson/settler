@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Example on Apple Silicon: bin/register-local-box.sh ../bento/builds/ubuntu-22.04-aarch64.vmware.box 15.0.2 arm64
+# Example on Apple Silicon: bin/register-local-box.sh ../bento/builds/ubuntu-24.04-aarch64.vmware.box 17.0.4 arm64
 
 homestead_name="laravel/homestead"
-homestead_box="${1:-builds/ubuntu-22.04-x86_64.vmware.box}"
-homestead_version="${2:-15.0.0}"
+homestead_box="${1:-builds/ubuntu-24.04-x86_64.vmware.box}"
+homestead_version="${2:-17.0.4}"
 homestead_arch="${3:-$(uname -m)}" # either amd64|arm64 
 
 if [ ! -e $homestead_box ]; then

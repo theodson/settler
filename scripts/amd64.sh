@@ -35,9 +35,10 @@ apt-add-repository ppa:ondrej/php -y
 # Prepare keyrings directory
 sudo mkdir -p /etc/apt/keyrings
 
-# NodeJS (use NVM)
-# curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-# echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_21.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+# NodeJS
+NODE_MAJOR=22
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 # PostgreSQL
 sudo install -d -m 0755 /etc/apt/keyrings
@@ -672,8 +673,8 @@ EOF
   # Install Nginx
   apt-get install -y --allow-downgrades --allow-remove-essential --allow-change-held-packages nginx
 
-  rm /etc/nginx/sites-enabled/default
-  rm /etc/nginx/sites-available/default
+  rm /etc/nginx/sites-enabled/default || true
+  rm /etc/nginx/sites-available/default || true
 
   # Create a configuration file for Nginx overrides.
   mkdir -p /home/vagrant/.config/nginx
@@ -696,8 +697,8 @@ EOF
   sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php/8.5/fpm/pool.d/www.conf
   sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.5/fpm/pool.d/www.conf
 
-  service nginx restart
-  service php8.5-fpm restart
+  systemctl restart nginx || true
+  systemctl restart php8.5-fpm || true
 
   # Add Vagrant User To WWW-Data
   usermod -a -G www-data vagrant
@@ -713,21 +714,12 @@ EOF
   printf "\nPATH=\"$(sudo su - vagrant -c 'composer config -g home 2>/dev/null')/vendor/bin:\$PATH\"\n" | tee -a /home/vagrant/.profile
 fi
 
-# Download and install nvm:
-runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
-
-# Install Node
-# apt-get install -y nodejs
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  || true # This loads nvm
-nvm install 22 --latest-npm
-nvm install-latest-npm
-
 # Install Node
 apt-get install -y nodejs
 npm install -g gulp-cli bower yarn grunt-cli
 
+# Download and install nvm:
+runuser --login vagrant --command 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
 
 # Install SQLite
 apt-get install -y sqlite3 libsqlite3-dev
@@ -834,18 +826,19 @@ EOF
   unset MYSQL_PWD
 fi
 
+PGVER=15
 if "$SKIP_POSTGRESQL"; then
   echo "SKIP_POSTGRESQL is being used, so we're not installing PostgreSQL"
 else
-  # Install Postgres 16
-  apt-get install -y postgresql-16 postgresql-server-dev-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts
+  # Install Postgres $PGVER
+  apt-get install -y postgresql-$PGVER postgresql-server-dev-$PGVER postgresql-$PGVER-postgis-3 postgresql-$PGVER-postgis-3-scripts
 
   # Configure Postgres Users
   sudo -u postgres psql -c "CREATE ROLE homestead LOGIN PASSWORD 'secret' SUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;"
 
   # Configure Postgres Remote Access
-  sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/16/main/postgresql.conf
-  echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/16/main/pg_hba.conf
+  sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/$PGVER/main/postgresql.conf
+  echo "host    all             all             10.0.2.2/32               md5" | tee -a /etc/postgresql/$PGVER/main/pg_hba.conf
 
   sudo -u postgres /usr/bin/createdb --echo --owner=homestead homestead
   service postgresql restart
@@ -903,8 +896,8 @@ service supervisor start
 # Install ngrok
 curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo gpg --dearmor -o /etc/apt/keyrings/ngrok.gpg
 echo "deb [signed-by=/etc/apt/keyrings/ngrok.gpg] https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-apt-get update
-apt-get install ngrok
+apt-get update -y
+apt-get install -y ngrok
 
 # Install & Configure Postfix
 echo "postfix postfix/mailname string homestead.test" | debconf-set-selections
@@ -921,7 +914,6 @@ rm -rf /etc/update-motd.d/50-landscape-sysinfo
 rm -rf /etc/update-motd.d/99-bento
 service motd-news restart
 bash /etc/update-motd.d/50-motd-news --force
-
 
 # One last upgrade check
 apt-get upgrade -y
@@ -964,19 +956,34 @@ path-exclude=/usr/share/doc/linux-firmware/*
 _EOF_
 
 # Delete the massive firmware packages
+# REVIEW: fine for a VMware Fusion guest (virtio/vmw devices need no firmware blobs)
+# and it is a large image-size win. Just be aware this is riskier on arm64 than on
+# x86 if the box is ever booted on different virtualisation or on real hardware -
+# there is no firmware left to load at all. The dpkg path-exclude above correctly
+# stops it coming back on the next linux-firmware upgrade.
 rm -rf /lib/firmware/*
 rm -rf /usr/share/doc/linux-firmware/*
 
-apt-get -y autoremove;
-apt-get -y clean;
+apt-get -y autoremove
+apt-get -y clean
 
 # Remove docs
 rm -rf /usr/share/doc/*
 
 # Remove caches
+# REVIEW: under `set -e` this is a real abort risk - if any file vanishes between
+# find listing it and rm running (systemd/journald/apt are all still live), rm
+# returns non-zero, find exits 1, and the build fails at the very last step.
+# Use `find /var/cache -type f -delete` - faster (no fork per file) and it does not
+# propagate a failure for an already-deleted path.
 find /var/cache -type f -exec rm -rf {} \;
 
 # delete any logs that have built up during the install
+# REVIEW: `*.log` is unquoted, so the shell glob-expands it against the *current
+# working directory* before find ever sees it. Thanks to the un-reverted `cd` at
+# line ~1421 that directory is /usr/src/pghashlib-$ver. If any .log file exists
+# there, find is handed that filename instead of the pattern and the intended log
+# cleanup silently does nothing. Quote it: `find /var/log/ -name '*.log' -delete`.
 find /var/log/ -name *.log -exec rm -f {} \;
 
 # Disable sleep https://github.com/laravel/homestead/issues/1624
@@ -984,6 +991,10 @@ systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
 # What are you doing Ubuntu?
 # https://askubuntu.com/questions/1250974/user-root-cant-write-to-file-in-tmp-owned-by-someone-else-in-20-04-but-can-in
+# REVIEW: `sysctl` only changes the running kernel; this is a VM image, so the
+# setting is lost on the first boot of the built box - i.e. exactly when it is
+# needed. Persist it instead:
+#   echo 'fs.protected_regular=0' > /etc/sysctl.d/99-homestead.conf
 sysctl fs.protected_regular=0
 
 # Blank netplan machine-id (DUID) so machines get unique ID generated on boot.

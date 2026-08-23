@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+#
+# package
+#
+# The step after `bin/build`. Takes the box packer just produced and turns it
+# into something you can hand to a Mac mini and double-click.
+#
+#     bash bin/build      # build the VM        -> ../bento/builds/*.vmware.box
+#     bash bin/package    # package it          -> dist/*.dmg
+#
+# What it does
+# ------------
+#   1. finds the newest *.vmware.box in ../bento/builds
+#   2. unpacks it and rewrites the .vmx for Apple Silicon
+#   3. boots the VM and runs bin/vm-generalize.sh inside it, pushed over the
+#      VMware Tools channel - you never copy that script in by hand
+#   4. shuts the guest down and seals the image
+#   5. writes dist/<name>.vmwarevm, dist/<name>.dmg, checksums and a manifest
+#
+# The .dmg is the deliverable. Copy it to a Mac mini, open it, and run
+# Install.command once per customer.
+#
+# Environment
+# -----------
+#   SETTLER_VERSION    recorded in the manifest      (default 16.0.0)
+#   HOMESTEAD_VERSION  version tag in the name       (default 17.0.4)
+#   PRODUCT_NAME       artifact name                 (default settler-homestead)
+#   VM_MEMORY          guest RAM in MB               (default 4096)
+#   VM_CPUS            vCPUs                         (default 4)
+#   VM_NET             nat | bridged | hostonly      (default nat)
+#   GUEST_USER/PASS    guest credentials             (default vagrant/vagrant)
+#
+# Options
+# -------
+#   --box PATH        package this box instead of the newest one
+#   --no-generalize   skip the generalize boot (faster, but every deployed
+#                     copy will share a hostname, machine-id and SSH host keys)
+#   --zip             also emit a .zip alongside the .dmg
+#   -h, --help        this text
+#
+# Anything else is passed straight through to bin/package-vmwarevm.sh.
+#
+set -euo pipefail
+
+settler_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+builds_dir="${BUILDS_DIR:-$settler_root/../bento/builds}"
+
+PRODUCT_NAME="${PRODUCT_NAME:-settler-homestead}"
+HOMESTEAD_VERSION="${HOMESTEAD_VERSION:-17.0.4}"
+SETTLER_VERSION="${SETTLER_VERSION:-16.0.0}"
+
+box=""
+generalize="--generalize"
+formats="bundle,dmg"
+passthru=()
+
+usage() { sed -n '3,41p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --box)           box="$2"; shift ;;
+    --no-generalize) generalize="" ;;
+    --zip)           formats="bundle,dmg,zip" ;;
+    -h | --help)     usage; exit 0 ;;
+    *)               passthru+=("$1") ;;
+    esac
+    shift
+done
+
+#
+# find the box
+#
+if [ -z "$box" ]; then
+    if [ ! -d "$builds_dir" ]; then
+        echo "✋ no builds directory at $builds_dir"
+        echo "   Run the build first:  bash bin/build"
+        exit 1
+    fi
+    # Packer's vagrant post-processor writes to builds/build_complete/, not to
+    # builds/ itself, so this has to recurse. Boxes that have been moved up to
+    # builds/ by hand, or archived under builds/uploaded/, are found too - the
+    # newest wins. build_files/ holds the in-progress VM and contains no .box.
+    box="$(find "$builds_dir" -name '*.vmware.box' -print0 2>/dev/null |
+        xargs -0 ls -t 2>/dev/null | head -1)"
+fi
+
+if [ -z "$box" ] || [ ! -e "$box" ]; then
+    echo "✋ no *.vmware.box found in $builds_dir"
+    echo
+    echo "   Build one first:"
+    echo "       SETTLER_VERSION=$SETTLER_VERSION HOMESTEAD_VERSION=$HOMESTEAD_VERSION bash bin/build"
+    echo
+    echo "   Or point at a box explicitly:"
+    echo "       bash bin/package --box /path/to/ubuntu-24.04-aarch64.vmware.box"
+    exit 1
+fi
+
+if [ "$(uname -m)" != "arm64" ]; then
+    echo "⚠️  this host is $(uname -m), not arm64."
+    echo "   The .vmwarevm produced here targets Apple Silicon Fusion. An x86_64"
+    echo "   box packaged this way will not run on the Mac mini fleet."
+    echo
+fi
+
+echo "📦 packaging for distribution"
+echo "   box     : $box"
+echo "   size    : $(du -h "$box" | awk '{print $1}')"
+echo "   built   : $(date -r "$box" '+%Y-%m-%d %H:%M')"
+if [ -n "$generalize" ]; then
+    echo "   guest   : will be generalized (boots the VM, adds a few minutes)"
+else
+    echo "   guest   : NOT generalized - clones will share hostname/machine-id"
+fi
+echo
+
+exec "$settler_root/bin/package-vmwarevm.sh" \
+    ${generalize:+"$generalize"} \
+    -n "$PRODUCT_NAME" \
+    -V "$HOMESTEAD_VERSION" \
+    -f "$formats" \
+    -a "$PRODUCT_NAME $HOMESTEAD_VERSION | settler $SETTLER_VERSION | Ubuntu 24.04 aarch64" \
+    ${passthru[@]+"${passthru[@]}"} \
+    "$box"
