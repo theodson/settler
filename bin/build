@@ -104,6 +104,17 @@ echo -e "⚡️ setup" &&
         exit 2
     }
 
+# Splice the settler-firstboot service into the provisioning scripts, so the
+# built box ships with it already installed and every deployed clone names
+# itself on first boot. The definition lives in bin/vm-generalize.sh; this
+# copies it in verbatim. Runs after the git reset above, and after
+# use-homestead-features.sh, both of which rewrite scripts/*.sh.
+echo -e "⚡️ firstboot service" &&
+    bin/inject-firstboot.sh || {
+        echo "✋ problem injecting the firstboot service!"
+        exit 2
+    }
+
 if [ "$(uname -p)" = "arm" ]; then
     #var_file='os_pkrvars/ubuntu/ubuntu-22.04-aarch64.pkrvars.hcl'
     var_file='os_pkrvars/ubuntu/ubuntu-24.04-aarch64.pkrvars.hcl '
