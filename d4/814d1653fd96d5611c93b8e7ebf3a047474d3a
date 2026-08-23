@@ -1,0 +1,15 @@
+scripts/amd64.sh
+  h_6bb49d5e53f88a 39-41,676-677,700-701,721-722,829,833-834,840-841,899-900,959-963,967-968,974-978,982-986,994-997
+  h_6bb49d5e53f88a 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "d4814d1653fd96d5611c93b8e7ebf3a047474d3a",
+  "prompts": {},
+  "humans": {
+    "h_6bb49d5e53f88a": {
+      "author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
