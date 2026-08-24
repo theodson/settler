@@ -1,0 +1,24 @@
+bin/package-vmwarevm.sh
+  s_d17ee24c109ae4::t_1bb6adbd23411d 156-160,166-171
+docs/packaging.md
+  s_d17ee24c109ae4::t_4472ae3413ddd3 23-26,29-31
+  s_d17ee24c109ae4::t_5d811c0aec97fd 281
+  s_d17ee24c109ae4::t_cca4756b52a9d3 249
+  s_d17ee24c109ae4::t_b47212f99d60b9 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "c4e7b32c410904016a2aca2916323c29a898bcc5",
+  "prompts": {},
+  "sessions": {
+    "s_d17ee24c109ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "05139771-9314-46c7-a72c-428f4d8558d0",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
