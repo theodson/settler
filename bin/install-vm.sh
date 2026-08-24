@@ -44,6 +44,30 @@
 #
 set -euo pipefail
 
+# Double-clicked straight off a mounted .dmg, this script runs from a
+# read-only, quarantined volume under /Volumes. macOS cannot clear the
+# quarantine flag on read-only media, so Gatekeeper re-checks it through the
+# run and can kill the process partway - the symptom is exactly "it copies
+# the VM, then the Terminal window just vanishes." Copying yourself out to a
+# normal writable location and re-execing from there sidesteps it. The
+# original directory is kept (not the copy's) so the default "find the
+# .vmwarevm sitting next to me" lookup below still finds it on the dmg.
+if [ -z "${INSTALL_VM_ORIGINAL_DIR:-}" ]; then
+    case "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" in
+    /Volumes/*)
+        stable_dir="$(mktemp -d)"
+        cp "${BASH_SOURCE[0]}" "$stable_dir/install-vm.sh"
+        chmod +x "$stable_dir/install-vm.sh"
+        export INSTALL_VM_ORIGINAL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        # $0 becomes the relaunched copy's name below - remember whether this
+        # was run as Install.command so the "hold the window open" prompt at
+        # the bottom still fires after the relaunch.
+        export INSTALL_VM_ORIGINAL_NAME="$(basename "${BASH_SOURCE[0]}")"
+        exec bash "$stable_dir/install-vm.sh" "$@"
+        ;;
+    esac
+fi
+
 FUSION_APP="${FUSION_APP:-/Applications/VMware Fusion.app}"
 TARGET_DIR="${TARGET_DIR:-$HOME/Virtual Machines.localized}"
 SOURCE_BUNDLE=""
@@ -54,7 +78,7 @@ VM_NET=""
 ASSUME_YES=0
 DO_OPEN=1
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="${INSTALL_VM_ORIGINAL_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
 usage() { sed -n '3,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
@@ -160,7 +184,16 @@ echo
 cleanup_failed() { [ -d "$dest" ] && rm -rf "$dest"; }
 trap cleanup_failed ERR INT TERM
 
-cp -Rc "$SOURCE_BUNDLE" "$dest" 2>/dev/null || cp -R "$SOURCE_BUNDLE" "$dest"
+# A failed clone leaves an empty $dest behind (mkdir succeeds even though
+# every clonefile() call fails cross-volume), and cp -R onto an *existing*
+# directory copies the source into it as a subdirectory instead of copying
+# it flat - so without the rm -rf here, installing straight from a mounted
+# .dmg silently nests the bundle a level too deep and the later rename step
+# fails to find it.
+if ! cp -Rc "$SOURCE_BUNDLE" "$dest" 2>/dev/null; then
+    rm -rf "$dest"
+    cp -R "$SOURCE_BUNDLE" "$dest"
+fi
 
 # Anything that arrived via a download or a disk image carries a quarantine
 # xattr. Fusion refuses to power on a quarantined VM without a prompt per file.
@@ -267,7 +300,7 @@ fi
 
 # When run by double-clicking Install.command, Terminal closes on exit and the
 # output vanishes. Hold the window open so whoever ran it can read the result.
-case "$0" in
+case "${INSTALL_VM_ORIGINAL_NAME:-$0}" in
 *Install.command)
     echo
     read -r -n1 -p "Press any key to close this window. " _ || true
