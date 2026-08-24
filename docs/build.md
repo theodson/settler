@@ -372,7 +372,7 @@ uname -m
 arm64
 ```
 
-Ubuntu `aarch64`
+Within VM Ubuntu on Apple Silicon `aarch64`
 
 ```bash
 # bash on Ubuntu/Debian ARM based VM
@@ -386,6 +386,32 @@ aarch64
 uname -m
 aarch64
 ```
+
+Apple Intel OS (64bit)
+```bash
+arch
+i386
+
+uname -p
+i386
+
+uname -m
+x86_64
+```
+
+Within VM Ubuntu on Apple Intel `x86_64`
+```bash
+# bash on Ubuntu/Debian Intel based VM
+arch
+x86_64
+
+uname -p
+x86_64
+
+uname -m
+x86_64
+```
+
 
 # `bento` Build Extension points
 
