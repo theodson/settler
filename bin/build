@@ -2,7 +2,7 @@
 
 set -a
 
-BENTO_BRANCH="main"
+BENTO_BRANCH="settler-homestead"
 SETTLER_BRANCH="ubuntu-vmware-16"
 HOMESTEAD_BRANCH="support/17"
 UBUNTU_VERSION="24.04"
