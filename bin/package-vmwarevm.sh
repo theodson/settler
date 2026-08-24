@@ -154,7 +154,16 @@ esac
 vm_name="$PRODUCT_NAME"
 [ -n "$PRODUCT_VERSION" ] && vm_name="$PRODUCT_NAME-$PRODUCT_VERSION"
 OUTPUT_DIR="${OUTPUT_DIR:-$settler_root/dist}"
-[ -n "$ANNOTATION" ] || ANNOTATION="$vm_name | Ubuntu 24.04 aarch64 | packaged $(date -u '+%Y-%m-%d')"
+
+# Read the arch out of the source name rather than assuming aarch64 - this
+# script packages whatever box it is given, and bin/build produces x86_64
+# boxes on Intel hosts.
+case "$source_path" in
+*aarch64* | *arm64*) source_arch="aarch64" ;;
+*x86_64* | *amd64*)  source_arch="x86_64" ;;
+*)                   source_arch="$(uname -m)" ;;
+esac
+[ -n "$ANNOTATION" ] || ANNOTATION="$vm_name | Ubuntu 24.04 $source_arch | packaged $(date -u '+%Y-%m-%d')"
 
 staging="$OUTPUT_DIR/.staging-$vm_name"
 bundle="$OUTPUT_DIR/$vm_name.vmwarevm"

@@ -95,6 +95,12 @@ if [ -z "$box" ] || [ ! -e "$box" ]; then
     exit 1
 fi
 
+case "$box" in
+*aarch64* | *arm64*) box_arch="aarch64" ;;
+*x86_64* | *amd64*)  box_arch="x86_64" ;;
+*)                   box_arch="$(uname -m)" ;;
+esac
+
 if [ "$(uname -m)" != "arm64" ]; then
     echo "⚠️  this host is $(uname -m), not arm64."
     echo "   The .vmwarevm produced here targets Apple Silicon Fusion. An x86_64"
@@ -118,6 +124,6 @@ exec "$settler_root/bin/package-vmwarevm.sh" \
     -n "$PRODUCT_NAME" \
     -V "$HOMESTEAD_VERSION" \
     -f "$formats" \
-    -a "$PRODUCT_NAME $HOMESTEAD_VERSION | settler $SETTLER_VERSION | Ubuntu 24.04 aarch64" \
+    -a "$PRODUCT_NAME $HOMESTEAD_VERSION | settler $SETTLER_VERSION | Ubuntu 24.04 $box_arch" \
     ${passthru[@]+"${passthru[@]}"} \
     "$box"

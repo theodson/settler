@@ -246,8 +246,20 @@ if [ "$DO_OPEN" = 1 ]; then
     echo
     echo "⚡️ opening in Fusion"
     open -a "$FUSION_APP" "$vmx"
+
+    # Fusion shows a blocking "upgrade this virtual machine" dialog the first
+    # time it opens a .vmx it did not author itself (which is every VM this
+    # script installs - they all come from Packer/Vagrant). If that dialog
+    # lands behind another window - easy to happen when Fusion is already
+    # running with other VMs open - the import stalls with no visible sign,
+    # and the new VM never appears in the library until someone answers it.
+    # Bring Fusion to the front so the dialog cannot hide.
+    osascript -e 'tell application "VMware Fusion" to activate' >/dev/null 2>&1 || true
+
     echo
     echo "   The VM is now in Window > Virtual Machine Library (⇧⌘L)."
+    echo "   If Fusion asks to upgrade the virtual machine, click Upgrade -"
+    echo "   until you do, it will not show up in the library."
 else
     echo
     echo "   To start it:  open -a \"$FUSION_APP\" \"$vmx\""
