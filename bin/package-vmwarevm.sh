@@ -151,18 +151,24 @@ nat | bridged | hostonly) ;;
 *) echo "✋ --net must be nat, bridged or hostonly (got '$VM_NET')"; exit 1 ;;
 esac
 
-vm_name="$PRODUCT_NAME"
-[ -n "$PRODUCT_VERSION" ] && vm_name="$PRODUCT_NAME-$PRODUCT_VERSION"
-OUTPUT_DIR="${OUTPUT_DIR:-$settler_root/dist}"
-
 # Read the arch out of the source name rather than assuming aarch64 - this
 # script packages whatever box it is given, and bin/build produces x86_64
-# boxes on Intel hosts.
+# boxes on Intel hosts. Folded into vm_name (below) so every artifact this
+# script writes - the .vmwarevm, the .dmg, the .sha256, the manifest - carries
+# the architecture in its filename. Two Mac minis of different architectures
+# building the same product/version would otherwise produce identically named
+# files that silently overwrite each other if ever copied to the same place.
 case "$source_path" in
 *aarch64* | *arm64*) source_arch="aarch64" ;;
 *x86_64* | *amd64*)  source_arch="x86_64" ;;
 *)                   source_arch="$(uname -m)" ;;
 esac
+
+vm_name="$PRODUCT_NAME"
+[ -n "$PRODUCT_VERSION" ] && vm_name="$vm_name-$PRODUCT_VERSION"
+vm_name="$vm_name-$source_arch"
+OUTPUT_DIR="${OUTPUT_DIR:-$settler_root/dist}"
+
 [ -n "$ANNOTATION" ] || ANNOTATION="$vm_name | Ubuntu 24.04 $source_arch | packaged $(date -u '+%Y-%m-%d')"
 
 staging="$OUTPUT_DIR/.staging-$vm_name"

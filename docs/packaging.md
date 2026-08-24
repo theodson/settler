@@ -20,11 +20,15 @@ bash bin/package                                                 # ship it
 seals the image and writes to `dist/`:
 
 ```
-settler-homestead-17.0.4.vmwarevm      double-click to run in Fusion
-settler-homestead-17.0.4.dmg           what you hand to the fleet
-settler-homestead-17.0.4.sha256        integrity check
-settler-homestead-17.0.4.manifest.txt  what is in it and where it came from
+settler-homestead-17.0.4-aarch64.vmwarevm      double-click to run in Fusion
+settler-homestead-17.0.4-aarch64.dmg           what you hand to the fleet
+settler-homestead-17.0.4-aarch64.sha256        integrity check
+settler-homestead-17.0.4-aarch64.manifest.txt  what is in it and where it came from
 ```
+
+The architecture (`aarch64` or `x86_64`) comes from the box's own filename and
+is always part of the artifact name — building both architectures side by side
+never produces two files that collide.
 
 On each Mac mini, per customer:
 
@@ -242,7 +246,7 @@ before starting a multi-gigabyte copy.
 Non-interactively, for scripted rollout:
 
 ```bash
-bin/install-vm.sh --source /Volumes/settler-homestead-17.0.4/settler-homestead-17.0.4.vmwarevm \
+bin/install-vm.sh --source /Volumes/settler-homestead-17.0.4-aarch64/settler-homestead-17.0.4-aarch64.vmwarevm \
                   --name acme-corp --memory 8192 --cpus 6 --yes
 ```
 
@@ -274,7 +278,7 @@ In rough order of how well they suit twenty machines:
 Whatever the transport, verify before installing:
 
 ```bash
-shasum -a 256 -c settler-homestead-17.0.4.sha256
+shasum -a 256 -c settler-homestead-17.0.4-aarch64.sha256
 ```
 
 Keep the `.manifest.txt` — it records the settler commit, the source box, the
