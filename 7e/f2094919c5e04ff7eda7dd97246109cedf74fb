@@ -1,0 +1,21 @@
+scripts/arm.sh
+  s_04c7fc8233cdc7::t_d5df4c72d9b29a 858
+scripts/amd64.sh
+  s_04c7fc8233cdc7::t_d5df4c72d9b29a 858
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ef2094919c5e04ff7eda7dd97246109cedf74fb",
+  "prompts": {},
+  "sessions": {
+    "s_04c7fc8233cdc7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0b1b8-90aa-7883-8a6f-00d8fc4ff6b2",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
