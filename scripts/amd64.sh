@@ -855,7 +855,7 @@ service redis-server start
 sed -i "s/#START=yes/START=yes/" /etc/default/beanstalkd
 
 # Install Golang
-if [[ "$ARCH" == "aarch64" ]]; then
+if [ "$ARCH" = "aarch64" ]; then
     GOLANG_LATEST_STABLE_VERSION=$(curl https://go.dev/dl/?mode=json | grep -o 'go.*.linux-arm64.tar.gz' | head -n 1 | tr -d '\r\n')
     wget https://dl.google.com/go/${GOLANG_LATEST_STABLE_VERSION} -O golang.tar.gz
 else
