@@ -1,0 +1,32 @@
+prov-repo/README.md
+  s_526e69beb66051::t_b318bf87137c3a 94
+  s_526e69beb66051::t_df365e12a69493 1-38,41-56,58-93,95-105
+  s_526e69beb66051::t_649bc6bf77fb2c 57
+  s_526e69beb66051::t_beaaec4aa9b059 39-40
+prov-repo/README.html
+  s_526e69beb66051::t_1ba6c0f525b1ca 1-264
+prov-repo/download.sh
+  s_526e69beb66051::t_c2490ab6c6c164 147-171,178
+  s_526e69beb66051::t_9a0ce01426a6c2 68
+  s_526e69beb66051::t_7d8c0144a2b396 189
+  s_526e69beb66051::t_c15a33a8c64eb9 29
+  s_526e69beb66051::t_c3135109dd86cf 1-28,30-46,50-67,69-125,127-146,172-177,179-188,190-209
+  s_526e69beb66051::t_72e8ad17e036e7 126
+  s_526e69beb66051::t_0e978499eeafee 47-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "12e967648e1e527e84b1a2afdbc357f36a9f34c4",
+  "prompts": {},
+  "sessions": {
+    "s_526e69beb66051": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3477734-022c-4bfe-992b-390b1f7c97c3",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}
