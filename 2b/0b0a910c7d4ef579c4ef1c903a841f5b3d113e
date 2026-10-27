@@ -1,0 +1,30 @@
+prov-repo/README.md
+  s_526e69beb66051::t_b318bf87137c3a 94
+  s_526e69beb66051::t_649bc6bf77fb2c 57
+  s_526e69beb66051::t_df365e12a69493 1-38,41-56,58-93,95-105
+  s_526e69beb66051::t_beaaec4aa9b059 39-40
+prov-repo/download.sh
+  s_526e69beb66051::t_7d8c0144a2b396 189
+  s_526e69beb66051::t_0e978499eeafee 47-49
+  s_526e69beb66051::t_c2490ab6c6c164 147-171,178
+  s_526e69beb66051::t_9a0ce01426a6c2 68
+  s_526e69beb66051::t_c3135109dd86cf 1-28,30-46,50-67,69-125,127-146,172-177,179-188,190-209
+  s_526e69beb66051::t_72e8ad17e036e7 126
+  s_526e69beb66051::t_c15a33a8c64eb9 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2b0b0a910c7d4ef579c4ef1c903a841f5b3d113e",
+  "prompts": {},
+  "sessions": {
+    "s_526e69beb66051": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3477734-022c-4bfe-992b-390b1f7c97c3",
+        "model": "unknown"
+      },
+      "human_author": "Theo <theodson@gmail.com>"
+    }
+  }
+}
