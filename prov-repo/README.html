@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VM images for VMware Fusion</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1d1d1f;
+    --muted: #5f6368;
+    --border: #d9dce1;
+    --code-bg: #f4f5f7;
+    --code-fg: #1d1d1f;
+    --accent: #0a62c9;
+    --warn-bg: #fff4e5;
+    --warn-border: #f0a43a;
+    --note-bg: #eef4fc;
+    --note-border: #7aa7e0;
+    --button-bg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17181a;
+      --fg: #e6e6e6;
+      --muted: #a3a7ad;
+      --border: #3a3d42;
+      --code-bg: #24262a;
+      --code-fg: #e6e6e6;
+      --accent: #6cb0ff;
+      --warn-bg: #3a2c16;
+      --warn-border: #c9862b;
+      --note-bg: #1c2a3b;
+      --note-border: #4a79b3;
+      --button-bg: #2d3035;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 12px; }
+  h2 { font-size: 1.3rem; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  p, ul, ol { margin: 0 0 14px; }
+  li { margin: 4px 0; }
+  a { color: var(--accent); }
+  code {
+    font: 0.9em/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    overflow-wrap: anywhere;
+  }
+  .cmd {
+    position: relative;
+    margin: 10px 0 16px;
+  }
+  .cmd pre {
+    margin: 0;
+    padding: 14px 16px;
+    padding-right: 76px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  .cmd pre code { background: none; padding: 0; white-space: pre; overflow-wrap: normal; }
+  .cmd button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font: 13px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .cmd button:hover { border-color: var(--accent); }
+  .callout {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border-left: 4px solid;
+    border-radius: 6px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .warn { background: var(--warn-bg); border-color: var(--warn-border); }
+  .note { background: var(--note-bg); border-color: var(--note-border); }
+  .table-wrap { overflow-x: auto; margin: 10px 0 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; white-space: nowrap; }
+  td:first-child { min-width: 14ch; }
+  .lede { color: var(--muted); font-size: 1.05rem; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>VM images for VMware Fusion</h1>
+<p class="lede">Packaged Ubuntu 24.04 VMs for the Mac mini fleet. Each <code>.dmg</code> contains a
+ready-to-run <code>.vmwarevm</code>, an <code>Install.command</code> that installs one named copy, and
+a <code>README.txt</code>. A <code>.sha256</code> and a <code>.manifest.txt</code> sit beside each
+<code>.dmg</code>.</p>
+
+<div class="callout warn">
+  <p><strong>Internal use only.</strong> These images contain shared infrastructure credentials. Do
+  not copy them outside the company network or to personal or cloud storage.</p>
+</div>
+
+<h2 id="which-image">Which image</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>File</th><th>What it is</th></tr></thead>
+  <tbody>
+    <tr><td><code>hs-nss-template-&lt;version&gt;-aarch64.dmg</code></td><td>NSS template for <strong>Apple Silicon</strong> Macs (M1 and later)</td></tr>
+    <tr><td><code>hs-nss-template-&lt;version&gt;-x86_64.dmg</code></td><td>NSS template for <strong>Intel</strong> Macs</td></tr>
+    <tr><td><code>settler-homestead-&lt;version&gt;-&lt;arch&gt;.dmg</code></td><td>The plain Homestead base the templates are built from</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Pick the architecture that matches the Mac: Apple menu → About This Mac → <em>Chip</em> (Apple M…)
+means <code>aarch64</code>; <em>Processor</em> (Intel) means <code>x86_64</code>. A VM does not run on
+the other kind of Mac.</p>
+
+<h2 id="before-you-start">Before you start</h2>
+<ul>
+  <li><strong>VMware Fusion</strong> installed in <code>/Applications</code>.</li>
+  <li><strong>Disk space:</strong> about 4 × the <code>.dmg</code> size free (the download, plus the installed VM).</li>
+  <li><strong>Network:</strong> this Mac must reach <code>prov-repo.blueglue.com.au</code>.</li>
+</ul>
+
+<h2 id="quick-install">Quick install (recommended)</h2>
+<p>Open <strong>Terminal</strong> and paste:</p>
+<div class="cmd"><pre><code>bash &lt;(curl -fsSL http://prov-repo.blueglue.com.au:9000/boxes/settler-homestead-17.0.4/download.sh)</code></pre></div>
+
+<p><a href="download.sh"><code>download.sh</code></a> will:</p>
+<ol>
+  <li>pick the newest <code>hs-nss-template</code> image for this Mac's architecture;</li>
+  <li>download it to <code>~/Downloads/vm-images</code> (re-run it to resume an interrupted download);</li>
+  <li>verify it against the published <code>.sha256</code>. On a mismatch it deletes the file and
+    stops, or with <code>--keep-on-mismatch</code> keeps it, warns and stops;</li>
+  <li>clear the macOS quarantine flag (<code>xattr -dr com.apple.quarantine</code>);</li>
+  <li>mount the <code>.dmg</code>, show it in Finder and open <strong>Install.command</strong> in a new Terminal window.</li>
+</ol>
+<p>In that window, type a name for this VM when asked, for example the customer or site. The
+installer copies the VM, gives it a new identity (UUID, MAC address, hostname, SSH keys) and opens it
+in Fusion. Several VMs on one Mac are fine, as long as each has its own name.</p>
+
+<p>Useful options (add after the command above, e.g. <code>… download.sh) --list</code>):</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Option</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td><code>--list</code></td><td>Show the images available and which match this Mac</td></tr>
+    <tr><td><code>--image hs-nss-template-17.0.4-20261026-aarch64.dmg</code></td><td>Fetch a specific image instead of the newest</td></tr>
+    <tr><td><code>--name acme-site</code></td><td>Install with this name in the current Terminal, with no extra window</td></tr>
+    <tr><td><code>--no-install</code></td><td>Download, verify and mount only</td></tr>
+    <tr><td><code>--dir PATH</code></td><td>Download somewhere other than <code>~/Downloads/vm-images</code></td></tr>
+    <tr><td><code>--keep-on-mismatch</code></td><td>If the SHA-256 check fails, keep the <code>.dmg</code>, print expected and actual checksums, and stop (default: delete it)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout note">
+  <p>Use <code>bash &lt;(curl …)</code> as shown, not <code>curl … | bash</code>: the installer needs
+  the keyboard to ask for the VM's name. To read the script first: <code>curl -fsSLO …/download.sh</code>,
+  review it, then <code>bash download.sh</code>.</p>
+</div>
+
+<h2 id="manual-install">Manual install</h2>
+<ol>
+  <li>Download the <code>.dmg</code> and its <code>.sha256</code> from this page into the same folder.</li>
+  <li>Verify the download (from that folder):
+    <div class="cmd"><pre><code>shasum -a 256 -c hs-nss-template-17.0.4-20261026-aarch64.sha256</code></pre></div>
+    It must print <code>…dmg: OK</code>. If it does not, download the <code>.dmg</code> again.</li>
+  <li>Clear the quarantine flag that the browser added, so the disk image and its installer are not blocked:
+    <div class="cmd"><pre><code>xattr -dr com.apple.quarantine ~/Downloads/hs-nss-template-17.0.4-20261026-aarch64.dmg</code></pre></div></li>
+  <li>Double-click the <code>.dmg</code> to mount it.</li>
+  <li>Double-click <strong>Install.command</strong> and enter a name when asked.</li>
+</ol>
+<p>To install a single VM without the installer instead, drag the <code>.vmwarevm</code> from the disk
+image to <code>~/Virtual Machines.localized/</code> and double-click it. Do not run it from the disk
+image itself; it is read-only.</p>
+<p>When the VM is running, eject the disk image (Finder sidebar ⏏, or
+<code>hdiutil detach /Volumes/&lt;name&gt;</code>).</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><em>"Install.command cannot be opened because it is from an unidentified developer"</em></td>
+        <td>The quarantine flag is still set. Run the <code>xattr</code> command from step 3 on the
+        <code>.dmg</code>, eject and remount it; or right-click Install.command → <strong>Open</strong> →
+        <strong>Open</strong>.</td></tr>
+    <tr><td><code>SHA-256 mismatch</code> or <code>shasum … FAILED</code></td>
+        <td>The download is damaged or incomplete. <code>download.sh</code> deletes it, so re-run to
+        fetch it again. To keep the file for investigation (for example, while an upload to prov-repo
+        is still finishing), re-run with <code>--keep-on-mismatch</code>; it stops without mounting.</td></tr>
+    <tr><td><code>download is incomplete</code></td>
+        <td>The connection dropped. Re-run the same command; it resumes.</td></tr>
+    <tr><td><code>not built for this Mac</code></td>
+        <td>You chose the other architecture. Use <code>--list</code> and pick the one marked for this Mac.</td></tr>
+    <tr><td>Fusion asks <em>"Did you move it or copy it?"</em></td>
+        <td>Answer <strong>I Copied It</strong>. Never <em>I Moved It</em>: two VMs would share a MAC address.</td></tr>
+    <tr><td>The VM has no network</td>
+        <td>Check Fusion → VM → Settings → Network Adapter. NAT ("Share with my Mac") works on any
+        network; bridged needs the Mac's own LAN.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="maintainers">For maintainers</h2>
+<p>Images are built and packaged with the settler repository (<code>bin/package-vmwarevm.sh</code>, see
+<code>docs/packaging.md</code>). Publish each <code>.dmg</code> with its <code>.sha256</code> and
+<code>.manifest.txt</code> in this folder; the <code>.sha256</code> must keep the packager's format
+(<code>&lt;sha256&gt;  &lt;file&gt;.dmg</code>), which <code>download.sh</code> reads. Upload the
+<code>.dmg</code> before its <code>.sha256</code>, so a half-copied image cannot be mistaken for a
+verified one.</p>
+
+<footer>Generated from <code>README.md</code> in the settler repository (<code>prov-repo/</code>). Edit the Markdown and regenerate this page together.</footer>
+
+</main>
+<script>
+  // Copy buttons for command blocks. Without JavaScript the commands are still plain selectable text.
+  document.querySelectorAll('.cmd').forEach(function (block) {
+    var code = block.querySelector('code');
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Copy';
+    button.addEventListener('click', function () {
+      var text = code.textContent;
+      var done = function () {
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = 'Copy'; }, 1500);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done);
+      } else {
+        // prov-repo is plain http, where the async clipboard API is unavailable.
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+        done();
+      }
+    });
+    block.appendChild(button);
+  });
+</script>
+</body>
+</html>
